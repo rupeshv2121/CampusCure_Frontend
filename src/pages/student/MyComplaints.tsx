@@ -27,11 +27,6 @@ const MyComplaints = () => {
     return matchStatus && matchSearch;
   });
 
-  const getUserName = (_userId: string) => {
-    // TODO: Replace with actual user name lookup
-    return 'Staff Member';
-  };
-
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
     { title: 'Title', dataIndex: 'title', key: 'title' },
@@ -84,7 +79,12 @@ const MyComplaints = () => {
                 {selected.priority && <Tag color={priorityColors[selected.priority]}>Priority {selected.priority}</Tag>}
                 <Tag color={statusColors[selected.status]}>{selected.status.replace('_', ' ')}</Tag>
               </div>
-              {selected.assignedTo && <p className="text-sm"><strong>Assigned to:</strong> {getUserName(selected.assignedTo)}</p>}
+              {selected.assignedTo && (
+                <p className="text-sm">
+                  <strong>Assigned to:</strong> {selected.assignedTo.name}
+                  {selected.assignedTo.facultyProfile && ` (${selected.assignedTo.facultyProfile.department})`}
+                </p>
+              )}
               {selected.resolutionNote && <p className="text-sm"><strong>Resolution:</strong> {selected.resolutionNote}</p>}
               {selected.feedbackRating && <p className="text-sm"><strong>Feedback Rating:</strong> {selected.feedbackRating}/5</p>}
             </div>
