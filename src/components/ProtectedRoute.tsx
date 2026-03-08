@@ -8,6 +8,7 @@ interface Props {
   allowedRoles: string[];
 }
 
+
 const ProtectedRoute = ({ children, allowedRoles }: Props) => {
   const { user, isAuthenticated, loading } = useAuth();
 

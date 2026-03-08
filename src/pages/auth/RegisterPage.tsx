@@ -1,4 +1,5 @@
-import { registerUser } from '@/api/auth';
+import { loginUser, registerUser } from '@/api/auth';
+import FaceRegister from '@/components/FaceRegister';
 import { UserRole, departments } from '@/types';
 import { IdcardOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Select } from 'antd';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 const RegisterPage = () => {
   const [role, setRole] = useState<UserRole | ''>('');
   const [loading, setLoading] = useState(false);
+  const [showFaceRegister, setShowFaceRegister] = useState(false);
   const [userData, setUserData] = useState({
     fullName: '',
     email: '',
@@ -50,14 +52,56 @@ const RegisterPage = () => {
     
     const user = await registerUser(userData.fullName, userData.email, userData.password, role, username);
     console.log("Registered user:", user);
-    toast.success("Registration successful! Redirecting to login...", { description: user.name });
-    setTimeout(() => navigate("/login"), 1500);
+    toast.success("Account created! Set up face login or skip to proceed.");
+
+    // Auto-login to get a token for the face registration step
+    try {
+      const loginResponse = await loginUser(userData.email, userData.password);
+      // Store token temporarily for face descriptor upload — not going through auth context
+      localStorage.setItem('token', loginResponse.token);
+      setShowFaceRegister(true);
+    } catch {
+      // Auto-login failed — just go to login page
+      setTimeout(() => navigate("/login"), 1000);
+    }
    } catch (error) {
     toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.");
    } finally {
     setLoading(false);
    }
   };
+
+  const handleFaceSuccess = () => {
+    toast.success("Face registered! Your account is pending approval.");
+    localStorage.removeItem('token');
+    setTimeout(() => navigate("/login"), 1000);
+  };
+
+  const handleFaceSkip = () => {
+    toast.info("Skipped face setup. You can register your face later from your profile.");
+    localStorage.removeItem('token');
+    setTimeout(() => navigate("/login"), 800);
+  };
+
+  if (showFaceRegister) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: 'linear-gradient(135deg, hsl(214 100% 97%), hsl(214 60% 92%))' }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <Card className="rounded-2xl shadow-lg" styles={{ body: { padding: 32 } }}>
+            <FaceRegister onSuccess={handleFaceSuccess} onSkip={handleFaceSkip} />
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, hsl(214 100% 97%), hsl(214 60% 92%))' }}>
