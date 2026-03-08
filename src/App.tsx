@@ -8,12 +8,13 @@ import AdminAnalytics from "@/pages/admin/AdminAnalytics.tsx";
 import AdminComplaints from "@/pages/admin/AdminComplaints.tsx";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminUsers from "@/pages/admin/AdminUsers.tsx";
+import FaceLoginPage from "@/pages/auth/FaceLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import FacultyComplaints from "@/pages/faculty/FacultyComplaints.tsx";
 import FacultyDashboard from "@/pages/faculty/FacultyDashboard";
-import FacultyDoubts from "@/pages/faculty/FacultyDoubts.tsx";
 import FacultyDoubtDetail from "@/pages/faculty/FacultyDoubtDetail.tsx";
+import FacultyDoubts from "@/pages/faculty/FacultyDoubts.tsx";
 import LandingPage from "@/pages/LandingPage";
 import DoubtCommunity from "@/pages/student/DoubtCommunity";
 import DoubtDetail from "@/pages/student/DoubtDetail";
@@ -40,6 +41,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/face-login" element={<FaceLoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Student Routes */}

@@ -2,7 +2,7 @@ import { loginUser } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleRedirect } from '@/lib/authUtils';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Spin } from 'antd';
+import { Button, Card, Divider, Input, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -92,6 +92,20 @@ const LoginPage = () => {
               Sign In
             </Button>
           </div>
+
+          <Divider plain>
+            <span className="text-xs text-muted-foreground">or</span>
+          </Divider>
+
+          <Button
+            size="large"
+            block
+            onClick={() => navigate('/face-login')}
+            className="rounded-xl h-11 font-semibold flex items-center justify-center gap-2"
+            style={{ borderColor: 'hsl(214 60% 80%)', color: 'hsl(214 100% 40%)' }}
+          >
+            <span>📷</span> Login with Face
+          </Button>
 
           <div className="text-center mt-6">
             <span className="text-sm text-muted-foreground">Don't have an account? </span>

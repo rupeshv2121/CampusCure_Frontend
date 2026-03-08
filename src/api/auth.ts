@@ -105,3 +105,45 @@ export const getCurrentUser = async () => {
     throw new Error("Failed to fetch current user");
   }
 };
+
+export const saveFaceDescriptor = async (descriptor: number[]) => {
+  try {
+    const response = await api.post("/auth/save-face-descriptor", {
+      descriptor,
+    });
+    return response.data;
+  } catch (error: unknown) {
+    const message =
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      (error as { response?: { data?: { error?: string } } }).response?.data
+        ?.error
+        ? String(
+            (error as { response: { data: { error: string } } }).response.data
+              .error,
+          )
+        : "Failed to save face descriptor";
+    throw new Error(message);
+  }
+};
+
+export const faceLogin = async (descriptor: number[]) => {
+  try {
+    const response = await api.post("/auth/face-login", { descriptor });
+    return response.data;
+  } catch (error: unknown) {
+    const message =
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      (error as { response?: { data?: { error?: string } } }).response?.data
+        ?.error
+        ? String(
+            (error as { response: { data: { error: string } } }).response.data
+              .error,
+          )
+        : "Face login failed";
+    throw new Error(message);
+  }
+};
