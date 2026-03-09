@@ -35,7 +35,7 @@ const FaceLoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(getRoleRedirect(user.role, user.id), { replace: true });
+      navigate(getRoleRedirect(user.role, user), { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -150,7 +150,7 @@ const FaceLoginPage = () => {
           toast.success(`Welcome back, ${response.user.name}!`);
           stopCamera();
           login(response.token, response.user);
-          navigate(getRoleRedirect(response.user.role, response.user.id));
+          navigate(getRoleRedirect(response.user.role, response.user));
           return;
         }
       } catch (err) {

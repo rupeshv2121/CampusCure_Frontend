@@ -129,9 +129,10 @@ const RegisterPage = () => {
               className="w-full"
               onChange={(v: UserRole) => setRole(v)}
               options={[
-                { label: 'Admin', value: 'ADMIN' },
-                { label: 'Faculty', value: 'FACULTY' },
                 { label: 'Student', value: 'STUDENT' },
+                { label: 'Faculty', value: 'FACULTY' },
+                { label: 'Admin', value: 'ADMIN' },
+                { label: '⭐ Super Admin', value: 'SUPER_ADMIN' },
               ]}
             />
 
@@ -144,6 +145,7 @@ const RegisterPage = () => {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden space-y-4"
                 >
+                  {(role === 'STUDENT' || role === 'FACULTY' || role === 'ADMIN') && (
                   <Select
                     size="large"
                     placeholder="Select Department"
@@ -152,6 +154,7 @@ const RegisterPage = () => {
                     value={userData.department}
                     onChange={(value) => setUserData({...userData, department: value})}
                   />
+                  )}
                   {role === 'STUDENT' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
                       <Input size="large" prefix={<IdcardOutlined />} placeholder="Student ID" className="rounded-xl" value={userData.studentId} onChange={(e) => setUserData({...userData, studentId: e.target.value})} />

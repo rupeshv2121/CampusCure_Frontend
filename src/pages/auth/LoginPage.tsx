@@ -19,7 +19,7 @@ const LoginPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = getRoleRedirect(user.role, user.id);
+      const redirectPath = getRoleRedirect(user.role, user);
       navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
@@ -34,7 +34,7 @@ const LoginPage = () => {
       const response = await loginUser(email, password);
       console.log('Login response:', response);
       login(response.token, response.user);
-      const redirectPath = getRoleRedirect(response.user.role, response.user.id);
+      const redirectPath = getRoleRedirect(response.user.role, response.user);
       console.log('Redirecting to:', redirectPath);
       toast.success(`Welcome back, ${response.user.name}!`);
       navigate(redirectPath);

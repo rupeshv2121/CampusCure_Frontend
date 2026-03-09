@@ -302,3 +302,86 @@ export const updateUserApprovalStatus = async (
     throw new Error(message);
   }
 };
+
+export interface SuperAdminStats {
+  stats: {
+    totalStudents: number;
+    totalFaculty: number;
+    totalAdmins: number;
+    pendingStudents: number;
+    pendingFaculty: number;
+    pendingAdmins: number;
+    totalComplaints: number;
+    resolvedComplaints: number;
+    totalDoubts: number;
+    resolutionRate: number;
+  };
+  adminProfiles: Array<{
+    id: string;
+    adminLevel: AdminLevel;
+    manageUsers: boolean;
+    manageComplaints: boolean;
+    manageDoubts: boolean;
+    viewAnalytics: boolean;
+    assignedDepartments: string[];
+    allowedCategories: string[];
+    complaintsAssigned: number;
+    complaintsClosed: number;
+    usersManaged: number;
+    createdAt: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      username: string;
+      approvalStatus: string;
+      isActive: boolean;
+      createdAt: string;
+    };
+  }>;
+}
+
+const apiError = (e: unknown, fallback: string): Error => {
+  const msg =
+    e &&
+    typeof e === "object" &&
+    "response" in e &&
+    (e as { response?: { data?: { error?: string } } }).response?.data?.error;
+  return new Error(msg ? String(msg) : fallback);
+};
+
+export const getSuperAdminStats = async (): Promise<SuperAdminStats> => {
+  try {
+    const response = await api.get("/admin/super/stats");
+    return response.data;
+  } catch (e) {
+    throw apiError(e, "Failed to fetch super admin stats");
+  }
+};
+
+export const getPendingAdmins = async (): Promise<User[]> => {
+  try {
+    const response = await api.get("/admin/pending/admins");
+    return response.data.pendingAdmins;
+  } catch (e) {
+    throw apiError(e, "Failed to fetch pending admins");
+  }
+};
+
+export const updateAdminPermissions = async (
+  adminProfileId: string,
+  permissions: {
+    manageUsers?: boolean;
+    manageComplaints?: boolean;
+    manageDoubts?: boolean;
+    viewAnalytics?: boolean;
+    assignedDepartments?: string[];
+    allowedCategories?: string[];
+  },
+): Promise<void> => {
+  try {
+    await api.put(`/admin/permissions/${adminProfileId}`, permissions);
+  } catch (e) {
+    throw apiError(e, "Failed to update admin permissions");
+  }
+};
