@@ -119,8 +119,8 @@ const DoubtCommunity = () => {
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <Input.Search placeholder="Search doubts..." className="max-w-xs" onChange={(e) => setSearch(e.target.value)} allowClear />
-          <Select placeholder="Filter by subject" className="min-w-[140px]" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} />
+          <Input.Search placeholder="Search doubts..." className="max-w-xs !placeholder-gray-800 placeholder:font-medium" onChange={(e) => setSearch(e.target.value)} allowClear />
+          <Select placeholder="Filter by subject" className="min-w-[140px] [&_.ant-select-selection-placeholder]:!text-gray-800 [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} />
         </div>
 
         {loading ? (
@@ -145,9 +145,6 @@ const DoubtCommunity = () => {
                   <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
                 </div>
                 <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1 cursor-pointer hover:text-primary transition" onClick={(e) => { e.stopPropagation(); toggleUpvote(doubt.id); }}>
-                    <LikeOutlined /> {doubt.upVoteCount}
-                  </span>
                   <span className="flex items-center gap-1"><MessageOutlined /> {doubt.answerCount} answers</span>
                   <span className="flex items-center gap-1"><EyeOutlined /> {doubt.views} views</span>
                   <span>by {doubt.postedBy.name || doubt.postedBy.username}</span>

@@ -139,6 +139,7 @@ export interface Answer {
   upvotes: number;
   isVerified: boolean;
   isAccepted: boolean;
+  isUpvotedByUser?: boolean;
   edited: boolean;
   editHistory?: { content: string; editedAt: string }[];
   createdAt: string;

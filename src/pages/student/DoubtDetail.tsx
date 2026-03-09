@@ -1,4 +1,4 @@
-import { deleteDoubt, editAnswer, editDoubt, getDoubtById, markAnswerAsAccepted, postAnswer, upvoteAnswer } from '@/api/student';
+import { deleteAnswer, deleteDoubt, editAnswer, editDoubt, getDoubtById, markAnswerAsAccepted, postAnswer, upvoteAnswer } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
@@ -29,7 +29,6 @@ const DoubtDetail = () => {
   const [loading, setLoading] = useState(false);
   const [answerText, setAnswerText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [upvotedAnswers, setUpvotedAnswers] = useState<Set<string>>(new Set());
   const [editMode, setEditMode] = useState(false);
   const [editedDoubt, setEditedDoubt] = useState({ title: '', description: '' });
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
@@ -83,18 +82,9 @@ const DoubtDetail = () => {
   const handleUpvote = async (answerId: string) => {
     try {
       await upvoteAnswer(answerId);
-      setUpvotedAnswers((prev) => {
-        const next = new Set(prev);
-        if (next.has(answerId)) {
-          next.delete(answerId);
-        } else {
-          next.add(answerId);
-        }
-        return next;
-      });
-      fetchDoubt(); // Refresh to update counts
+      fetchDoubt(); // Refresh to update counts and upvote status
     } catch (error) {
-      message.error('Failed to upvote answer');
+      message.error('Failed to toggle upvote');
     }
   };
 
@@ -102,10 +92,9 @@ const DoubtDetail = () => {
     if (!id) return;
     try {
       await markAnswerAsAccepted(id, answerId);
-      message.success('Answer marked as accepted!');
       fetchDoubt();
     } catch (error) {
-      message.error('Failed to mark answer as accepted');
+      message.error('Failed to toggle answer acceptance');
     }
   };
 
@@ -146,6 +135,24 @@ const DoubtDetail = () => {
     }
   };
 
+  const handleDeleteAnswer = async (answerId: string) => {
+    Modal.confirm({
+      title: 'Delete Answer',
+      content: 'Are you sure you want to delete this answer? This action cannot be undone.',
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          await deleteAnswer(answerId);
+          message.success('Answer deleted successfully');
+          fetchDoubt();
+        } catch (error) {
+          message.error('Failed to delete answer');
+        }
+      },
+    });
+  };
+
   const handleDeleteDoubt = async () => {
     if (!id) return;
     Modal.confirm({
@@ -170,7 +177,7 @@ const DoubtDetail = () => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
     if (diffMins < 10080) return `${Math.floor(diffMins / 1440)}d ago`;
@@ -212,14 +219,14 @@ const DoubtDetail = () => {
 
         <Card className="rounded-2xl">
           {editMode ? (
-            <div className="space-y-4">
-              <Input 
-                value={editedDoubt.title} 
+            <div className="space-y-5 flex flex-col gap-2.5">
+              <Input
+                value={editedDoubt.title}
                 onChange={(e) => setEditedDoubt({ ...editedDoubt, title: e.target.value })}
                 placeholder="Doubt title"
                 className="text-lg"
               />
-              <TextArea 
+              <TextArea
                 value={editedDoubt.description}
                 onChange={(e) => setEditedDoubt({ ...editedDoubt, description: e.target.value })}
                 rows={6}
@@ -260,7 +267,6 @@ const DoubtDetail = () => {
               <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t">
                 <span className="flex items-center gap-1"><EyeOutlined /> {doubt.views} views</span>
                 <span className="flex items-center gap-1"><MessageOutlined /> {doubt.answerCount} answers</span>
-                <span className="flex items-center gap-1"><LikeOutlined /> {doubt.upVoteCount} upvotes</span>
                 <span>Posted by {doubt.postedBy.name || doubt.postedBy.username}</span>
                 <span>{formatDate(doubt.createdAt)}</span>
                 {doubt.editHistory && doubt.editHistory.length > 0 && (
@@ -292,7 +298,7 @@ const DoubtDetail = () => {
                 >
                   <Card className={`rounded-xl ${answer.isAccepted ? 'border-green-500 border-2' : ''}`}>
                     {isEditing ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4 flex flex-col gap-2.5">
                         <TextArea
                           value={editedAnswerText}
                           onChange={(e) => setEditedAnswerText(e.target.value)}
@@ -310,62 +316,76 @@ const DoubtDetail = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center gap-2">
-                          <Button
-                            icon={<LikeOutlined />}
-                            type={upvotedAnswers.has(answer.id) ? 'primary' : 'default'}
-                            onClick={() => handleUpvote(answer.id)}
-                            size="small"
-                          />
-                          <span className="text-lg font-semibold">{answer.upvotes}</span>
-                          {isDoubtOwner && !answer.isAccepted && (
-                            <Tooltip title="Mark as accepted answer">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between w-full gap-3">
+                          <p className="text-foreground whitespace-pre-wrap mb-3">{answer.content}</p>
+                          <Tooltip title="Upvote this answer">
+                            <div className="flex items-center gap-2">
                               <Button
-                                icon={<CheckCircleOutlined />}
-                                type="default"
-                                onClick={() => handleAcceptAnswer(answer.id)}
+                                icon={<LikeOutlined />}
+                                type={answer.isUpvotedByUser ? 'primary' : 'default'}
+                                onClick={() => handleUpvote(answer.id)}
                                 size="small"
                               />
-                            </Tooltip>
-                          )}
-                          {answer.isAccepted && (
-                            <Tag color="green" icon={<CheckCircleOutlined />}>Accepted</Tag>
-                          )}
-                          {answer.isVerified && (
-                            <Tag color="blue">Verified</Tag>
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <p className="text-foreground whitespace-pre-wrap mb-3">{answer.content}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <Avatar size="small">{(answer.answeredBy.name || answer.answeredBy.username || 'U')[0]}</Avatar>
-                              <span className="font-medium">
-                                {answer.answeredBy.name || answer.answeredBy.username}
-                                {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
-                              </span>
-                              <span>{formatDate(answer.createdAt)}</span>
-                              {answer.editHistory && answer.editHistory.length > 0 && (
-                                <Tooltip title={`Edited ${answer.editHistory.length} time(s)`}>
-                                  <HistoryOutlined className="text-orange-500" />
-                                </Tooltip>
-                              )}
+                              <span className="text-base font-semibold">{answer.upvotes}</span>
                             </div>
-                            {isMyAnswer && (
-                              <Button
-                                icon={<EditOutlined />}
-                                size="small"
-                                onClick={() => {
-                                  setEditingAnswerId(answer.id);
-                                  setEditedAnswerText(answer.content);
-                                }}
-                              >
-                                Edit
-                              </Button>
+                          </Tooltip>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <Avatar size="small">{(answer.answeredBy.name || answer.answeredBy.username || 'U')[0]}</Avatar>
+                            <span className="font-medium">
+                              {answer.answeredBy.name || answer.answeredBy.username}&nbsp;&nbsp;
+                              {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
+                            </span>
+                            <span>{formatDate(answer.createdAt)}</span>
+                            {answer.editHistory && answer.editHistory.length > 0 && (
+                              <Tooltip title={`Edited ${answer.editHistory.length} time(s)`}>
+                                <HistoryOutlined className="text-orange-500" />
+                              </Tooltip>
+                            )}
+                            {answer.isVerified && (
+                              <Tag color="blue">Verified</Tag>
                             )}
                           </div>
+                          <div className='flex gap-2'>
+                            {isMyAnswer && (
+                              <div>
+                                <Button
+                                  icon={<EditOutlined />}
+                                  size="small"
+                                  onClick={() => {
+                                    setEditingAnswerId(answer.id);
+                                    setEditedAnswerText(answer.content);
+                                  }}
+                                >
+                                  Edit
+                                </Button> &nbsp;&nbsp;
+                                <Button
+                                  icon={<DeleteOutlined />}
+                                  size="small"
+                                  danger
+                                  onClick={() => handleDeleteAnswer(answer.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                            {isDoubtOwner && (
+                              <Tooltip title={answer.isAccepted ? "Unaccept this answer" : "Mark as accepted answer"}>
+                                <Button
+                                  icon={<CheckCircleOutlined />}
+                                  type={answer.isAccepted ? 'primary' : 'default'}
+                                  onClick={() => handleAcceptAnswer(answer.id)}
+                                  size="small"
+                                />
+                              </Tooltip>
+                            )}
+                            {answer.isAccepted && (
+                              <Tag color="green" icon={<CheckCircleOutlined />}>Accepted</Tag>
+                            )}
+                          </div>
+
                         </div>
                       </div>
                     )}
@@ -387,7 +407,7 @@ const DoubtDetail = () => {
             showCount
           />
           <div className="mt-3">
-            <Button type="primary" onClick={handlePostAnswer} loading={submitting} disabled={answerText.length < 10}>
+            <Button onClick={handlePostAnswer} loading={submitting} disabled={answerText.length < 10}>
               Post Answer
             </Button>
           </div>

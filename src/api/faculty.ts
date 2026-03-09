@@ -148,6 +148,27 @@ export const editAnswer = async (answerId: string, content: string) => {
   }
 };
 
+export const deleteAnswer = async (answerId: string) => {
+  try {
+    const response = await api.delete(`/faculty/answers/${answerId}`);
+    return response.data;
+  } catch (e: unknown) {
+    const message =
+      e &&
+      typeof e === "object" &&
+      "response" in e &&
+      e.response &&
+      typeof e.response === "object" &&
+      "data" in e.response &&
+      e.response.data &&
+      typeof e.response.data === "object" &&
+      "error" in e.response.data
+        ? String((e.response.data as { error: string }).error)
+        : "Failed to delete answer";
+    throw new Error(message);
+  }
+};
+
 export const verifyAnswer = async (answerId: string) => {
   try {
     const response = await api.post(`/faculty/answers/${answerId}/verify`);
