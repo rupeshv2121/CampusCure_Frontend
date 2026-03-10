@@ -1,6 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { User, UserRole } from '@/types';
+import { UserRole } from '@/types';
 import {
   BarChartOutlined,
   BellOutlined,
@@ -27,7 +27,7 @@ const { Header, Sider, Content } = Layout;
 
 type MenuItem = { key: string; icon: React.ReactNode; label: string };
 
-const getMenuItems = (role: UserRole, user: User): MenuItem[] => {
+const getMenuItems = (role: UserRole): MenuItem[] => {
   if (role === 'STUDENT') return [
     { key: '/student/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/student/complaints/new', icon: <FormOutlined />, label: 'Raise Complaint' },
@@ -73,7 +73,7 @@ const AppLayout = () => {
 
   if (!user) return null;
 
-  const menuItems = getMenuItems(user.role, user);
+  const menuItems = getMenuItems(user.role);
 
   const profilePath = user.role === 'STUDENT' ? '/student/profile' : user.role === 'FACULTY' ? '/faculty/profile' : (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin/profile' : null;
 
