@@ -56,7 +56,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex bg-background">
       {/* ── Left brand panel (lg+) ── */}
-      <div className="hidden lg:flex flex-col justify-between w-[460px] shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-115 shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 bg-blue-600/20 blur-3xl rounded-full" />
 

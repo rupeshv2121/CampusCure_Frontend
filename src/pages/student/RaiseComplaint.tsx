@@ -1,7 +1,7 @@
 import { raiseComplaint } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { SendOutlined } from '@ant-design/icons';
-import { Button, Input, message, Select } from 'antd';
+import { Input, message, Select, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { z } from 'zod';
@@ -19,6 +19,14 @@ const complaintSchema = z.object({
 
 const blocks = ['A', 'B', 'C', 'D', 'E'];
 const complaintCategories = ['PROJECTOR', 'FAN', 'LIGHT', 'SMART_BOARD', 'SEATING', 'FURNITURE', 'NETWORK', 'OTHER'];
+
+const PRIORITY_OPTIONS = [
+  { label: '1 — Low', value: '1' },
+  { label: '2 — Minor', value: '2' },
+  { label: '3 — Medium', value: '3' },
+  { label: '4 — High', value: '4' },
+  { label: '5 — Critical', value: '5' },
+];
 
 const RaiseComplaint = () => {
   const [form, setForm] = useState({ classroomNumber: '', block: '', category: '', title: '', description: '', priority: '' });
@@ -66,60 +74,147 @@ const RaiseComplaint = () => {
   return (
     <PageTransition>
       <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Raise a Complaint</h1>
-          <p className="text-muted-foreground">Report classroom or facility issues.</p>
+        {/* Header banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-6 text-white">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px]" />
+          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-blue-600/15 blur-2xl" />
+          <div className="relative">
+            <div className="inline-flex h-10 w-10 rounded-xl bg-linear-to-br from-blue-500 to-violet-600 items-center justify-center mb-3 shadow-md shadow-blue-600/30">
+              <SendOutlined style={{ fontSize: 16, color: 'white' }} />
+            </div>
+            <h1 className="text-xl font-bold">Raise a Complaint</h1>
+            <p className="text-blue-200/70 text-sm mt-0.5">Report classroom or facility issues to the administration</p>
+          </div>
         </div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card rounded-2xl border  p-6 shadow-sm space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Classroom Number *</label>
-              <Input size="large" placeholder="e.g. 301, LH-A" className="rounded-xl" value={form.classroomNumber} onChange={(e) => update('classroomNumber', e.target.value)} status={errors.classroomNumber ? 'error' : undefined} />
-              {errors.classroomNumber && <p className="text-red-500 text-xs mt-1">{errors.classroomNumber}</p>}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Block *</label>
-              <Select size="large" placeholder="Select Block" className="w-full" value={form.block || undefined} onChange={(v) => update('block', v)} options={blocks.map((b) => ({ label: `Block ${b}`, value: b }))} status={errors.block ? 'error' : undefined} />
-              {errors.block && <p className="text-red-500 text-xs mt-1">{errors.block}</p>}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Category *</label>
-              <Select size="large" placeholder="Select Category" className="w-full" value={form.category || undefined} onChange={(v) => update('category', v)} options={complaintCategories.map((c) => ({ label: c.replace('_', ' '), value: c }))} status={errors.category ? 'error' : undefined} />
-              {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Priority (1-5) *</label>
-              <Select size="large" placeholder="Select Priority" className="w-full" value={form.priority || undefined} onChange={(v) => update('priority', v)} options={[
-                { label: '1 - Low', value: '1' },
-                { label: '2 - Minor', value: '2' },
-                { label: '3 - Medium', value: '3' },
-                { label: '4 - High', value: '4' },
-                { label: '5 - Critical', value: '5' },
-              ]} status={errors.priority ? 'error' : undefined} />
-              {errors.priority && <p className="text-red-500 text-xs mt-1">{errors.priority}</p>}
-            </div>
-          </div>
-
+        {/* Form card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-card rounded-2xl border p-6 shadow-sm space-y-6"
+        >
+          {/* Location row */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Title *</label>
-            <Input size="large" placeholder="Brief title of the issue" className="rounded-xl" value={form.title} onChange={(e) => update('title', e.target.value)} status={errors.title ? 'error' : undefined} maxLength={100} />
-            {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Location</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Classroom Number <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  size="large"
+                  placeholder="e.g. 301, LH-A"
+                  className="rounded-xl"
+                  value={form.classroomNumber}
+                  onChange={(e) => update('classroomNumber', e.target.value)}
+                  status={errors.classroomNumber ? 'error' : undefined}
+                />
+                {errors.classroomNumber && <p className="text-red-500 text-xs mt-1">{errors.classroomNumber}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Block <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  size="large"
+                  placeholder="Select Block"
+                  className="w-full"
+                  value={form.block || undefined}
+                  onChange={(v) => update('block', v)}
+                  options={blocks.map((b) => ({ label: `Block ${b}`, value: b }))}
+                  status={errors.block ? 'error' : undefined}
+                />
+                {errors.block && <p className="text-red-500 text-xs mt-1">{errors.block}</p>}
+              </div>
+            </div>
           </div>
 
+          {/* Classification row */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Description *</label>
-            <TextArea rows={4} placeholder="Describe the issue in detail (min 10 characters)..." className="rounded-xl" value={form.description} onChange={(e) => update('description', e.target.value)} status={errors.description ? 'error' : undefined} maxLength={1000} showCount />
-            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Classification</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  size="large"
+                  placeholder="Select Category"
+                  className="w-full"
+                  value={form.category || undefined}
+                  onChange={(v) => update('category', v)}
+                  options={complaintCategories.map((c) => ({ label: c.replace(/_/g, ' '), value: c }))}
+                  status={errors.category ? 'error' : undefined}
+                />
+                {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Priority <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  size="large"
+                  placeholder="Select Priority"
+                  className="w-full"
+                  value={form.priority || undefined}
+                  onChange={(v) => update('priority', v)}
+                  options={PRIORITY_OPTIONS}
+                  status={errors.priority ? 'error' : undefined}
+                />
+                {errors.priority && <p className="text-red-500 text-xs mt-1">{errors.priority}</p>}
+              </div>
+            </div>
           </div>
 
-          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-            <Button type="primary" size="large" block icon={<SendOutlined />} onClick={handleSubmit} loading={submitting} className="rounded-xl h-11 font-semibold">
-              Submit Complaint
-            </Button>
-          </motion.div>
+          {/* Details */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Details</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  size="large"
+                  placeholder="Brief title of the issue"
+                  className="rounded-xl"
+                  value={form.title}
+                  onChange={(e) => update('title', e.target.value)}
+                  status={errors.title ? 'error' : undefined}
+                  maxLength={100}
+                />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <TextArea
+                  rows={4}
+                  placeholder="Describe the issue in detail (min 10 characters)..."
+                  className="rounded-xl"
+                  value={form.description}
+                  onChange={(e) => update('description', e.target.value)}
+                  status={errors.description ? 'error' : undefined}
+                  maxLength={1000}
+                  showCount
+                />
+                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+              </div>
+            </div>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="w-full h-11 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer shadow-md shadow-blue-600/20"
+          >
+            {submitting ? <Spin size="small" /> : <SendOutlined />}
+            {submitting ? 'Submitting…' : 'Submit Complaint'}
+          </motion.button>
         </motion.div>
       </div>
     </PageTransition>

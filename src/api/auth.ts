@@ -1,7 +1,13 @@
 import axios from "axios";
 
+const backendBase = (
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"
+)
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api",
+  baseURL: `${backendBase}/api`,
   withCredentials: true,
 });
 

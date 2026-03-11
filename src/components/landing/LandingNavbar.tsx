@@ -34,8 +34,8 @@ const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) =>
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className={`w-full max-w-5xl rounded-2xl transition-all duration-300 ${
           scrolled || mobileMenu
-            ? 'bg-background/85 backdrop-blur-2xl border shadow-lg shadow-black/5'
-            : 'bg-background/60 backdrop-blur-md border border-border/50 shadow-sm'
+            ? 'bg-background/85 backdrop-blur-2xl shadow-lg shadow-black/5'
+            : 'bg-background/60 backdrop-blur-md shadow-sm'
         }`}
       >
         <div className="flex items-center justify-between px-5 h-14">

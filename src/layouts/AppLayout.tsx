@@ -100,7 +100,7 @@ const AppLayout = () => {
       {
         key: 'no-notifications',
         label: (
-          <div className="max-w-[280px] text-center text-muted-foreground p-2">
+          <div className="max-w-70 text-center text-muted-foreground p-2">
             No new notifications
           </div>
         ),
@@ -128,7 +128,7 @@ const AppLayout = () => {
   const unreadCount = 0; // This will be fetched from the backend
 
   return (
-    <Layout className="h-[100vh]">
+    <Layout className="h-screen">
       {!isMobile && (
         <Sider trigger={null} collapsible collapsed={collapsed} width={240} collapsedWidth={80} style={{ background: 'hsl(var(--sidebar-background))', borderRight: '1px solid hsl(var(--border))' }}>
           {siderContent}
@@ -147,7 +147,7 @@ const AppLayout = () => {
             ) : (
               <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
             )}
-            <Input prefix={<SearchOutlined className="text-muted-foreground" />} placeholder="Search..." className="max-w-[240px] hidden md:block" variant="filled" />
+            <Input prefix={<SearchOutlined className="text-muted-foreground" />} placeholder="Search..." className="max-w-60 hidden md:block" variant="filled" />
           </div>
           <div className="flex items-center gap-2">
             <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.1 }}>
