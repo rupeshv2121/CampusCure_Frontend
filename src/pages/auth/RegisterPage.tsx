@@ -70,7 +70,7 @@ const RegisterPage = () => {
   if (showFaceRegister) {
     return (
       <div className="min-h-screen flex bg-background">
-        <div className="hidden lg:flex flex-col justify-between w-[460px] shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
+        <div className="hidden lg:flex flex-col justify-between w-115 shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px]" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 bg-violet-600/20 blur-3xl rounded-full" />
           <div className="relative flex items-center gap-2.5">
@@ -115,7 +115,7 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen flex bg-background">
       {/* ── Left brand panel (lg+) ── */}
-      <div className="hidden lg:flex flex-col justify-between w-[460px] shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-115 shrink-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 bg-violet-600/20 blur-3xl rounded-full" />
 
@@ -223,7 +223,7 @@ const RegisterPage = () => {
               <Select
                 size="large"
                 placeholder="Select your role"
-                className="w-full"
+                className="w-full my-2"
                 onChange={(v: UserRole) => setRole(v)}
                 options={[
                   { label: 'Student', value: 'STUDENT' },
@@ -240,13 +240,13 @@ const RegisterPage = () => {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="overflow-hidden space-y-4"
+                    className="overflow-hidden my-4"
                   >
                     {(role === 'STUDENT' || role === 'FACULTY' || role === 'ADMIN') && (
                       <Select
                         size="large"
                         placeholder="Select Department"
-                        className="w-full"
+                        className="w-full my-2"
                         options={departments.map((d) => ({ label: d, value: d }))}
                         value={userData.department}
                         onChange={(value) => setUserData({ ...userData, department: value })}
@@ -258,7 +258,7 @@ const RegisterPage = () => {
                           size="large"
                           prefix={<IdcardOutlined className="text-muted-foreground" />}
                           placeholder="Student ID"
-                          className="rounded-xl"
+                          className="rounded-xl my-4"
                           value={userData.studentId}
                           onChange={(e) => setUserData({ ...userData, studentId: e.target.value })}
                         />

@@ -72,10 +72,10 @@ const HowItWorksSection = () => (
           >
             {/* Connector line */}
             {i < steps.length - 1 && (
-              <div className="hidden lg:block absolute top-10 left-[calc(50%+2.5rem)] right-[-0.75rem] h-[1px] bg-linear-to-r from-border via-border to-transparent z-10" />
+              <div className="hidden lg:block absolute top-10 left-[calc(50%+2.5rem)] -right-3 h-px bg-linear-to-r from-border via-border to-transparent z-10" />
             )}
 
-            <div className="relative bg-card border border-border rounded-3xl p-6 text-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+            <div className="relative bg-card border border-gray-500 rounded-3xl p-6 text-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 min-h-65">
               {/* Gradient icon */}
               <div className={`h-16 w-16 rounded-2xl bg-linear-to-br ${step.gradient} flex items-center justify-center text-white mx-auto mb-5 shadow-xl ${step.shadow} group-hover:scale-110 transition-transform duration-300`}>
                 {step.icon}

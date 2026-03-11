@@ -79,12 +79,12 @@ const FeaturesSection = () => (
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.45, delay: i * 0.08 }}
             whileHover={{ y: -5 }}
-            className={`group relative rounded-3xl border border-border bg-card p-7 overflow-hidden cursor-default transition-all hover:shadow-2xl ${f.glow}`}
+            className={`group relative rounded-3xl border border-gray-500 bg-card p-7 overflow-hidden cursor-default transition-all hover:shadow-2xl ${f.glow}`}
           >
             {/* Subtle gradient overlay on hover */}
             <div className={`absolute inset-0 bg-linear-to-br ${f.gradient} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 rounded-3xl`} />
             {/* Top accent line */}
-            <div className={`absolute top-0 inset-x-0 h-[2px] bg-linear-to-r ${f.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+            <div className={`absolute top-0 inset-x-0 h-0.5 bg-linear-to-r ${f.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
 
             <div className={`relative h-12 w-12 rounded-2xl bg-linear-to-br ${f.gradient} flex items-center justify-center text-white text-xl mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
               {f.icon}

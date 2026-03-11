@@ -1,4 +1,4 @@
-import { GithubOutlined, LinkedinOutlined, MailOutlined, TwitterOutlined } from '@ant-design/icons';
+import { GithubOutlined, LinkedinFilled, MailOutlined, TwitterOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const LandingFooter = () => {
@@ -45,7 +45,7 @@ const LandingFooter = () => {
             <div className="flex gap-2">
               {[
                 { icon: <TwitterOutlined />, href: '#', label: 'Twitter' },
-                { icon: <LinkedinOutlined />, href: '#', label: 'LinkedIn' },
+                { icon: <LinkedinFilled />, href: '#', label: 'LinkedIn' },
                 { icon: <GithubOutlined />, href: '#', label: 'GitHub' },
                 { icon: <MailOutlined />, href: 'mailto:contact@campuscure.com', label: 'Email' },
               ].map((s) => (
@@ -53,7 +53,7 @@ const LandingFooter = () => {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-accent text-muted-foreground hover:bg-blue-600 hover:text-white transition-all duration-200"
+                  className="h-7 w-7 flex items-center justify-center rounded-xl bg-accent text-muted-foreground hover:bg-blue-400 hover:text-white transition-all duration-200"
                 >
                   {s.icon}
                 </a>

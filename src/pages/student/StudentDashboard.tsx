@@ -2,11 +2,11 @@ import { getComplaints, getStudentProfile } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import { Complaint, Doubt } from '@/types';
-import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, FireOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Button, Progress, Tag } from 'antd';
+import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, FireOutlined, QuestionCircleOutlined, TeamOutlined } from '@ant-design/icons';
+import { Progress, Tag } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   const [count, setCount] = useState(0);
@@ -26,7 +26,13 @@ const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   return <>{count}</>;
 };
 
-const statusColors: Record<string, string> = { RAISED: '#fa8c16', ASSIGNED: '#1677FF', IN_PROGRESS: '#722ed1', RESOLVED: '#52c41a', CLOSED: '#8c8c8c' };
+const STATUS_STYLES: Record<string, { dot: string; bg: string; text: string; label: string }> = {
+  RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-300', label: 'Raised' },
+  ASSIGNED:    { dot: 'bg-blue-500',    bg: 'bg-blue-100 dark:bg-blue-90/40',     text: 'text-blue-700 dark:text-blue-300',     label: 'Assigned' },
+  IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-300', label: 'In Progress' },
+  RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-300',   label: 'Resolved' },
+  CLOSED:      { dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/40',   text: 'text-slate-600 dark:text-slate-400',   label: 'Closed' },
+};
 
 interface StudentProfile {
   id: string;
@@ -84,45 +90,121 @@ const StudentDashboard = () => {
   const resolvedDoubts = profile?.doubtsSolved ?? 0;
   const resolutionRate = totalComplaints > 0 ? Math.round((resolvedComplaints / totalComplaints) * 100) : 0;
 
-  const recentComplaints = complaints.slice(0, 3);
+  const recentComplaints = complaints.slice(0, 4);
   const recentDoubts: Doubt[] = []; // TODO: Fetch doubts when API is ready
 
+  const initials = user?.name?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() ?? '??';
+
   const stats = [
-    { label: 'Total Complaints', value: totalComplaints, icon: <FileTextOutlined />, iconColor: 'text-blue-600 dark:text-blue-400', lightBg: 'bg-blue-50 dark:bg-blue-90/30' },
-    { label: 'Active Complaints', value: activeComplaints, icon: <ExclamationCircleOutlined />, iconColor: 'text-orange-600 dark:text-orange-400', lightBg: 'bg-orange-50 dark:bg-orange-90/30' },
-    { label: 'Doubts Asked', value: totalDoubts, icon: <QuestionCircleOutlined />, iconColor: 'text-purple-600 dark:text-purple-400', lightBg: 'bg-purple-50 dark:bg-purple-90/30' },
-    { label: 'Doubt Resolved', value: resolvedDoubts, icon: <CheckCircleOutlined />, iconColor: 'text-green-600 dark:text-green-400', lightBg: 'bg-green-50 dark:bg-green-90/30' },
+    {
+      label: 'Total Complaints', value: totalComplaints,
+      icon: <FileTextOutlined />,
+      from: 'from-blue-500', to: 'to-blue-600', shadow: 'shadow-blue-500/30', ring: 'ring-blue-500/20',
+    },
+    {
+      label: 'Active Complaints', value: activeComplaints,
+      icon: <ExclamationCircleOutlined />,
+      from: 'from-orange-500', to: 'to-amber-600', shadow: 'shadow-orange-500/30', ring: 'ring-orange-500/20',
+    },
+    {
+      label: 'Doubts Asked', value: totalDoubts,
+      icon: <QuestionCircleOutlined />,
+      from: 'from-violet-500', to: 'to-purple-600', shadow: 'shadow-violet-500/30', ring: 'ring-violet-500/20',
+    },
+    {
+      label: 'Doubts Resolved', value: resolvedDoubts,
+      icon: <CheckCircleOutlined />,
+      from: 'from-green-500', to: 'to-emerald-600', shadow: 'shadow-green-500/30', ring: 'ring-green-500/20',
+    },
+  ];
+
+  const quickActions = [
+    {
+      label: 'Raise Complaint', description: 'Report an issue to admin',
+      icon: <FileTextOutlined />, from: 'from-blue-500', to: 'to-blue-600', shadow: 'shadow-blue-500/30',
+      onClick: () => navigate('/student/complaints/new'),
+    },
+    {
+      label: 'Ask a Doubt', description: 'Post to the community',
+      icon: <QuestionCircleOutlined />, from: 'from-violet-500', to: 'to-purple-600', shadow: 'shadow-violet-500/30',
+      onClick: () => navigate('/student/doubts'),
+    },
+    {
+      label: 'My Complaints', description: 'Track your submissions',
+      icon: <ClockCircleOutlined />, from: 'from-indigo-500', to: 'to-indigo-600', shadow: 'shadow-indigo-500/30',
+      onClick: () => navigate('/student/complaints'),
+    },
+    {
+      label: 'Community', description: 'Help others with answers',
+      icon: <TeamOutlined />, from: 'from-teal-500', to: 'to-emerald-600', shadow: 'shadow-teal-500/30',
+      onClick: () => navigate('/student/doubts'),
+    },
   ];
 
   return (
     <PageTransition>
       <div className="space-y-6">
-        {/* Welcome Banner */}
+
+        {/* ── 1. Welcome Banner ── */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-600 via-blue-500 to-indigo-500 p-6 text-white shadow-lg"
+          className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-8 text-white shadow-xl"
         >
-          <div className="relative z-10">
-            <h1 className="text-2xl font-bold">Welcome back, {user?.name?.split(' ')[0]}! 👋</h1>
-            <p className="text-blue-100 mt-1 text-sm">
-              Welcome to your dashboard
-            </p>
-            <div className="flex gap-3 mt-4">
-              <Button type="default" ghost icon={<FileTextOutlined />} className="rounded-xl border-white/40 text-white hover:bg-white/10" onClick={() => navigate('/student/complaints/new')}>
-                Raise Complaint
-              </Button>
-              <Button type="default" ghost icon={<QuestionCircleOutlined />} className="rounded-xl border-white/40 text-white hover:bg-white/10" onClick={() => navigate('/student/doubts')}>
-                Ask a Doubt
-              </Button>
+          {/* Grid overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[48px_48px]" />
+          {/* Glows */}
+          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
+          <div className="absolute -bottom-8 right-1/3 h-40 w-40 rounded-full bg-violet-600/15 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            {/* Avatar + info */}
+            <div className="flex items-center gap-5">
+              <div className="h-16 w-16 shrink-0 rounded-2xl bg-linear-to-br from-blue-500 to-violet-600 flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-600/40 ring-2 ring-white/20">
+                {initials}
+              </div>
+              <div>
+                <p className="text-blue-200/70 text-sm font-medium tracking-wide">Welcome back 👋</p>
+                <h1 className="text-2xl font-bold text-white">{user?.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {profile?.enrollmentNumber && (
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-blue-100 ring-1 ring-white/10">
+                      #{profile.enrollmentNumber}
+                    </span>
+                  )}
+                  {profile?.department && (
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-blue-100 ring-1 ring-white/10">
+                      {profile.department}
+                    </span>
+                  )}
+                  {profile?.semester && (
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-blue-100 ring-1 ring-white/10">
+                      Sem {profile.semester}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CTA buttons */}
+            <div className="flex gap-3 sm:shrink-0">
+              <button
+                onClick={() => navigate('/student/complaints/new')}
+                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
+              >
+                <FileTextOutlined /> Raise Complaint
+              </button>
+              <button
+                onClick={() => navigate('/student/doubts')}
+                className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 hover:bg-blue-50 transition-colors cursor-pointer shadow-lg shadow-blue-900/20"
+              >
+                <QuestionCircleOutlined /> Ask a Doubt
+              </button>
             </div>
           </div>
-          {/* Decorative circles */}
-          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10" />
-          <div className="absolute -right-4 -bottom-12 h-32 w-32 rounded-full bg-white/5" />
         </motion.div>
 
-        {/* Stat Cards */}
+        {/* ── 2. Stat Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
             <motion.div
@@ -130,107 +212,199 @@ const StudentDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.07 }}
-              whileHover={{ y: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
-              className="rounded-2xl bg-card border p-5 shadow-sm cursor-default"
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="relative rounded-2xl bg-card border p-5 shadow-sm cursor-default overflow-hidden group"
             >
-              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-xl ${stat.lightBg} ${stat.iconColor}`}>
+              <div className={`absolute inset-0 bg-linear-to-br ${stat.from} ${stat.to} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl`} />
+              <div className={`relative inline-flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br ${stat.from} ${stat.to} text-white text-base shadow-md ${stat.shadow} ring-4 ${stat.ring}`}>
                 {stat.icon}
               </div>
-              <div className="mt-3">
-                <div className="text-3xl font-extrabold text-foreground tracking-tight">
+              <div className="relative mt-4">
+                <div className="text-3xl font-extrabold text-foreground tracking-tight tabular-nums">
                   <CountUp end={stat.value} delay={0.2 + i * 0.07} />
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 font-medium">{stat.label}</div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Middle Row: Resolution Rate + Quick Actions */}
+        {/* ── 3. Middle Row: Profile + Resolution | Recent Complaints ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Resolution Ring */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="rounded-2xl bg-card border  p-6 shadow-sm flex flex-col items-center justify-center"
-          >
-            <Progress
-              type="dashboard"
-              percent={resolutionRate}
-              strokeColor={{ '0%': '#1677FF', '100%': '#52c41a' }}
-              format={(p) => <span className="text-2xl font-bold text-foreground">{p}%</span>}
-              size={140}
-            />
-            <p className="text-sm font-medium text-foreground mt-3">Resolution Rate</p>
-            <p className="text-xs text-muted-foreground">{resolvedComplaints} of {totalComplaints} resolved</p>
-          </motion.div>
+          {/* Left col */}
+          <div className="flex flex-col gap-4">
+            {/* Profile Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38 }}
+              className="rounded-2xl bg-card border p-5 shadow-sm"
+            >
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <span className="inline-flex h-5 w-5 rounded-md bg-linear-to-br from-blue-500 to-violet-600 items-center justify-center text-white text-[10px] font-bold">C</span>
+                Student Profile
+              </h3>
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Department', value: profile?.department },
+                  { label: 'Branch', value: profile?.branch },
+                  { label: 'Semester', value: profile?.semester ? `Semester ${profile.semester}` : undefined },
+                  {
+                    label: 'Status',
+                    value: profile ? (profile.isStudying ? 'Currently Studying' : 'Alumni') : undefined,
+                    badge: profile ? (profile.isStudying ? 'green' : 'gray') : undefined,
+                  },
+                  { label: 'Enrollment', value: profile?.enrollmentNumber },
+                ].map(({ label, value, badge }) => (
+                  <div key={label} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground shrink-0">{label}</span>
+                    {value ? (
+                      badge ? (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge === 'green' ? 'bg-green-100 text-green-700 dark:bg-green-90/50 dark:text-green-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                          {value}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-foreground text-right max-w-35 truncate">{value}</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground/40 italic text-xs">—</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Resolution Ring */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42 }}
+              className="rounded-2xl bg-card border p-6 shadow-sm flex flex-col items-center justify-center"
+            >
+              <Progress
+                type="dashboard"
+                percent={resolutionRate}
+                strokeColor={{ '0%': '#3b82f6', '100%': '#22c55e' }}
+                format={(p) => <span className="text-2xl font-bold text-foreground">{p}%</span>}
+                size={130}
+              />
+              <p className="text-sm font-semibold text-foreground mt-2">Resolution Rate</p>
+              <p className="text-xs text-muted-foreground">{resolvedComplaints} of {totalComplaints} resolved</p>
+            </motion.div>
+          </div>
 
           {/* Recent Complaints */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
+            transition={{ delay: 0.44 }}
             className="rounded-2xl bg-card border p-6 shadow-sm lg:col-span-2"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2">
-                <ClockCircleOutlined className="text-primary" /> Recent Complaints
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <ClockCircleOutlined className="text-blue-500" /> Recent Complaints
               </h3>
-              <Button type="link" size="small" onClick={() => navigate('/student/complaints')} className="text-xs">
-                View All <ArrowRightOutlined />
-              </Button>
+              <button
+                onClick={() => navigate('/student/complaints')}
+                className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+              >
+                View All <ArrowRightOutlined style={{ fontSize: 10 }} />
+              </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {recentComplaints.length > 0 ? (
-                recentComplaints.map((c) => (
-                  <NavLink key={c.id} to={`/student/complaints`} className="block my-2">
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border /50 hover:border-primary/30 transition">
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColors[c.status] }} />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">Room {c.classroomNumber} · Block {c.block}</p>
+                recentComplaints.map((c) => {
+                  const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.CLOSED;
+                  return (
+                    <motion.div
+                      key={c.id}
+                      whileHover={{ x: 3 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => navigate('/student/complaints')}
+                      className="flex items-center justify-between p-3.5 rounded-xl border bg-muted/5 hover:border-blue-500/30 hover:bg-muted/30 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{c.title}</p>
+                          <p className="text-xs text-muted-foreground">Room {c.classroomNumber} · Block {c.block}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {c.priority && <Tag color={c.priority >= 4 ? 'red' : c.priority >= 3 ? 'orange' : 'blue'} className="text-xs">P{c.priority}</Tag>}
-                      <Tag color={statusColors[c.status]}>{c.status.replace('_', ' ')}</Tag>
-                    </div>
-                  </div>
-                  
-                  </NavLink>
-                ))
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        {c.priority != null && (
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.priority >= 4 ? 'bg-red-100 text-red-700 dark:bg-red-90/50 dark:text-red-400' : c.priority >= 3 ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-90/50 dark:text-blue-400'}`}>
+                            P{c.priority}
+                          </span>
+                        )}
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.text}`}>
+                          {s.label}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="h-20 w-20 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-4">
-                    <FileTextOutlined className="text-4xl text-blue-500" />
+                  <div className="h-16 w-16 rounded-2xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-4">
+                    <FileTextOutlined className="text-3xl text-blue-500" />
                   </div>
                   <h4 className="text-base font-semibold text-foreground mb-1">No Complaints Yet</h4>
                   <p className="text-sm text-muted-foreground mb-4">Start by raising your first complaint</p>
-                  <Button type="primary" icon={<FileTextOutlined />} onClick={() => navigate('/student/complaints/new')} className="rounded-lg">
-                    Raise a Complaint
-                  </Button>
+                  <button
+                    onClick={() => navigate('/student/complaints/new')}
+                    className="flex items-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-blue-600/20"
+                  >
+                    <FileTextOutlined /> Raise a Complaint
+                  </button>
                 </div>
               )}
             </div>
           </motion.div>
         </div>
 
-        {/* Recent Doubts */}
+        {/* ── 4. Quick Actions ── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-2xl bg-card border  p-6 shadow-sm"
+          transition={{ delay: 0.52 }}
+        >
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {quickActions.map((action) => (
+              <motion.div
+                key={action.label}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                onClick={action.onClick}
+                className="group relative rounded-2xl border bg-card p-5 shadow-sm cursor-pointer overflow-hidden hover:border-blue-500/20 transition-colors"
+              >
+                <div className={`absolute inset-0 bg-linear-to-br ${action.from} ${action.to} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl`} />
+                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br ${action.from} ${action.to} text-white text-base shadow-md ${action.shadow}`}>
+                  {action.icon}
+                </div>
+                <p className="relative mt-3 text-sm font-semibold text-foreground">{action.label}</p>
+                <p className="relative text-xs text-muted-foreground mt-0.5">{action.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ── 5. Trending Doubts ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.58 }}
+          className="rounded-2xl bg-card border p-6 shadow-sm"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <FireOutlined className="text-orange-500" /> Trending Doubts
             </h3>
-            <Button type="link" size="small" onClick={() => navigate('/student/doubts')} className="text-xs">
-              View All <ArrowRightOutlined />
-            </Button>
+            <button
+              onClick={() => navigate('/student/doubts')}
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+            >
+              View All <ArrowRightOutlined style={{ fontSize: 10 }} />
+            </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {recentDoubts.length > 0 ? (
@@ -238,7 +412,7 @@ const StudentDashboard = () => {
                 <motion.div
                   key={d.id}
                   whileHover={{ y: -2 }}
-                  className="p-4 rounded-xl border  bg-muted/5 hover:border-primary/30 cursor-pointer transition"
+                  className="p-4 rounded-xl border bg-muted/5 hover:border-violet-500/30 cursor-pointer transition"
                   onClick={() => navigate(`/student/doubts/${d.id}`)}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -255,18 +429,22 @@ const StudentDashboard = () => {
               ))
             ) : (
               <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-20 w-20 rounded-full bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center mb-4">
-                  <QuestionCircleOutlined className="text-4xl text-purple-500" />
+                <div className="h-16 w-16 rounded-2xl bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center mb-4">
+                  <QuestionCircleOutlined className="text-3xl text-violet-500" />
                 </div>
                 <h4 className="text-base font-semibold text-foreground mb-1">No Doubts Yet</h4>
                 <p className="text-sm text-muted-foreground mb-4">Have a question? Ask the community!</p>
-                <Button type="primary" icon={<QuestionCircleOutlined />} onClick={() => navigate('/student/doubts')} className="rounded-lg">
-                  Ask a Doubt
-                </Button>
+                <button
+                  onClick={() => navigate('/student/doubts')}
+                  className="flex items-center gap-2 rounded-xl bg-linear-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-violet-600/20"
+                >
+                  <QuestionCircleOutlined /> Ask a Doubt
+                </button>
               </div>
             )}
           </div>
         </motion.div>
+
       </div>
     </PageTransition>
   );

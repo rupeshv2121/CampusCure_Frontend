@@ -85,7 +85,7 @@ const TestimonialsSection = () => (
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.45, delay: i * 0.08 }}
             whileHover={{ y: -5 }}
-            className="group rounded-3xl bg-card border border-border p-6 cursor-default flex flex-col hover:shadow-2xl hover:shadow-black/5 transition-all duration-300"
+            className="group rounded-3xl bg-card border border-gray-500 p-6 cursor-default flex flex-col hover:shadow-2xl hover:shadow-black/5 transition-all duration-300"
           >
             {/* Large decorative quote */}
             <div className="text-5xl font-serif leading-none text-muted/30 mb-3 select-none">&ldquo;</div>
