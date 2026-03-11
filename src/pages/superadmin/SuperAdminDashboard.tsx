@@ -2,16 +2,14 @@ import { getDashboardStats, getSuperAdminStats, type DashboardStats, type SuperA
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import {
-  BarChartOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  ControlOutlined,
   FileTextOutlined,
   QuestionCircleOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
-  UserOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import { Button, Progress, Spin, Tag } from 'antd';
 import { motion } from 'framer-motion';
@@ -111,14 +109,6 @@ const SuperAdminDashboard = () => {
     { label: 'Resolved', value: s.resolvedComplaints, pending: 0, icon: <CheckCircleOutlined />, iconColor: 'text-teal-600 dark:text-teal-400', lightBg: 'bg-teal-50 dark:bg-teal-90/30' },
   ];
 
-  const quickActions = [
-    { title: 'Admin Management', desc: 'Permissions & roles', icon: <SafetyCertificateOutlined className="text-xl" />, path: '/superadmin/admins', bg: 'bg-blue-50 dark:bg-blue-90/30', color: 'text-blue-600 dark:text-blue-400' },
-    { title: 'Analytics', desc: 'System-wide insights', icon: <BarChartOutlined className="text-xl" />, path: '/admin/analytics', bg: 'bg-purple-50 dark:bg-purple-90/30', color: 'text-purple-600 dark:text-purple-400' },
-    { title: 'System Settings', desc: 'Configure categories & depts', icon: <ControlOutlined className="text-xl" />, path: '/superadmin/settings', bg: 'bg-green-50 dark:bg-green-90/30', color: 'text-green-600 dark:text-green-400' },
-    { title: 'All Users', desc: 'View & manage users', icon: <TeamOutlined className="text-xl" />, path: '/admin/users', bg: 'bg-orange-50 dark:bg-orange-90/30', color: 'text-orange-600 dark:text-orange-400' },
-    { title: 'Complaints', desc: 'Review all complaints', icon: <FileTextOutlined className="text-xl" />, path: '/admin/complaints', bg: 'bg-red-50 dark:bg-red-90/30', color: 'text-red-600 dark:text-red-400' },
-  ];
-
   return (
     <PageTransition>
       <div className="space-y-6">
@@ -126,7 +116,7 @@ const SuperAdminDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-700 via-blue-600 to-indigo-600 p-6 text-white shadow-lg"
+          className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-6 text-white shadow-lg"
         >
           <div className="relative z-10">
             <div className="flex items-center gap-2 flex-wrap">
@@ -158,7 +148,7 @@ const SuperAdminDashboard = () => {
               <ClockCircleOutlined className="text-orange-500 text-lg" />
               <div>
                 <p className="font-semibold text-orange-800 dark:text-orange-300">Pending Approvals</p>
-                <p className="text-xs text-orange-600 dark:text-orange-400">
+                <p className="text-xs text-orange-600 dark:text-orange-700">
                   {s.pendingStudents} students · {s.pendingFaculty} faculty · {s.pendingAdmins} admins
                 </p>
               </div>
@@ -192,27 +182,6 @@ const SuperAdminDashboard = () => {
                   <Tag color="orange" className="mt-1 text-[10px]">{stat.pending} pending</Tag>
                 )}
               </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {quickActions.map((action, i) => (
-            <motion.div
-              key={action.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.06 }}
-              whileHover={{ y: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
-              onClick={() => navigate(action.path)}
-              className="rounded-2xl bg-card border p-4 shadow-sm cursor-pointer hover:border-primary/30 transition group"
-            >
-              <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${action.bg} ${action.color} mb-2`}>
-                {action.icon}
-              </div>
-              <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition">{action.title}</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">{action.desc}</p>
             </motion.div>
           ))}
         </div>

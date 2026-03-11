@@ -13,10 +13,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED:      { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-950/40', text: 'text-orange-700 dark:text-orange-300', label: 'Raised' },
-  ASSIGNED:    { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-950/40',     text: 'text-cyan-700 dark:text-cyan-300',     label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-blue-500',   bg: 'bg-blue-100 dark:bg-blue-950/40',     text: 'text-blue-700 dark:text-blue-300',     label: 'In Progress' },
-  RESOLVED:    { dot: 'bg-green-500',  bg: 'bg-green-100 dark:bg-green-950/40',   text: 'text-green-700 dark:text-green-300',   label: 'Resolved' },
+  RAISED:      { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700', label: 'Raised' },
+  ASSIGNED:    { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-90/40',     text: 'text-cyan-700 dark:text-cyan-700',     label: 'Assigned' },
+  IN_PROGRESS: { dot: 'bg-blue-500',   bg: 'bg-blue-100 dark:bg-blue-90/40',     text: 'text-blue-700 dark:text-blue-700',     label: 'In Progress' },
+  RESOLVED:    { dot: 'bg-green-500',  bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',   label: 'Resolved' },
   CLOSED:      { dot: 'bg-slate-400',  bg: 'bg-slate-100 dark:bg-slate-800/60',   text: 'text-slate-600 dark:text-slate-400',   label: 'Closed' },
 };
 
@@ -198,7 +198,7 @@ const AdminComplaints = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search complaints..."
-            className="w-full rounded-xl border border-border bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full rounded-xl border-2 bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
           />
         </div>
 
@@ -206,7 +206,7 @@ const AdminComplaints = () => {
         {loading ? (
           <div className="flex justify-center py-20"><Spin size="large" /></div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl border bg-card">
+          <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl border-2 bg-card">
             <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
               <FileTextOutlined className="text-2xl text-muted-foreground" />
             </div>
@@ -225,7 +225,7 @@ const AdminComplaints = () => {
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ x: 3 }}
                   onClick={() => setSelected(c)}
-                  className="flex items-start gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all"
+                  className="flex items-start gap-4 rounded-2xl border-2 bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all"
                 >
                   <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${st.dot}`} />
                   <div className="flex-1 min-w-0">
@@ -264,7 +264,7 @@ const AdminComplaints = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed bg-floralwhite/80 right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto "
+                className="fixed bg-white right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto "
               >
                 <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">{selected.title}</h2>
@@ -284,7 +284,7 @@ const AdminComplaints = () => {
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Room {selected.classroomNumber}</span>
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Block {selected.block}</span>
                     {selected.category && (
-                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">{selected.category.replace('_', ' ')}</span>
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-90/40 dark:text-blue-700">{selected.category.replace('_', ' ')}</span>
                     )}
                   </div>
 
@@ -318,7 +318,7 @@ const AdminComplaints = () => {
 
                   {/* Resolution note */}
                   {selected.resolutionNote && (
-                    <div className="rounded-xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 p-4">
+                    <div className="rounded-xl border border-green-200 dark:border-green-90 bg-green-50 dark:bg-green-90/30 p-4">
                       <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-1">Resolution Note</p>
                       <p className="text-sm text-foreground">{selected.resolutionNote}</p>
                     </div>
