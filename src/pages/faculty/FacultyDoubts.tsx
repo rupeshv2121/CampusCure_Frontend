@@ -2,7 +2,7 @@ import PageTransition from '@/components/animated/PageTransition';
 import { Doubt } from '@/types';
 import { getDoubts } from '@/api/faculty';
 import { EyeOutlined, LikeOutlined, MessageOutlined, TrophyOutlined } from '@ant-design/icons';
-import { Empty, Input, Select, Tag, message, Spin, Card } from 'antd';
+import { Empty, Input, Select, Tag, message, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -61,58 +61,83 @@ const FacultyDoubts = () => {
   return (
     <PageTransition>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Doubt Management</h1>
-          <p className="text-muted-foreground">Answer and verify student doubts.</p>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Doubt Management</h1>
+            <p className="text-muted-foreground">Answer and verify student doubts.</p>
+          </div>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="rounded-xl border-l-4 border-l-orange-500">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl bg-card border p-5 shadow-sm hover:shadow-md transition-all"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Open Doubts</p>
-                <p className="text-2xl font-bold text-orange-500">{openDoubts}</p>
+                <p className="text-sm text-muted-foreground mb-1">Open Doubts</p>
+                <p className="text-3xl font-bold text-orange-500 tabular-nums">{openDoubts}</p>
               </div>
-              <MessageOutlined className="text-3xl text-orange-500" />
+              <div className="h-12 w-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                <MessageOutlined className="text-2xl text-orange-500" />
+              </div>
             </div>
-          </Card>
-          <Card className="rounded-xl border-l-4 border-l-blue-500">
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-2xl bg-card border p-5 shadow-sm hover:shadow-md transition-all"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Answered</p>
-                <p className="text-2xl font-bold text-blue-500">{answeredDoubts}</p>
+                <p className="text-sm text-muted-foreground mb-1">Answered</p>
+                <p className="text-3xl font-bold text-blue-500 tabular-nums">{answeredDoubts}</p>
               </div>
-              <LikeOutlined className="text-3xl text-blue-500" />
+              <div className="h-12 w-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                <LikeOutlined className="text-2xl text-blue-500" />
+              </div>
             </div>
-          </Card>
-          <Card className="rounded-xl border-l-4 border-l-green-500">
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl bg-card border p-5 shadow-sm hover:shadow-md transition-all"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Resolved</p>
-                <p className="text-2xl font-bold text-green-500">{resolvedDoubts}</p>
+                <p className="text-sm text-muted-foreground mb-1">Resolved</p>
+                <p className="text-3xl font-bold text-green-500 tabular-nums">{resolvedDoubts}</p>
               </div>
-              <TrophyOutlined className="text-3xl text-green-500" />
+              <div className="h-12 w-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                <TrophyOutlined className="text-2xl text-green-500" />
+              </div>
             </div>
-          </Card>
+          </motion.div>
         </div>
 
         <div className="flex gap-3 flex-wrap">
           <Input.Search 
             placeholder="Search doubts..." 
-            className="max-w-xs !placeholder-gray-800 placeholder:font-medium" 
+            className="max-w-xs placeholder-gray-800! placeholder:font-medium" 
             onChange={(e) => setSearch(e.target.value)} 
             allowClear 
           />
           <Select 
             placeholder="Filter by subject" 
-            className="min-w-[140px] [&_.ant-select-selection-placeholder]:!text-gray-800 [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="min-w-35 [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setSubjectFilter(v || null)} 
             options={doubtSubjects.map((s) => ({ label: s, value: s }))} 
           />
           <Select 
             placeholder="Filter by status" 
-            className="min-w-[140px] [&_.ant-select-selection-placeholder]:!text-gray-800 [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="min-w-35 [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setStatusFilter(v || null)} 
             options={[

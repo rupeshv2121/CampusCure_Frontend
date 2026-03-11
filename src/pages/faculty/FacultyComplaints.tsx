@@ -1,67 +1,285 @@
-import { assignedComplaints } from '@/api/faculty';
+import { assignedComplaints, updateComplaintStatus } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
 import { Complaint, ComplaintStatus } from '@/types';
-import { Select, Table, Tag, message } from 'antd';
-import { motion } from 'framer-motion';
+import { CloseOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
+import { Select, message } from 'antd';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const statusColors: Record<ComplaintStatus, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', RESOLVED: 'green', CLOSED: 'default' };
+const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
+  RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700',   label: 'Raised' },
+  ASSIGNED:    { dot: 'bg-blue-500',    bg: 'bg-blue-100 dark:bg-blue-90/40',     text: 'text-blue-700 dark:text-blue-700',       label: 'Assigned' },
+  IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700',   label: 'In Progress' },
+  RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',     label: 'Resolved' },
+  CLOSED:      { dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/40',   text: 'text-slate-600 dark:text-slate-700',     label: 'Closed' },
+};
+
+const PRIORITY_STYLES: Record<number, { bg: string; text: string; label: string }> = {
+  1: { bg: 'bg-slate-100 dark:bg-slate-80',          text: 'text-slate-600 dark:text-slate-400',     label: 'P1 · Low' },
+  2: { bg: 'bg-blue-100 dark:bg-blue-90/40',          text: 'text-blue-700 dark:text-blue-300',       label: 'P2 · Minor' },
+  3: { bg: 'bg-yellow-100 dark:bg-yellow-90/40',      text: 'text-yellow-700 dark:text-yellow-300',   label: 'P3 · Medium' },
+  4: { bg: 'bg-orange-100 dark:bg-orange-90/40',      text: 'text-orange-700 dark:text-orange-700',   label: 'P4 · High' },
+  5: { bg: 'bg-red-100 dark:bg-red-90/40',            text: 'text-red-800 dark:text-red-700',         label: 'P5 · Critical' },
+};
 
 const FacultyComplaints = () => {
-  const [statuses, setStatuses] = useState<Record<string, ComplaintStatus>>({});
   const [assigned, setAssigned] = useState<Complaint[]>([]);
+  const [selected, setSelected] = useState<Complaint | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
-  const getStatus = (id: string, original: ComplaintStatus) => statuses[id] ?? original;
-
-  const updateStatus = (id: string, newStatus: ComplaintStatus) => {
-    setStatuses((prev) => ({ ...prev, [id]: newStatus }));
-    message.success(`Complaint ${id} status updated to ${newStatus.replace('_', ' ')}`);
-  };
+  const filtered = assigned.filter((c) => {
+    const matchStatus = !statusFilter || c.status === statusFilter;
+    const matchSearch = !search || c.title.toLowerCase().includes(search.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   useEffect(() => {
-
-    const fetchComplaints = async () => {
-      try {
-        const result = await assignedComplaints();
-      setAssigned(result);
-      } catch (e: unknown) {
-        console.error("Error fetching assigned complaints:", e);
-        message.error(e instanceof Error ? e.message : 'Failed to fetch assigned complaints');
-      }
-    } 
     fetchComplaints();
   }, []);
 
-  const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: 'Title', dataIndex: 'title', key: 'title' },
-    { title: 'Room', dataIndex: 'classroomNumber', key: 'classroomNumber', responsive: ['md' as const], render: (v: string, r: typeof assigned[0]) => `${v} (Block ${r.block})` },
-    { title: 'Category', dataIndex: 'category', key: 'category', responsive: ['lg' as const], render: (c: string) => <Tag>{c.replace('_', ' ')}</Tag> },
-    {
-      title: 'Status', dataIndex: 'status', key: 'status',
-      render: (s: ComplaintStatus, r: typeof assigned[0]) => {
-        const current = getStatus(r.id, s);
-        return <Tag color={statusColors[current]}>{current.replace('_', ' ')}</Tag>;
-      },
-    },
-    {
-      title: 'Action', key: 'action',
-      render: (_: unknown, record: typeof assigned[0]) => (
-        <Select size="small" value={getStatus(record.id, record.status)} className="w-[140px]" onChange={(v) => updateStatus(record.id, v as ComplaintStatus)} options={(['ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const).map((s) => ({ label: s.replace('_', ' '), value: s }))} />
-      ),
-    },
-  ];
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      const result = await assignedComplaints();
+      setAssigned(result);
+    } catch (e: unknown) {
+      console.error("Error fetching assigned complaints:", e);
+      message.error(e instanceof Error ? e.message : 'Failed to fetch assigned complaints');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (id: string, newStatus: ComplaintStatus) => {
+    try {
+      setUpdating(true);
+      await updateComplaintStatus(id, newStatus);
+      setAssigned((prev) => prev.map((c) => c.id === id ? { ...c, status: newStatus } : c));
+      if (selected?.id === id) {
+        setSelected({ ...selected, status: newStatus });
+      }
+      message.success(`Complaint status updated to ${newStatus.replace('_', ' ')}`);
+    } catch (e: unknown) {
+      console.error("Error updating complaint status:", e);
+      message.error(e instanceof Error ? e.message : 'Failed to update complaint status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <PageTransition>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Assigned Complaints</h1>
-          <p className="text-muted-foreground">Manage complaints assigned to you.</p>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Assigned Complaints</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Manage and resolve complaints assigned to you</p>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground">{assigned.length} total</span>
+            <span className="h-4 w-px bg-border" />
+            <span className="text-green-600 dark:text-green-400 font-medium">
+              {assigned.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length} resolved
+            </span>
+          </div>
         </div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-card rounded-2xl border  shadow-sm overflow-hidden">
-          <Table dataSource={assigned} columns={columns} rowKey="id" pagination={false} />
-        </motion.div>
+
+        {/* Status summary strip */}
+        <div className="grid grid-cols-5 gap-2">
+          {(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as ComplaintStatus[]).map((s) => {
+            const style = STATUS_STYLES[s];
+            const count = assigned.filter(c => c.status === s).length;
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(statusFilter === s ? null : s)}
+                className={`rounded-xl border p-3 text-center transition-all cursor-pointer ${
+                  statusFilter === s
+                    ? `${style.bg} border-current ${style.text}`
+                    : 'bg-card hover:border-blue-500/30'
+                }`}
+              >
+                <div className={`text-lg font-bold ${statusFilter === s ? style.text : 'text-foreground'}`}>{count}</div>
+                <div className={`text-xs mt-0.5 ${statusFilter === s ? style.text : 'text-muted-foreground'}`}>{style.label}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search + filter */}
+        <div className="flex gap-3 flex-wrap">
+          <div className="relative">
+            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm z-10 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-4 h-9 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all w-64"
+            />
+          </div>
+          <Select
+            placeholder="All statuses"
+            value={statusFilter}
+            className="min-w-37.5"
+            allowClear
+            onChange={(v) => setStatusFilter(v || null)}
+            options={(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as ComplaintStatus[]).map((s) => ({
+              label: STATUS_STYLES[s].label, value: s,
+            }))}
+          />
+        </div>
+
+        {/* Card list */}
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-muted/30 animate-pulse" />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-4">
+              <FileTextOutlined className="text-3xl text-blue-500" />
+            </div>
+            <p className="text-base font-semibold text-foreground mb-1">No complaints found</p>
+            <p className="text-sm text-muted-foreground">Try adjusting your search or status filter.</p>
+          </motion.div>
+        ) : (
+          <div className="space-y-2.5">
+            {filtered.map((c, i) => {
+              const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.CLOSED;
+              const p = c.priority ? PRIORITY_STYLES[c.priority] : null;
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  whileHover={{ x: 3 }}
+                  onClick={() => setSelected(c)}
+                  className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-card border hover:border-blue-500/30 hover:shadow-md hover:shadow-blue-500/5 cursor-pointer transition-all"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{c.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Room {c.classroomNumber} · Block {c.block}{c.category ? ` · ${c.category.replace(/_/g, ' ')}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p && (
+                      <span className={`hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${p.bg} ${p.text}`}>
+                        {p.label}
+                      </span>
+                    )}
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.text}`}>
+                      {s.label}
+                    </span>
+                    <span className="hidden md:block text-xs text-muted-foreground">{formatDate(c.createdAt)}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Slide-in detail panel */}
+        <AnimatePresence>
+          {selected && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                onClick={() => setSelected(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 60 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l shadow-2xl z-50 overflow-y-auto"
+              >
+                <div className="p-6 flex flex-col gap-5 min-h-full">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="text-lg font-bold text-foreground leading-snug">{selected.title}</h2>
+                    <button
+                      onClick={() => setSelected(null)}
+                      className="shrink-0 h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <CloseOutlined style={{ fontSize: 13 }} />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {selected.priority && PRIORITY_STYLES[selected.priority] && (
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${PRIORITY_STYLES[selected.priority].bg} ${PRIORITY_STYLES[selected.priority].text}`}>
+                        {PRIORITY_STYLES[selected.priority].label}
+                      </span>
+                    )}
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[selected.status].bg} ${STATUS_STYLES[selected.status].text}`}>
+                      {STATUS_STYLES[selected.status].label}
+                    </span>
+                    {selected.category && (
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                        {selected.category.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Description</p>
+                      <p className="text-sm text-foreground leading-relaxed">{selected.description}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Location</p>
+                        <p className="text-sm text-foreground">Room {selected.classroomNumber}</p>
+                        <p className="text-sm text-foreground">Block {selected.block}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Date Filed</p>
+                        <p className="text-sm text-foreground">{formatDate(selected.createdAt)}</p>
+                      </div>
+                    </div>
+
+                    {selected.assignedTo && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Assigned To</p>
+                        <p className="text-sm text-foreground">{selected.assignedTo.name || selected.assignedTo.username}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Update Status</p>
+                      <Select
+                        value={selected.status}
+                        className="w-full"
+                        onChange={(v) => handleStatusUpdate(selected.id, v as ComplaintStatus)}
+                        disabled={updating}
+                        options={(['ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const).map((s) => ({
+                          label: STATUS_STYLES[s].label,
+                          value: s,
+                        }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </PageTransition>
   );
