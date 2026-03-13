@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { getNotificationRoute, getNotifications, getUnreadCount, markAllAsRead, markAsRead, type Notification } from '@/api/notifications';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -236,8 +237,11 @@ const AppLayout = () => {
   const siderContent = (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-center h-16 border-b ">
-        <motion.div animate={{ opacity: 1 }} className="text-lg font-bold" style={{ color: 'hsl(214 100% 50%)' }}>
-          {collapsed && !isMobile ? '🎓' : '🎓 CampusCure'}
+        <motion.div animate={{ opacity: 1 }} className="flex items-center gap-2 text-lg font-bold overflow-hidden">
+          <div className="h-7 w-7 shrink-0">
+            <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
+          </div>
+          {(!collapsed || isMobile) && <span><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>}
         </motion.div>
       </div>
       <Menu

@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { CloseOutlined, MenuOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
@@ -44,12 +45,10 @@ const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) =>
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center gap-2"
           >
-            <div className="h-8 w-8 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-              <span className="text-white text-sm font-bold">C</span>
+            <div className="h-8 w-8 shrink-0">
+              <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
             </div>
-            <span className="font-bold text-base bg-linear-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent select-none">
-              CampusCure
-            </span>
+            <span className="font-bold text-base select-none"><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>
           </button>
 
           {/* Desktop nav links */}

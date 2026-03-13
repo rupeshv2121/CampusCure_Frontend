@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { loginUser, registerUser } from '@/api/auth';
 import FaceRegister from '@/components/FaceRegister';
 import { UserRole, departments } from '@/types';
@@ -74,10 +75,10 @@ const RegisterPage = () => {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px]" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-48 bg-violet-600/20 blur-3xl rounded-full" />
           <div className="relative flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-              <span className="text-white font-bold text-sm">C</span>
+            <div className="h-9 w-9 shrink-0">
+              <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
             </div>
-            <span className="text-xl font-bold text-white">CampusCure</span>
+            <span className="text-xl font-bold"><span className="text-blue-400">Campus</span><span className="text-violet-400">Cure</span></span>
           </div>
           <div className="relative border border-white/10 rounded-2xl p-6 bg-white/5">
             <div className="text-blue-200 text-2xl mb-3">🔒</div>
@@ -121,10 +122,10 @@ const RegisterPage = () => {
 
         <div className="relative">
           <div className="flex items-center gap-2.5 mb-12">
-            <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-              <span className="text-white font-bold text-sm">C</span>
+            <div className="h-9 w-9 shrink-0">
+              <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
             </div>
-            <span className="text-xl font-bold text-white">CampusCure</span>
+            <span className="text-xl font-bold"><span className="text-blue-400">Campus</span><span className="text-violet-400">Cure</span></span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4 leading-snug">
             Join{' '}
@@ -182,10 +183,10 @@ const RegisterPage = () => {
           >
             {/* Mobile logo */}
             <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-              <div className="h-8 w-8 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">C</span>
+              <div className="h-8 w-8 shrink-0">
+                <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
               </div>
-              <span className="text-lg font-bold bg-linear-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">CampusCure</span>
+              <span className="text-lg font-bold"><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>
             </div>
 
             <div className="mb-8">

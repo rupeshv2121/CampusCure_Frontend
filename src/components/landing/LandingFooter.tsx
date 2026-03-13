@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { GithubOutlined, LinkedinFilled, MailOutlined, TwitterOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,12 +33,10 @@ const LandingFooter = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/25">
-                <span className="text-white font-bold text-sm">C</span>
+              <div className="h-9 w-9 shrink-0">
+                <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
               </div>
-              <span className="text-xl font-bold bg-linear-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-                CampusCure
-              </span>
+              <span className="text-xl font-bold"><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>
             </div>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed mb-6">
               Transforming campus management with intelligent solutions for students, faculty, and administrators.

@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { faceLogin } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleRedirect } from '@/lib/authUtils';
@@ -207,10 +208,10 @@ const FaceLoginPage = () => {
 
         {/* Logo */}
         <div className="relative flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-            <span className="text-white font-bold text-sm">C</span>
+          <div className="h-9 w-9 shrink-0">
+            <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
           </div>
-          <span className="text-xl font-bold text-white">CampusCure</span>
+          <span className="text-xl font-bold"><span className="text-blue-400">Campus</span><span className="text-violet-400">Cure</span></span>
         </div>
 
         {/* Heading + description */}
@@ -274,10 +275,10 @@ const FaceLoginPage = () => {
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12 gap-6">
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-2.5 mb-2">
-            <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-              <span className="text-white font-bold text-sm">C</span>
+            <div className="h-9 w-9 shrink-0">
+              <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
             </div>
-            <span className="text-xl font-bold text-foreground">CampusCure</span>
+            <span className="text-xl font-bold"><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>
           </div>
 
           <motion.div

@@ -2,7 +2,7 @@ import { getMyComplaints } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { Complaint, ComplaintStatus } from '@/types';
 import { CloseOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
-import { Select } from 'antd';
+import { Select, Spin } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
@@ -119,9 +119,7 @@ const MyComplaints = () => {
 
         {/* Card list */}
         {loading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-muted/30 animate-pulse" />)}
-          </div>
+          <div className="flex justify-center py-20"><Spin size="large" /></div>
         ) : filtered.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
             <div className="h-16 w-16 rounded-2xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-4">
@@ -187,7 +185,7 @@ const MyComplaints = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 60 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed bg-white right-0 top-0 h-full w-full max-w-md bg-card border-l shadow-2xl z-50 overflow-y-auto"
+                className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l shadow-2xl z-50 overflow-y-auto"
               >
                 <div className="p-6 flex flex-col gap-5 min-h-full bg-white">
                   <div className="flex items-start justify-between gap-3">

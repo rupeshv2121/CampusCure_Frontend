@@ -1,3 +1,4 @@
+import logo from '@/assets/logo.jpeg';
 import { loginUser } from '@/api/auth';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleRedirect } from '@/lib/authUtils';
@@ -63,10 +64,10 @@ const LoginPage = () => {
         {/* Logo + tagline */}
         <div className="relative">
           <div className="flex items-center gap-2.5 mb-12">
-            <div className="h-9 w-9 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-blue-600/30">
-              <span className="text-white font-bold text-sm">C</span>
+            <div className="h-9 w-9 shrink-0">
+              <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
             </div>
-            <span className="text-xl font-bold text-white">CampusCure</span>
+            <span className="text-xl font-bold"><span className="text-blue-400">Campus</span><span className="text-violet-400">Cure</span></span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4 leading-snug">
             The Smarter Way to{' '}
@@ -126,10 +127,10 @@ const LoginPage = () => {
           >
             {/* Mobile logo */}
             <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-              <div className="h-8 w-8 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">C</span>
+              <div className="h-8 w-8 shrink-0">
+                <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
               </div>
-              <span className="text-lg font-bold bg-linear-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">CampusCure</span>
+              <span className="text-lg font-bold"><span className="text-blue-600">Campus</span><span className="text-violet-600">Cure</span></span>
             </div>
 
             <div className="mb-8">
