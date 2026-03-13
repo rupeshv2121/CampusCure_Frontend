@@ -161,7 +161,7 @@ const SuperAdminDashboard = () => {
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 min-[460px]:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-3 gap-4">
           {topStats.map((stat, i) => (
             <motion.div
               key={stat.label}

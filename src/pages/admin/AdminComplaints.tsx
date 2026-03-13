@@ -238,7 +238,7 @@ const AdminComplaints = () => {
             <p className="text-xs text-muted-foreground">Try adjusting your filters</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {filtered.map((c, i) => {
               const st = STATUS_STYLES[c.status];
               return (
@@ -247,9 +247,9 @@ const AdminComplaints = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  whileHover={{ x: 3 }}
+                  whileHover={{ scale: 1.01 }}
                   onClick={() => setSelected(c)}
-                  className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all"
+                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2">
@@ -290,7 +290,7 @@ const AdminComplaints = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto bg-white"
+                className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto"
               >
                 <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">{selected.title}</h2>

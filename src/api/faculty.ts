@@ -80,6 +80,7 @@ export const getDoubts = async (filters?: {
   subject?: string;
   semester?: number;
   search?: string;
+  myAnswered?: boolean;
 }): Promise<Doubt[]> => {
   try {
     const params = new URLSearchParams();
@@ -87,6 +88,7 @@ export const getDoubts = async (filters?: {
     if (filters?.subject) params.append("subject", filters.subject);
     if (filters?.semester) params.append("semester", String(filters.semester));
     if (filters?.search) params.append("search", filters.search);
+    if (filters?.myAnswered) params.append("myAnswered", "true");
 
     const response = await api.get(`/faculty/doubts?${params.toString()}`);
     return response.data.doubts;

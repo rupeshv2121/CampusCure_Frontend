@@ -1,8 +1,9 @@
 import PageTransition from '@/components/animated/PageTransition';
 import { Doubt } from '@/types';
 import { getDoubts } from '@/api/faculty';
-import { EyeOutlined, MessageOutlined } from '@ant-design/icons';
-import { Empty, Input, Select, Tag, message, Spin } from 'antd';
+import { useAuth } from '@/context/AuthContext';
+import { CheckCircleOutlined, EyeOutlined, MessageOutlined } from '@ant-design/icons';
+import { Button, Empty, Input, Select, Tag, message, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,10 +12,12 @@ const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue',
 const doubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
 
 const FacultyDoubts = () => {
+  useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [myAnsweredOnly, setMyAnsweredOnly] = useState(false);
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,16 +25,22 @@ const FacultyDoubts = () => {
     fetchDoubts();
   }, []);
 
-  const fetchDoubts = async () => {
+  const fetchDoubts = async (answeredByMe = false) => {
     try {
       setLoading(true);
-      const data = await getDoubts();
+      const data = await getDoubts(answeredByMe ? { myAnswered: true } : undefined);
       setDoubts(data);
     } catch (error) {
       message.error('Failed to fetch doubts');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMyAnsweredToggle = () => {
+    const next = !myAnsweredOnly;
+    setMyAnsweredOnly(next);
+    fetchDoubts(next);
   };
 
   const filtered = doubts.filter((d) => {
@@ -64,20 +73,20 @@ const FacultyDoubts = () => {
         <div className="flex gap-3 flex-wrap">
           <Input.Search 
             placeholder="Search doubts..." 
-            className="w-full sm:max-w-xs !placeholder-gray-800 placeholder:font-medium" 
+            className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" 
             onChange={(e) => setSearch(e.target.value)} 
             allowClear 
           />
           <Select 
             placeholder="Filter by subject" 
-            className="w-full sm:min-w-[140px] sm:w-auto [&_.ant-select-selection-placeholder]:!text-gray-800 [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setSubjectFilter(v || null)} 
             options={doubtSubjects.map((s) => ({ label: s, value: s }))} 
           />
           <Select 
             placeholder="Filter by status" 
-            className="w-full sm:min-w-[140px] sm:w-auto [&_.ant-select-selection-placeholder]:!text-gray-800 [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setStatusFilter(v || null)} 
             options={[
@@ -86,6 +95,14 @@ const FacultyDoubts = () => {
               { label: 'Resolved', value: 'RESOLVED' },
             ]} 
           />
+          <Button
+            icon={<CheckCircleOutlined />}
+            type={myAnsweredOnly ? 'primary' : 'default'}
+            onClick={handleMyAnsweredToggle}
+            className="w-full sm:w-auto"
+          >
+            My Answered
+          </Button>
         </div>
 
         {loading ? (

@@ -2,7 +2,7 @@ import { getDoubts, postDoubt } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
-import { ClockCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Empty, Input, message, Modal, Select, Spin, Tag } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ const DoubtCommunity = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  const [myDoubtsOnly, setMyDoubtsOnly] = useState(false);
   const [askModal, setAskModal] = useState(false);
   const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: '' });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -54,7 +55,8 @@ const DoubtCommunity = () => {
   const filtered = doubts.filter((d) => {
     const matchSearch = d.title.toLowerCase().includes(search.toLowerCase());
     const matchSubject = !subjectFilter || d.subject === subjectFilter;
-    return matchSearch && matchSubject;
+    const matchMyDoubt = !myDoubtsOnly || d.postedBy.id === user?.id;
+    return matchSearch && matchSubject && matchMyDoubt;
   });
 
   const handleAsk = async () => {
@@ -130,6 +132,14 @@ const DoubtCommunity = () => {
         <div className="flex gap-3 flex-wrap mt-4">
           <Input.Search placeholder="Search doubts..." className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" onChange={(e) => setSearch(e.target.value)} allowClear />
           <Select placeholder="Filter by subject" className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} />
+          <Button
+            icon={<UserOutlined />}
+            type={myDoubtsOnly ? 'primary' : 'default'}
+            onClick={() => setMyDoubtsOnly((v) => !v)}
+            className="w-full sm:w-auto"
+          >
+            My Doubts
+          </Button>
         </div>
 
         {loading ? (
