@@ -32,7 +32,6 @@ const statusColors: Record<string, string> = { RAISED: 'orange', ASSIGNED: 'cyan
 const FacultyDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isApproved = user?.approvalStatus === 'APPROVED';
   const [assignedComplaintsData, setAssignedComplaintsData] = useState<Complaint[]>([]);  
   // TODO: Fetch from backend API - Currently using empty array until doubts endpoint is implemented
   const unresolvedDoubts: Doubt[] = [];
