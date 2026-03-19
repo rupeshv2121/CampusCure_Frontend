@@ -2,6 +2,7 @@ import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Doubt } from '@/types';
 import { getDoubts } from '@/api/faculty';
+import { getStudentPostingSettings } from '@/api/student';
 import { useAuth } from '@/context/AuthContext';
 import { CheckCircleOutlined, EyeOutlined, MessageOutlined } from '@ant-design/icons';
 import { Button, Empty, Input, Select, Tag, message } from 'antd';
@@ -10,7 +11,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
-const doubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
+const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
 
 const FacultyDoubts = () => {
   useAuth();
@@ -21,10 +22,29 @@ const FacultyDoubts = () => {
   const [myAnsweredOnly, setMyAnsweredOnly] = useState(false);
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [loading, setLoading] = useState(false);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
+  const [doubtSubjects, setDoubtSubjects] = useState<string[]>(fallbackDoubtSubjects);
 
   useEffect(() => {
     fetchDoubts();
+    fetchPostingSettings();
   }, []);
+
+  const fetchPostingSettings = async () => {
+    try {
+      setSubjectsLoading(true);
+      const settings = await getStudentPostingSettings();
+      setDoubtSubjects(
+        settings.doubtSubjects.length > 0
+          ? settings.doubtSubjects
+          : fallbackDoubtSubjects,
+      );
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Failed to load subjects');
+    } finally {
+      setSubjectsLoading(false);
+    }
+  };
 
   const fetchDoubts = async (answeredByMe = false) => {
     try {
@@ -83,7 +103,8 @@ const FacultyDoubts = () => {
             className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setSubjectFilter(v || null)} 
-            options={doubtSubjects.map((s) => ({ label: s, value: s }))} 
+            options={doubtSubjects.map((s) => ({ label: s, value: s }))}
+            loading={subjectsLoading}
           />
           <Select 
             placeholder="Filter by status" 
