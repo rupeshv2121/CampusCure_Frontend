@@ -3,11 +3,11 @@ import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Complaint, ComplaintStatus, User } from '@/types';
 import {
-    CheckCircleOutlined,
-    CloseOutlined,
-    FileTextOutlined,
-    SearchOutlined,
-    UserSwitchOutlined,
+  CheckCircleOutlined,
+  CloseOutlined,
+  FileTextOutlined,
+  SearchOutlined,
+  UserSwitchOutlined,
 } from '@ant-design/icons';
 import { Input, Modal, Select, message } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
