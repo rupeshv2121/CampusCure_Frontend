@@ -119,21 +119,23 @@ const FacultyComplaints = () => {
               )}
             </div>
           ) : (
-            <Table dataSource={assigned} columns={columns} rowKey="id" size="small" pagination={false} />
-          {loading ? (
-            <div className="p-4 space-y-3">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-3 items-center">
-                  <Skeleton className="col-span-5 h-4" />
-                  <Skeleton className="col-span-2 h-4 hidden md:block" />
-                  <Skeleton className="col-span-2 h-4 hidden lg:block" />
-                  <Skeleton className="col-span-2 h-6 rounded-full" />
-                  <Skeleton className="col-span-3 md:col-span-1 h-8 rounded-md" />
+            <>
+              {loading ? (
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-3 items-center">
+                      <Skeleton className="col-span-5 h-4" />
+                      <Skeleton className="col-span-2 h-4 hidden md:block" />
+                      <Skeleton className="col-span-2 h-4 hidden lg:block" />
+                      <Skeleton className="col-span-2 h-6 rounded-full" />
+                      <Skeleton className="col-span-3 md:col-span-1 h-8 rounded-md" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <Table dataSource={assigned} columns={columns} rowKey="id" size="small" pagination={false} scroll={{ x: 640 }} />
+              ) : (
+                <Table dataSource={assigned} columns={columns} rowKey="id" size="small" pagination={false} scroll={{ x: 640 }} />
+              )}
+            </>
           )}
         </motion.div>
       </div>
