@@ -30,8 +30,9 @@ const STATUS_STYLES: Record<string, { dot: string; bg: string; text: string; lab
   RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700', label: 'Raised' },
   ASSIGNED:    { dot: 'bg-cyan-500',    bg: 'bg-cyan-100 dark:bg-cyan-90/40',     text: 'text-cyan-700 dark:text-cyan-700',     label: 'Assigned' },
   IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700', label: 'In Progress' },
+  PENDING_CONFIRMATION: { dot: 'bg-blue-500', bg: 'bg-blue-100 dark:bg-blue-90/40', text: 'text-blue-700 dark:text-blue-700', label: 'Pending Confirmation' },
+  ESCALATED_TO_SUPERADMIN: { dot: 'bg-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', label: 'Escalated' },
   RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',   label: 'Resolved' },
-  CLOSED:      { dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/40',   text: 'text-slate-600 dark:text-slate-700',   label: 'Closed' },
 };
 
 interface StudentProfile {
@@ -84,7 +85,7 @@ const StudentDashboard = () => {
   
   // Use profile data if available, otherwise fall back to local state
   const totalComplaints = profile?.totalComplaints ?? complaints.length;
-  const activeComplaints = profile?.totalActiveComplaints ?? complaints.filter((c) => c.status !== 'RESOLVED' && c.status !== 'CLOSED').length;
+  const activeComplaints = profile?.totalActiveComplaints ?? complaints.filter((c) => c.status !== 'RESOLVED').length;
   const resolvedComplaints = totalComplaints - activeComplaints;
   const totalDoubts = profile?.doubtsAsked ?? 0;
   const resolvedDoubts = profile?.doubtsSolved ?? 0;
@@ -314,7 +315,7 @@ const StudentDashboard = () => {
             <div className="space-y-2.5">
               {recentComplaints.length > 0 ? (
                 recentComplaints.map((c) => {
-                  const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.CLOSED;
+                  const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.RESOLVED;
                   return (
                     <motion.div
                       key={c.id}

@@ -27,7 +27,7 @@ const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   return <>{count}</>;
 };
 
-const statusColors: Record<string, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', PENDING_CONFIRMATION: 'blue', RESOLVED: 'green', CLOSED: 'default' };
+const statusColors: Record<string, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', PENDING_CONFIRMATION: 'blue', ESCALATED_TO_SUPERADMIN: 'purple', RESOLVED: 'green' };
 
 const FacultyDashboard = () => {
   const navigate = useNavigate();

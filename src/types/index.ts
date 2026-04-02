@@ -7,12 +7,8 @@ export type ComplaintStatus =
   | "ASSIGNED"
   | "IN_PROGRESS"
   | "PENDING_CONFIRMATION"
-  | "PENDING_STUDENT_APPROVAL"
-  | "REJECTED_BY_STUDENT"
   | "ESCALATED_TO_SUPERADMIN"
-  | "HANDLED_BY_SUPERADMIN"
-  | "RESOLVED"
-  | "CLOSED";
+  | "RESOLVED";
 
 export type AdminLevel = "NORMAL" | "SUPER";
 
@@ -74,6 +70,7 @@ export interface Complaint {
   block: string;
   priority?: number;
   escalationCount?: number;
+  handledBySuperAdmin?: boolean;
   raisedBy: {
     id: string;
     name: string;

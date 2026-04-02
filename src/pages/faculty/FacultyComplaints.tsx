@@ -9,7 +9,7 @@ import { Alert, Select, Table, Tag, message } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const statusColors: Record<ComplaintStatus, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', PENDING_CONFIRMATION: 'blue', RESOLVED: 'green', CLOSED: 'default' };
+const statusColors: Record<ComplaintStatus, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', PENDING_CONFIRMATION: 'blue', ESCALATED_TO_SUPERADMIN: 'purple', RESOLVED: 'green' };
 
 const FacultyComplaints = () => {
   const { user } = useAuth();
@@ -22,6 +22,12 @@ const FacultyComplaints = () => {
   const updateStatus = async (complaintId: string, newStatus: "IN_PROGRESS" | "PENDING_CONFIRMATION") => {
     if (!isApproved) {
       message.error('Your account is not approved');
+      return;
+    }
+
+    const complaint = assigned.find((c) => c.id === complaintId);
+    if (complaint?.status === 'RESOLVED') {
+      message.error('Resolved complaints cannot be updated');
       return;
     }
 
@@ -77,7 +83,7 @@ const FacultyComplaints = () => {
       render: (_: unknown, record: typeof assigned[0]) => (
         <Select 
           size="small" 
-          disabled={!isApproved || updatingId === record.id}
+          disabled={!isApproved || updatingId === record.id || record.status === 'RESOLVED'}
           loading={updatingId === record.id}
           value={record.status} 
           className="w-40" 
@@ -126,7 +132,7 @@ const FacultyComplaints = () => {
                       </div>
                       <Select
                         size="small"
-                        disabled={!isApproved || updatingId === complaint.id}
+                        disabled={!isApproved || updatingId === complaint.id || complaint.status === 'RESOLVED'}
                         loading={updatingId === complaint.id}
                         value={complaint.status}
                         className="w-full"

@@ -15,20 +15,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED:      { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-800 dark:text-orange-200', label: 'Raised' },
-  ASSIGNED:    { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-200',     label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-200',     label: 'In Progress' },
-  PENDING_CONFIRMATION:      { dot: 'bg-slate-500',  bg: 'bg-slate-200 dark:bg-slate-800/60',     text: 'text-slate-800 dark:text-slate-100',  label: 'Pending Confirmation' },
-  PENDING_STUDENT_APPROVAL:  { dot: 'bg-amber-600',  bg: 'bg-amber-200 dark:bg-amber-900/20',     text: 'text-amber-800 dark:text-amber-200',  label: 'Pending Student Approval' },
-  REJECTED_BY_STUDENT:       { dot: 'bg-rose-600',   bg: 'bg-rose-200 dark:bg-rose-900/30',       text: 'text-rose-800 dark:text-rose-100',    label: 'Rejected by Student' },
-  ESCALATED_TO_SUPERADMIN:   { dot: 'bg-purple-600', bg: 'bg-purple-200 dark:bg-purple-900/30',   text: 'text-purple-800 dark:text-purple-100', label: 'Escalated to SuperAdmin' },
-  HANDLED_BY_SUPERADMIN:     { dot: 'bg-indigo-600', bg: 'bg-indigo-200 dark:bg-indigo-900/30',   text: 'text-indigo-800 dark:text-indigo-100', label: 'Handled by SuperAdmin' },
-  RESOLVED:    { dot: 'bg-green-500',  bg: 'bg-green-100 dark:bg-green-900/20',   text: 'text-green-800 dark:text-green-200',   label: 'Resolved' },
-  CLOSED:      { dot: 'bg-slate-500',  bg: 'bg-slate-200 dark:bg-slate-800/60',   text: 'text-slate-700 dark:text-slate-200',   label: 'Closed' },
+  RAISED:      { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-800 dark:text-orange-800', label: 'Raised' },
+  ASSIGNED:    { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-800',     label: 'Assigned' },
+  IN_PROGRESS: { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-800',     label: 'In Progress' },
+  PENDING_CONFIRMATION:      { dot: 'bg-slate-500',  bg: 'bg-slate-200 dark:bg-slate-400/60',     text: 'text-slate-800 dark:text-slate-800',  label: 'Pending Confirmation' },
+  ESCALATED_TO_SUPERADMIN:   { dot: 'bg-purple-600', bg: 'bg-purple-200 dark:bg-purple-400/30',   text: 'text-purple-800 dark:text-purple-800', label: 'Escalated to SuperAdmin' },
+  RESOLVED:    { dot: 'bg-green-500',  bg: 'bg-green-100 dark:bg-green-400/20',   text: 'text-green-800 dark:text-green-800',   label: 'Resolved' },
 };
-
-// Only show these escalated complaint statuses
-const ESCALATED_STATUSES: ComplaintStatus[] = ['REJECTED_BY_STUDENT', 'ESCALATED_TO_SUPERADMIN', 'HANDLED_BY_SUPERADMIN'];
 
 const SuperAdminComplaints = () => {
   const [selected, setSelected] = useState<Complaint | null>(null);
@@ -52,9 +45,9 @@ const SuperAdminComplaints = () => {
       setLoading(true);
       const data = await getEscalatedComplaints();
 
-      // Filter to only show escalated complaints with at least one escalation
+      // Show every complaint that has been escalated at least once.
       const escalatedOnly = (data || []).filter((complaint: Complaint) =>
-        ESCALATED_STATUSES.includes(complaint.status) && (complaint.escalationCount ?? 0) > 0
+        (complaint.escalationCount ?? 0) > 0 && complaint.status !== 'RESOLVED'
       );
 
       // Sort by escalation count (highest first) and then by created date
@@ -151,8 +144,8 @@ const SuperAdminComplaints = () => {
         >
           <AlertOutlined className="text-purple-600 dark:text-purple-400 text-lg mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-purple-900 dark:text-purple-300 text-sm mb-1">SuperAdmin Review Required</h3>
-            <p className="text-xs text-purple-700 dark:text-purple-400 leading-relaxed">
+            <h3 className="font-semibold text-purple-900 dark:text-purple-800 text-sm mb-1">SuperAdmin Review Required</h3>
+            <p className="text-xs text-purple-700 dark:text-purple-700 leading-relaxed">
               These complaints have been rejected by students and require your intervention. Review the rejection reasons, reassign to appropriate faculty members, and provide guidance for resolution.
             </p>
           </div>
@@ -253,7 +246,7 @@ const SuperAdminComplaints = () => {
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
                 className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-background"
               >
-                <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between z-10 bg-white">
+                <div className="sticky top-0 border-b border-border px-6 py-4 flex items-center justify-between z-10 bg-white">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">{selected.title}</h2>
                   <button
                     onClick={() => setSelected(null)}
@@ -291,7 +284,7 @@ const SuperAdminComplaints = () => {
 
                   {/* Rejection Reason */}
                   {selected.studentRejectionMessage && (
-                    <div className="rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4">
+                    <div className="rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-300/20 p-4">
                       <p className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide mb-2">Student Rejection Reason</p>
                       <p className="text-sm text-foreground">{selected.studentRejectionMessage}</p>
                     </div>
@@ -321,8 +314,8 @@ const SuperAdminComplaints = () => {
 
                   {/* Resolution note from previous attempt */}
                   {selected.resolutionNote && (
-                    <div className="rounded-xl border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-4">
-                      <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-1">Previous Resolution Attempt</p>
+                    <div className="rounded-xl border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-300/20 p-4">
+                      <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-800 uppercase tracking-wide mb-1">Previous Resolution Attempt</p>
                       <p className="text-sm text-foreground">{selected.resolutionNote}</p>
                     </div>
                   )}
@@ -331,15 +324,17 @@ const SuperAdminComplaints = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2 flex-wrap">
-                    <button
-                      onClick={() => {
-                        setReassignModal(selected);
-                        setAssignedFaculty(selected.assignedTo?.id || null);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-purple-600/20"
-                    >
-                      <UserSwitchOutlined /> Reassign to Faculty
-                    </button>
+                    {!selected.assignedTo ? (
+                      <button
+                        onClick={() => {
+                          setReassignModal(selected);
+                          setAssignedFaculty(null);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-purple-600 via-indigo-600 to-blue-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-purple-600/20"
+                      >
+                        <UserSwitchOutlined /> Reassign to Faculty
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </motion.div>

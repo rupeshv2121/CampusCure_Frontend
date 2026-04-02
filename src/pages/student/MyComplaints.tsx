@@ -13,8 +13,8 @@ const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: st
   ASSIGNED:    { dot: 'bg-cyan-500',    bg: 'bg-cyan-100 dark:bg-cyan-90/40',     text: 'text-cyan-700 dark:text-cyan-700',       label: 'Assigned' },
   IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700',   label: 'In Progress' },
   PENDING_CONFIRMATION: { dot: 'bg-blue-500',  bg: 'bg-blue-100 dark:bg-blue-90/40', text: 'text-blue-700 dark:text-blue-700',   label: 'Awaiting Your Confirmation' },
+  ESCALATED_TO_SUPERADMIN: { dot: 'bg-purple-600', bg: 'bg-purple-100 dark:bg-purple-400/30', text: 'text-purple-800 dark:text-purple-800', label: 'Escalated to Super Admin' },
   RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',     label: 'Resolved' },
-  CLOSED:      { dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/40',   text: 'text-slate-600 dark:text-slate-700',     label: 'Closed' },
 };
 
 const PRIORITY_STYLES: Record<number, { bg: string; text: string; label: string }> = {
@@ -86,9 +86,19 @@ const MyComplaints = () => {
       setConfirmLoading(true);
       await api.post(`/students/complaints/${selected.id}/reject-resolution`, { rejectionReason });
 
+      const nextStatus: ComplaintStatus = selected.assignedTo ? 'ASSIGNED' : 'RAISED';
+
       // Update the complaint status in the list
-      setComplaints(complaints.map(c => c.id === selected.id ? { ...c, status: 'IN_PROGRESS' } : c));
-      setSelected({ ...selected, status: 'IN_PROGRESS' });
+      setComplaints(complaints.map(c => c.id === selected.id ? {
+        ...c,
+        status: nextStatus,
+        escalationCount: (c.escalationCount ?? 0) + 1,
+      } : c));
+      setSelected({
+        ...selected,
+        status: nextStatus,
+        escalationCount: (selected.escalationCount ?? 0) + 1,
+      });
       setRejectionReason('');
       setShowRejectionInput(false);
 
@@ -116,14 +126,14 @@ const MyComplaints = () => {
             <span className="text-muted-foreground">{complaints.length} total</span>
             <span className="h-4 w-px bg-border" />
             <span className="text-green-600 dark:text-green-400 font-medium">
-              {complaints.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length} resolved
+              {complaints.filter(c => c.status === 'RESOLVED').length} resolved
             </span>
           </div>
         </div>
 
         {/* Status summary strip */}
         <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as ComplaintStatus[]).map((s) => {
+          {(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_CONFIRMATION', 'RESOLVED'] as ComplaintStatus[]).map((s) => {
             const style = STATUS_STYLES[s];
             const count = complaints.filter(c => c.status === s).length;
             return (
@@ -161,7 +171,7 @@ const MyComplaints = () => {
             className="w-full sm:min-w-37.5 sm:w-auto"
             allowClear
             onChange={(v) => setStatusFilter(v || null)}
-            options={(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as ComplaintStatus[]).map((s) => ({
+            options={(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_CONFIRMATION', 'RESOLVED'] as ComplaintStatus[]).map((s) => ({
               label: STATUS_STYLES[s].label, value: s,
             }))}
           />
@@ -193,7 +203,7 @@ const MyComplaints = () => {
         ) : (
           <div className="space-y-2.5">
             {filtered.map((c, i) => {
-              const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.CLOSED;
+              const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.RESOLVED;
               const p = c.priority ? PRIORITY_STYLES[c.priority] : null;
               return (
                 <motion.div
@@ -218,6 +228,11 @@ const MyComplaints = () => {
                     {p && (
                       <span className={`hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${p.bg} ${p.text}`}>
                         {p.label}
+                      </span>
+                    )}
+                    {Number(c.escalationCount ?? 0) > 0 && (
+                      <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                        Escalated {c.escalationCount}x
                       </span>
                     )}
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.text}`}>
@@ -261,7 +276,7 @@ const MyComplaints = () => {
                   </div>
 
                   <div className="flex gap-2 flex-wrap">
-                    {(() => { const s = STATUS_STYLES[selected.status] ?? STATUS_STYLES.CLOSED; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.bg} ${s.text}`}>{s.label}</span>; })()}
+                    {(() => { const s = STATUS_STYLES[selected.status] ?? STATUS_STYLES.RESOLVED; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.bg} ${s.text}`}>{s.label}</span>; })()}
                     {selected.priority && (() => { const p = PRIORITY_STYLES[selected.priority!]; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.bg} ${p.text}`}>{p.label}</span>; })()}
                     {selected.category && <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">{selected.category.replace(/_/g, ' ')}</span>}
                   </div>
