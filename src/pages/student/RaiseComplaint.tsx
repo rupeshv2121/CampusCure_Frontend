@@ -1,7 +1,8 @@
 import { getStudentPostingSettings, raiseComplaint } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
-import { ClockCircleOutlined, SendOutlined } from '@ant-design/icons';
+import blockClassroomData from '@/data/block_classroom.json';
+import { CheckCircleOutlined, ClockCircleOutlined, SendOutlined } from '@ant-design/icons';
 import { Alert, Input, message, Select, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,7 +19,7 @@ const complaintSchema = z.object({
   priority: z.number().min(1, 'Priority is required').max(5),
 });
 
-const blocks = ['A', 'B', 'C', 'D', 'E'];
+const blocks = Object.keys(blockClassroomData);
 const fallbackComplaintCategories = ['PROJECTOR', 'FAN', 'LIGHT', 'SMART_BOARD', 'SEATING', 'FURNITURE', 'NETWORK', 'OTHER'];
 
 const PRIORITY_OPTIONS = [
@@ -37,6 +38,38 @@ const RaiseComplaint = () => {
   const [submitting, setSubmitting] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [allowedCategories, setAllowedCategories] = useState<string[]>(fallbackComplaintCategories);
+  const [isBlockValid, setIsBlockValid] = useState(false);
+  const [isClassroomValid, setIsClassroomValid] = useState(false);
+
+  // Validation functions
+  const validateBlock = (blockValue: string): boolean => {
+    return blockValue.trim() !== '' && blockValue in blockClassroomData;
+  };
+
+  const validateClassroom = (blockValue: string, classroomValue: string): boolean => {
+    if (!validateBlock(blockValue) || classroomValue.trim() === '') {
+      return false;
+    }
+    const blockData = blockClassroomData[blockValue as keyof typeof blockClassroomData];
+    return blockData && blockData.classrooms.includes(classroomValue.toUpperCase());
+  };
+
+  const handleBlockChange = (value: string) => {
+    update('block', value);
+    const valid = validateBlock(value);
+    setIsBlockValid(valid);
+    // Reset classroom when block changes
+    if (!valid) {
+      update('classroomNumber', '');
+      setIsClassroomValid(false);
+    }
+  };
+
+  const handleClassroomChange = (value: string) => {
+    update('classroomNumber', value);
+    const valid = validateClassroom(form.block, value);
+    setIsClassroomValid(valid);
+  };
 
   useEffect(() => {
     let active = true;
@@ -182,33 +215,73 @@ const RaiseComplaint = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">
-                  Classroom Number <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  size="large"
-                  placeholder="e.g. 301, LH-A"
-                  className="rounded-xl"
-                  value={form.classroomNumber}
-                  onChange={(e) => update('classroomNumber', e.target.value)}
-                  status={errors.classroomNumber ? 'error' : undefined}
-                />
-                {errors.classroomNumber && <p className="text-red-500 text-xs mt-1">{errors.classroomNumber}</p>}
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
                   Block <span className="text-red-500">*</span>
                 </label>
-                <Select
-                  size="large"
-                  placeholder="Select Block"
-                  className="w-full"
-                  value={form.block || undefined}
-                  onChange={(v) => update('block', v)}
-                  options={blocks.map((b) => ({ label: `Block ${b}`, value: b }))}
-                  status={errors.block ? 'error' : undefined}
-                />
+                <div className="relative">
+                  <Input
+                    size="large"
+                    placeholder="e.g. ML, NL"
+                    className="rounded-xl pr-10"
+                    value={form.block}
+                    onChange={(e) => handleBlockChange(e.target.value.toUpperCase())}
+                    status={errors.block ? 'error' : undefined}
+                  />
+                  {isBlockValid && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                    >
+                      <CheckCircleOutlined className="text-emerald-500 text-lg" style={{ fontSize: '20px' }} />
+                    </motion.div>
+                  )}
+                </div>
                 {errors.block && <p className="text-red-500 text-xs mt-1">{errors.block}</p>}
               </div>
+
+              {isBlockValid && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    Classroom Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Input
+                      size="large"
+                      placeholder="e.g. ML01, NL20"
+                      className="rounded-xl pr-10"
+                      value={form.classroomNumber}
+                      onChange={(e) => handleClassroomChange(e.target.value.toUpperCase())}
+                      status={errors.classroomNumber ? 'error' : undefined}
+                    />
+                    {isClassroomValid && (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                      >
+                        <CheckCircleOutlined className="text-emerald-500 text-lg" style={{ fontSize: '20px' }} />
+                      </motion.div>
+                    )}
+                  </div>
+                  {errors.classroomNumber && <p className="text-red-500 text-xs mt-1">{errors.classroomNumber}</p>}
+                </div>
+              )}
+
+              {!isBlockValid && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    Classroom Number <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    size="large"
+                    placeholder="Select a valid block first"
+                    className="rounded-xl"
+                    disabled
+                  />
+                </div>
+              )}
             </div>
           </div>
 
