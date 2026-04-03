@@ -26,6 +26,18 @@ const formatDateTime = (date?: string) => {
 
 const getAssignedTime = (complaint: Complaint) => complaint.assignedAt ?? complaint.createdAt;
 
+const getReassignmentMeta = (complaint: Complaint, facultyId?: string) => {
+  const isCurrentlyAssignedToMe = complaint.assignedTo?.id === facultyId;
+  const isHandledByAnother = Boolean(
+    facultyId && complaint.assignedTo?.id && complaint.assignedTo.id !== facultyId,
+  );
+
+  return {
+    isCurrentlyAssignedToMe,
+    isHandledByAnother,
+  };
+};
+
 const FacultyComplaints = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -42,6 +54,13 @@ const FacultyComplaints = () => {
     }
 
     const complaint = assigned.find((c) => c.id === complaintId);
+    const isCurrentlyAssignedToMe = complaint?.assignedTo?.id === user?.id;
+
+    if (!isCurrentlyAssignedToMe) {
+      message.error('This complaint is currently handled by another faculty');
+      return;
+    }
+
     if (complaint?.status === 'RESOLVED') {
       message.error('Resolved complaints cannot be updated');
       return;
@@ -146,6 +165,7 @@ const FacultyComplaints = () => {
 
               {assigned.map((complaint, i) => {
                 const st = STATUS_STYLES[complaint.status];
+                const { isCurrentlyAssignedToMe, isHandledByAnother } = getReassignmentMeta(complaint, user?.id);
 
                 if (isMobile) {
                   return (
@@ -175,11 +195,18 @@ const FacultyComplaints = () => {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                          {isHandledByAnother && (
+                            <span className="inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800">
+                              Handled by {complaint.assignedTo?.name ?? 'another faculty'}
+                            </span>
+                          )}
+                        </div>
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             size="small"
-                            disabled={!isApproved || updatingId === complaint.id || complaint.status === 'RESOLVED'}
+                            disabled={!isApproved || updatingId === complaint.id || complaint.status === 'RESOLVED' || !isCurrentlyAssignedToMe}
                             loading={updatingId === complaint.id}
                             value={complaint.status}
                             className="w-full"
@@ -208,7 +235,14 @@ const FacultyComplaints = () => {
 
                     <p className="text-sm text-foreground truncate">{complaint.classroomNumber} (Block {complaint.block})</p>
                     <p className="text-sm text-foreground truncate">{(complaint.category ?? 'GENERAL').replace('_', ' ')}</p>
-                    <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                      {isHandledByAnother && (
+                        <span className="inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800">
+                          Handled by {complaint.assignedTo?.name ?? 'another faculty'}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground leading-5">
                       <p>Assigned: {formatDateTime(getAssignedTime(complaint))}</p>
                       <p>Pending: {formatDateTime(complaint.pendingConfirmationAt)}</p>
@@ -217,7 +251,7 @@ const FacultyComplaints = () => {
                     <div onClick={(e) => e.stopPropagation()}>
                       <Select
                         size="small"
-                        disabled={!isApproved || updatingId === complaint.id || complaint.status === 'RESOLVED'}
+                        disabled={!isApproved || updatingId === complaint.id || complaint.status === 'RESOLVED' || !isCurrentlyAssignedToMe}
                         loading={updatingId === complaint.id}
                         value={complaint.status}
                         className="w-full"
@@ -263,8 +297,16 @@ const FacultyComplaints = () => {
                   <div className="flex gap-2 flex-wrap">
                     {(() => {
                       const st = STATUS_STYLES[selectedComplaint.status];
+                      const { isHandledByAnother } = getReassignmentMeta(selectedComplaint, user?.id);
                       return (
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                        <>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                          {isHandledByAnother && (
+                            <span className="rounded-full px-3 py-1 text-xs font-semibold bg-amber-100 text-amber-800">
+                              Handled by {selectedComplaint.assignedTo?.name ?? 'another faculty'}
+                            </span>
+                          )}
+                        </>
                       );
                     })()}
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Room {selectedComplaint.classroomNumber}</span>
@@ -304,7 +346,12 @@ const FacultyComplaints = () => {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Update Status</p>
                     <Select
                       size="middle"
-                      disabled={!isApproved || updatingId === selectedComplaint.id || selectedComplaint.status === 'RESOLVED'}
+                      disabled={
+                        !isApproved ||
+                        updatingId === selectedComplaint.id ||
+                        selectedComplaint.status === 'RESOLVED' ||
+                        selectedComplaint.assignedTo?.id !== user?.id
+                      }
                       loading={updatingId === selectedComplaint.id}
                       value={selectedComplaint.status}
                       className="w-full"
