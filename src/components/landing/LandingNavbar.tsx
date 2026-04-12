@@ -1,7 +1,7 @@
 import logo from '@/assets/logo.jpeg';
 import { CloseOutlined, MenuOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface LandingNavbarProps {
@@ -21,20 +21,45 @@ const NAV_LINKS = [
 const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) => {
   const navigate = useNavigate();
   const [mobileMenu, setMobileMenu] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
+  const [overDark, setOverDark] = useState(false);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setMobileMenu(false);
   };
 
+  useEffect(() => {
+    const check = () => {
+      const navEl = navRef.current as HTMLElement | null;
+      if (!navEl) return;
+      const rect = navEl.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const elems = document.elementsFromPoint(x, y);
+      const behind = elems.find((e) => !navEl.contains(e));
+      const isDark = !!(behind && (behind.classList?.contains('landing-dark-bg') || behind.closest?.('.landing-dark-bg')));
+      setOverDark(isDark);
+    };
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, [mobileMenu]);
+
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4">
+    <nav ref={navRef as any} className="fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className={`w-full max-w-5xl rounded-2xl transition-all duration-300 ${
-          scrolled || mobileMenu
+          overDark
+            ? 'bg-white shadow-lg'
+            : scrolled || mobileMenu
             ? 'bg-background/85 backdrop-blur-2xl shadow-lg shadow-black/5'
             : 'bg-background/60 backdrop-blur-md shadow-sm'
         }`}
@@ -62,7 +87,7 @@ const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) =>
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
-                className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/70 rounded-lg transition-all"
+                className={`px-3 py-1.5 text-sm font-medium hover:text-foreground hover:bg-accent/70 rounded-lg transition-all ${overDark ? 'text-foreground' : 'text-muted-foreground'}`}
               >
                 {link.label}
               </button>
@@ -75,7 +100,7 @@ const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) =>
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleTheme}
-              className="h-8 w-8 flex items-center justify-center rounded-lg bg-accent/70 text-muted-foreground hover:text-foreground transition-colors"
+              className={`h-8 w-8 flex items-center justify-center rounded-lg bg-accent/70 hover:text-foreground transition-colors ${overDark ? 'text-foreground' : 'text-muted-foreground'}`}
               aria-label="Toggle theme"
             >
               {dark ? <SunOutlined /> : <MoonOutlined />}
@@ -85,7 +110,7 @@ const LandingNavbar = ({ scrolled, dark, onToggleTheme }: LandingNavbarProps) =>
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/login')}
-              className="hidden sm:flex h-8 px-4 items-center text-sm font-medium text-foreground hover:bg-accent/70 rounded-lg transition-colors cursor-pointer"
+              className={`hidden sm:flex h-8 px-4 items-center text-sm font-medium hover:bg-accent/70 rounded-lg transition-colors cursor-pointer ${overDark ? 'text-foreground' : 'text-foreground'}`}
             >
               Login
             </motion.button>

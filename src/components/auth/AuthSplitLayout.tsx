@@ -25,7 +25,7 @@ type AuthSplitLayoutProps = {
 const brand = (
   <div className="flex items-center gap-3">
     <div className="h-11 w-11 shrink-0 rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-lg shadow-cyan-950/20 backdrop-blur-sm">
-      <img src={logo} alt="CampusCure" className="h-full w-full rounded-xl object-cover" />
+      <img src={logo} alt="CampusCure" className="h-full w-full rounded-xl object-contain" />
     </div>
     <div className="flex flex-col">
       <span className="text-xl font-semibold tracking-tight">
