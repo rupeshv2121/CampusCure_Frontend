@@ -163,6 +163,33 @@ export const getDoubtById = async (id: string): Promise<Doubt> => {
   }
 };
 
+export const moderateAnswer = async (
+  answerId: string,
+  data: {
+    approvalStatus: "APPROVED" | "REJECTED";
+    moderationNote?: string;
+  },
+) => {
+  try {
+    const response = await api.put(`/faculty/answers/${answerId}/moderate`, data);
+    return response.data;
+  } catch (e: unknown) {
+    const message =
+      e &&
+      typeof e === "object" &&
+      "response" in e &&
+      e.response &&
+      typeof e.response === "object" &&
+      "data" in e.response &&
+      e.response.data &&
+      typeof e.response.data === "object" &&
+      "error" in e.response.data
+        ? String((e.response.data as { error: string }).error)
+        : "Failed to moderate answer";
+    throw new Error(message);
+  }
+};
+
 // ========== ANSWERS ==========
 
 export const postAnswer = async (doubtId: string, content: string) => {

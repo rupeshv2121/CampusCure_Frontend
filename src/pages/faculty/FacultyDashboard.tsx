@@ -230,7 +230,7 @@ const FacultyDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {unresolvedDoubts.map((d) => (
                 <div key={d.id} className="p-4 rounded-xl border  bg-muted/5 hover:border-primary/30 transition">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <Tag color="purple" className="text-xs">{d.subject}</Tag>
                     <Tag color={d.status === 'ANSWERED' ? 'blue' : 'orange'} className="text-xs">{d.status}</Tag>
                   </div>

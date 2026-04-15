@@ -1,4 +1,4 @@
-import { deleteAnswer, editAnswer, getDoubtById, postAnswer, verifyAnswer } from '@/api/faculty';
+import { deleteAnswer, editAnswer, getDoubtById, moderateAnswer, postAnswer } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
@@ -14,7 +14,7 @@ import {
   MessageOutlined,
   SafetyOutlined
 } from '@ant-design/icons';
-import { Alert, Avatar, Button, Card, Empty, Input, message, Modal, Tag, Tooltip } from 'antd';
+import { Alert, Avatar, Button, Card, Empty, Input, message, Modal, Select, Tag, Tooltip } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -22,6 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 const { TextArea } = Input;
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
+const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const FacultyDoubtDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +35,13 @@ const FacultyDoubtDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editedAnswerText, setEditedAnswerText] = useState('');
+  const [answerModerationModalOpen, setAnswerModerationModalOpen] = useState(false);
+  const [answerModerationSubmitting, setAnswerModerationSubmitting] = useState(false);
+  const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+  const [answerModerationForm, setAnswerModerationForm] = useState({
+    approvalStatus: 'APPROVED' as 'APPROVED' | 'REJECTED',
+    moderationNote: '',
+  });
 
   useEffect(() => {
     if (id) {
@@ -79,15 +87,6 @@ const FacultyDoubtDetail = () => {
     }
   };
 
-  const handleVerifyAnswer = async (answerId: string) => {
-    try {
-      await verifyAnswer(answerId);
-      fetchDoubt();
-    } catch (error) {
-      message.error('Failed to toggle answer verification');
-    }
-  };
-
   const handleEditAnswer = async (answerId: string) => {
     if (!editedAnswerText.trim() || editedAnswerText.length < 10) {
       message.warning('Answer must be at least 10 characters long');
@@ -123,6 +122,43 @@ const FacultyDoubtDetail = () => {
     });
   };
 
+  const openAnswerModerationModal = (
+    answerId: string,
+    approvalStatus: 'APPROVED' | 'REJECTED',
+    currentNote?: string | null,
+  ) => {
+    setSelectedAnswerId(answerId);
+    setAnswerModerationForm({
+      approvalStatus,
+      moderationNote: currentNote || '',
+    });
+    setAnswerModerationModalOpen(true);
+  };
+
+  const handleModerateAnswer = async () => {
+    if (!selectedAnswerId) return;
+
+    try {
+      setAnswerModerationSubmitting(true);
+      await moderateAnswer(selectedAnswerId, {
+        approvalStatus: answerModerationForm.approvalStatus,
+        moderationNote: answerModerationForm.moderationNote.trim() || undefined,
+      });
+      message.success(
+        answerModerationForm.approvalStatus === 'APPROVED'
+          ? 'Answer approved successfully'
+          : 'Answer rejected successfully',
+      );
+      setAnswerModerationModalOpen(false);
+      setSelectedAnswerId(null);
+      fetchDoubt();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Failed to moderate answer');
+    } finally {
+      setAnswerModerationSubmitting(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -147,6 +183,7 @@ const FacultyDoubtDetail = () => {
               <div className="flex gap-2">
                 <Skeleton className="h-6 w-16 rounded-full" />
                 <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
               </div>
             </div>
           </Card>
@@ -177,6 +214,7 @@ const FacultyDoubtDetail = () => {
     if (a.isVerified !== b.isVerified) return a.isVerified ? -1 : 1;
     return b.upvotes - a.upvotes;
   });
+  const canPostAnswer = isApproved;
 
   return (
     <PageTransition>
@@ -188,7 +226,9 @@ const FacultyDoubtDetail = () => {
         <Card className="rounded-2xl">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
             <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
-            <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+            <div className="flex flex-wrap gap-2">
+              <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+            </div>
           </div>
 
           <p className="text-foreground whitespace-pre-wrap mb-4">{doubt.description}</p>
@@ -280,32 +320,82 @@ const FacultyDoubtDetail = () => {
                             {answer.isVerified && (
                               <Tag color="blue" icon={<SafetyOutlined />}>Verified</Tag>
                             )}
+                            {answer.approvalStatus !== 'APPROVED' && (
+                              <Tag color={approvalColors[answer.approvalStatus] || 'gold'}>
+                                {answer.approvalStatus === 'PENDING' ? 'Pending Review' : 'Rejected'}
+                              </Tag>
+                            )}
+                            {answer.moderatedBy && (
+                              <span>
+                                Moderated by {answer.moderatedBy.name || answer.moderatedBy.username}
+                                {answer.moderatedAt ? ` · ${formatDate(answer.moderatedAt)}` : ''}
+                              </span>
+                            )}
                           </div>
-                          {isMyAnswer && (
                             <div className="flex flex-wrap items-center gap-2">
-                              <Button
-                                icon={<EditOutlined />}
-                                size="small"
-                                disabled={!isApproved}
-                                onClick={() => {
-                                  setEditingAnswerId(answer.id);
-                                  setEditedAnswerText(answer.content);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                icon={<DeleteOutlined />}
-                                size="small"
-                                danger
-                                disabled={!isApproved}
-                                onClick={() => handleDeleteAnswer(answer.id)}
-                              >
-                                Delete
-                              </Button>
+                              {answer.answeredBy.role !== 'FACULTY' && answer.approvalStatus === 'PENDING' && (
+                                <>
+                                  <Button size="small" type="primary" onClick={() => openAnswerModerationModal(answer.id, 'APPROVED', answer.moderationNote)}>
+                                    Approve
+                                  </Button>
+                                  <Button size="small" danger onClick={() => openAnswerModerationModal(answer.id, 'REJECTED', answer.moderationNote)}>
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              {answer.answeredBy.role !== 'FACULTY' &&
+                                answer.approvalStatus !== 'PENDING' &&
+                                answer.moderatedBy?.id === user?.id && (
+                                <Button
+                                  size="small"
+                                  onClick={() =>
+                                    openAnswerModerationModal(
+                                      answer.id,
+                                      answer.approvalStatus as 'APPROVED' | 'REJECTED',
+                                      answer.moderationNote,
+                                    )
+                                  }
+                                >
+                                  Update Moderation
+                                </Button>
+                              )}
+                              {isMyAnswer && (
+                                <>
+                                  <Button
+                                    icon={<EditOutlined />}
+                                    size="small"
+                                    disabled={!isApproved}
+                                    onClick={() => {
+                                      setEditingAnswerId(answer.id);
+                                      setEditedAnswerText(answer.content);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    danger
+                                    disabled={!isApproved}
+                                    onClick={() => handleDeleteAnswer(answer.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                </>
+                              )}
                             </div>
-                          )}
                         </div>
+                        {answer.moderationNote && (
+                          <div
+                            className={`mt-2 rounded-lg px-3 py-2 text-xs ${
+                              answer.approvalStatus === 'REJECTED'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-blue-50 text-blue-800'
+                            }`}
+                          >
+                            <span className="font-medium">Moderation Note:</span> {answer.moderationNote}
+                          </div>
+                        )}
                       </div>
                     )}
                   </Card>
@@ -334,15 +424,62 @@ const FacultyDoubtDetail = () => {
             placeholder="Write your answer here (minimum 10 characters)..."
             maxLength={2000}
             showCount
-            disabled={!isApproved}
+            disabled={!canPostAnswer}
             className='mt-4'
           />
           <div className="mt-3">
-            <Button onClick={handlePostAnswer} loading={submitting} disabled={answerText.length < 10 || !isApproved}>
+            <Button onClick={handlePostAnswer} loading={submitting} disabled={answerText.length < 10 || !canPostAnswer}>
               Post Answer
             </Button>
           </div>
         </Card>
+
+        <Modal
+          open={answerModerationModalOpen}
+          onCancel={() => {
+            setAnswerModerationModalOpen(false);
+            setSelectedAnswerId(null);
+          }}
+          title="Update Answer Moderation"
+          onOk={handleModerateAnswer}
+          okText="Update"
+          okButtonProps={{ danger: answerModerationForm.approvalStatus === 'REJECTED' }}
+          confirmLoading={answerModerationSubmitting}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Decision</label>
+              <Select
+                className="w-full"
+                value={answerModerationForm.approvalStatus}
+                options={[
+                  { label: 'Approve', value: 'APPROVED' },
+                  { label: 'Reject', value: 'REJECTED' },
+                ]}
+                onChange={(value) =>
+                  setAnswerModerationForm((prev) => ({
+                    ...prev,
+                    approvalStatus: value as 'APPROVED' | 'REJECTED',
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Moderation Note</label>
+              <TextArea
+                rows={3}
+                value={answerModerationForm.moderationNote}
+                onChange={(e) =>
+                  setAnswerModerationForm((prev) => ({
+                    ...prev,
+                    moderationNote: e.target.value,
+                  }))
+                }
+                placeholder="Optional note for the answer author"
+              />
+            </div>
+          </div>
+        </Modal>
       </div>
     </PageTransition>
   );

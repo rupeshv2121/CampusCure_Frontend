@@ -1,4 +1,4 @@
-import { deleteDoubt, editDoubt, getDoubtById, markAnswerAsAccepted, upvoteAnswer } from '@/api/student';
+import { deleteAnswer as deleteStudentAnswer, deleteDoubt, editAnswer as editStudentAnswer, editDoubt, getDoubtById, markAnswerAsAccepted, postAnswer, upvoteAnswer } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +21,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 const { TextArea } = Input;
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
+const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const DoubtDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,11 @@ const DoubtDetail = () => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedDoubt, setEditedDoubt] = useState({ title: '', description: '' });
+  const [answerText, setAnswerText] = useState('');
+  const [answerSubmitting, setAnswerSubmitting] = useState(false);
+  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
+  const [editedAnswerText, setEditedAnswerText] = useState('');
+  const [savingAnswerId, setSavingAnswerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -69,6 +75,64 @@ const DoubtDetail = () => {
     } catch (error) {
       message.error('Failed to toggle answer acceptance');
     }
+  };
+
+  const handlePostAnswer = async () => {
+    if (!id) return;
+    if (!answerText.trim() || answerText.trim().length < 10) {
+      message.warning('Answer must be at least 10 characters long');
+      return;
+    }
+
+    try {
+      setAnswerSubmitting(true);
+      await postAnswer(id, answerText.trim());
+      message.success('Answer submitted for faculty review');
+      setAnswerText('');
+      fetchDoubt();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Failed to submit answer');
+    } finally {
+      setAnswerSubmitting(false);
+    }
+  };
+
+  const handleEditMyAnswer = async (answerId: string) => {
+    if (!editedAnswerText.trim() || editedAnswerText.trim().length < 10) {
+      message.warning('Answer must be at least 10 characters long');
+      return;
+    }
+
+    try {
+      setSavingAnswerId(answerId);
+      await editStudentAnswer(answerId, editedAnswerText.trim());
+      message.success('Answer updated successfully');
+      setEditingAnswerId(null);
+      setEditedAnswerText('');
+      fetchDoubt();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Failed to update answer');
+    } finally {
+      setSavingAnswerId(null);
+    }
+  };
+
+  const handleDeleteMyAnswer = async (answerId: string) => {
+    Modal.confirm({
+      title: 'Delete Answer',
+      content: 'Are you sure you want to delete this answer?',
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          await deleteStudentAnswer(answerId);
+          message.success('Answer deleted successfully');
+          fetchDoubt();
+        } catch (error) {
+          message.error(error instanceof Error ? error.message : 'Failed to delete answer');
+        }
+      },
+    });
   };
 
   const handleEditDoubt = async () => {
@@ -123,6 +187,7 @@ const DoubtDetail = () => {
   };
 
   const isDoubtOwner = doubt && user && doubt.postedBy.id === user.id;
+  const canPostAnswer = Boolean(user?.approvalStatus === 'APPROVED');
 
   if (loading) {
     return (
@@ -243,6 +308,17 @@ const DoubtDetail = () => {
             <Empty description="No faculty answers yet" />
           ) : (
             sortedAnswers.map((answer, i) => {
+              const isMyAnswer = Boolean(user && answer.answeredBy.id === user.id);
+              const canEditMyPendingAnswer = isMyAnswer && answer.approvalStatus === 'PENDING';
+              const canDeleteMyPendingAnswer = isMyAnswer && answer.approvalStatus === 'PENDING';
+              const showRejectedNoteToOwner =
+                answer.approvalStatus === 'REJECTED' &&
+                isMyAnswer &&
+                Boolean(answer.moderationNote);
+              const showApprovedNoteToEveryone =
+                answer.approvalStatus === 'APPROVED' &&
+                Boolean(answer.moderationNote);
+
               return (
                 <motion.div
                   key={answer.id}
@@ -251,62 +327,157 @@ const DoubtDetail = () => {
                   transition={{ delay: i * 0.05 }}
                 >
                   <Card className={`rounded-xl ${answer.isAccepted ? 'border-green-500 border-2' : ''}`}>
-                    <div className="flex flex-col gap-2.5">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
-                        <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
-                        <Tooltip title="Upvote this answer">
-                          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                            <Button
-                              icon={<LikeOutlined />}
-                              type={answer.isUpvotedByUser ? 'primary' : 'default'}
-                              onClick={() => handleUpvote(answer.id)}
-                              size="small"
-                            />
-                            <span className="text-base font-semibold">{answer.upvotes}</span>
-                          </div>
-                        </Tooltip>
-                      </div>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
-                          <Avatar size="small">{(answer.answeredBy.name || answer.answeredBy.username || 'U')[0]}</Avatar>
-                          <span className="font-medium wrap-break-word">
-                            {answer.answeredBy.name || answer.answeredBy.username}
-                            {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
-                          </span>
-                          <span>{formatDate(answer.createdAt)}</span>
-                          {answer.editHistory && answer.editHistory.length > 0 && (
-                            <Tooltip title={`Edited ${answer.editHistory.length} time(s)`}>
-                              <HistoryOutlined className="text-orange-500" />
-                            </Tooltip>
-                          )}
-                          {answer.isVerified && (
-                            <Tag color="blue">Verified</Tag>
-                          )}
+                    {editingAnswerId === answer.id ? (
+                      <div className="space-y-4">
+                        <TextArea
+                          value={editedAnswerText}
+                          onChange={(e) => setEditedAnswerText(e.target.value)}
+                          rows={5}
+                          placeholder="Update your answer"
+                          maxLength={2000}
+                          showCount
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="primary"
+                            loading={savingAnswerId === answer.id}
+                            onClick={() => handleEditMyAnswer(answer.id)}
+                          >
+                            Save Changes
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setEditingAnswerId(null);
+                              setEditedAnswerText('');
+                            }}
+                          >
+                            Cancel
+                          </Button>
                         </div>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          {isDoubtOwner && (
-                            <Tooltip title={answer.isAccepted ? "Unaccept this answer" : "Mark as accepted answer"}>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
+                          <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
+                          <Tooltip title="Upvote this answer">
+                            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                               <Button
-                                icon={<CheckCircleOutlined />}
-                                type={answer.isAccepted ? 'primary' : 'default'}
-                                onClick={() => handleAcceptAnswer(answer.id)}
+                                icon={<LikeOutlined />}
+                                type={answer.isUpvotedByUser ? 'primary' : 'default'}
+                                onClick={() => handleUpvote(answer.id)}
                                 size="small"
                               />
-                            </Tooltip>
-                          )}
-                          {answer.isAccepted && (
-                            <Tag color="green" icon={<CheckCircleOutlined />}>Accepted</Tag>
-                          )}
+                              <span className="text-base font-semibold">{answer.upvotes}</span>
+                            </div>
+                          </Tooltip>
                         </div>
-
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
+                            <Avatar size="small">{(answer.answeredBy.name || answer.answeredBy.username || 'U')[0]}</Avatar>
+                            <span className="font-medium wrap-break-word">
+                              {answer.answeredBy.name || answer.answeredBy.username}
+                              &nbsp;&nbsp;&nbsp;
+                              {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
+                            </span>
+                            <span>{formatDate(answer.createdAt)}</span>
+                            {answer.editHistory && answer.editHistory.length > 0 && (
+                              <Tooltip title={`Edited ${answer.editHistory.length} time(s)`}>
+                                <HistoryOutlined className="text-orange-500" />
+                              </Tooltip>
+                            )}
+                            {answer.isVerified && (
+                              <Tag color="blue">Verified</Tag>
+                            )}
+                            {answer.approvalStatus !== 'APPROVED' && (
+                              <Tag color={approvalColors[answer.approvalStatus] || 'gold'}>
+                                {answer.approvalStatus === 'PENDING' ? 'Pending Review' : 'Rejected'}
+                              </Tag>
+                            )}
+                            {answer.moderatedBy && (
+                              <span>
+                                Moderated by {answer.moderatedBy.name || answer.moderatedBy.username}
+                                {answer.moderatedAt ? ` · ${formatDate(answer.moderatedAt)}` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            {canEditMyPendingAnswer && (
+                              <Button
+                                icon={<EditOutlined />}
+                                size="small"
+                                onClick={() => {
+                                  setEditingAnswerId(answer.id);
+                                  setEditedAnswerText(answer.content);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {canDeleteMyPendingAnswer && (
+                              <Button
+                                icon={<DeleteOutlined />}
+                                size="small"
+                                danger
+                                onClick={() => handleDeleteMyAnswer(answer.id)}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                            {isDoubtOwner && (
+                              <Tooltip title={answer.isAccepted ? "Unaccept this answer" : "Mark as accepted answer"}>
+                                <Button
+                                  icon={<CheckCircleOutlined />}
+                                  type={answer.isAccepted ? 'primary' : 'default'}
+                                  onClick={() => handleAcceptAnswer(answer.id)}
+                                  size="small"
+                                />
+                              </Tooltip>
+                            )}
+                            {answer.isAccepted && (
+                              <Tag color="green" icon={<CheckCircleOutlined />}>Accepted</Tag>
+                            )}
+                          </div>
+                        </div>
+                        {showApprovedNoteToEveryone && (
+                          <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                            <span className="font-medium">Faculty Note:</span> {answer.moderationNote}
+                          </div>
+                        )}
+                        {showRejectedNoteToOwner && (
+                          <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                            <span className="font-medium">Faculty Note:</span> {answer.moderationNote}
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )}
                   </Card>
                 </motion.div>
               );
             })
           )}
         </div>
+
+        {canPostAnswer && (
+          <Card className="rounded-2xl">
+            <h3 className="text-lg font-semibold mb-3">Your Answer</h3>
+            <TextArea
+              rows={6}
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              placeholder="Write your answer here (minimum 10 characters)..."
+              maxLength={2000}
+              showCount
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={answerText.trim().length < 10}>
+                Submit for Review
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Faculty will review this answer before it becomes public.
+              </span>
+            </div>
+          </Card>
+        )}
 
       </div>
     </PageTransition>

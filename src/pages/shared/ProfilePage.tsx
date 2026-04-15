@@ -289,7 +289,7 @@ const ProfilePage = () => {
                     {user.approvalStatus}
                   </Tag>
                 </div>
-                <p className="mt-0.5 break-all text-sm text-muted-foreground">{user.email}</p>
+                <p className="mt-0.5 break-all text-sm text-muted-foreground">Email: {user.email}</p>
                 <p className="mt-0.5 break-all text-xs text-muted-foreground">
                   Username: <span className="font-mono font-medium text-foreground">{user.username}</span>
                 </p>
@@ -539,7 +539,7 @@ const ProfilePage = () => {
         </motion.div>
 
         {/* Stats Card */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -553,7 +553,7 @@ const ProfilePage = () => {
               Your activity statistics will appear here once you start using the platform
             </p>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </PageTransition>
   );

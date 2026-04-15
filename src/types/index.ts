@@ -130,6 +130,7 @@ export interface Doubt {
     id: string;
     name: string;
     username: string;
+    role?: UserRole;
     studentProfile?: {
       semester: number;
       branch: string;
@@ -168,6 +169,19 @@ export interface Answer {
       branch: string;
     };
   };
+  approvalStatus: ApprovalStatus;
+  moderatedBy?: {
+    id: string;
+    name: string;
+    username: string;
+    role: UserRole;
+    facultyProfile?: {
+      department: string;
+      subjects: string[];
+    };
+  } | null;
+  moderatedAt?: string | null;
+  moderationNote?: string | null;
   upvotes: number;
   isVerified: boolean;
   isAccepted: boolean;
