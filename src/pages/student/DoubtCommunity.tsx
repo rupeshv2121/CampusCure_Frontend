@@ -1,4 +1,4 @@
-import { getDoubts, getStudentPostingSettings, postDoubt } from '@/api/student';
+import { getDoubts, getSimilarDoubtSuggestions, getStudentPostingSettings, postDoubt, SimilarDoubtSuggestion } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
@@ -38,6 +38,7 @@ const DoubtCommunity = () => {
   const [submitting, setSubmitting] = useState(false);
   const [doubtSubjects, setDoubtSubjects] = useState<string[]>(fallbackDoubtSubjects);
   const [subjectsLoading, setSubjectsLoading] = useState(true);
+  const [similarDoubts, setSimilarDoubts] = useState<SimilarDoubtSuggestion[]>([]);
 
   useEffect(() => {
     fetchDoubts();
@@ -60,6 +61,46 @@ const DoubtCommunity = () => {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
+
+  useEffect(() => {
+    if (!askModal) {
+      setSimilarDoubts([]);
+      return;
+    }
+
+    const query = `${newDoubt.title} ${newDoubt.description}`.trim();
+    if (query.length < 8) {
+      setSimilarDoubts([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const semesterValue = Number(newDoubt.semester);
+        const suggestions = await getSimilarDoubtSuggestions({
+          query,
+          subject: newDoubt.subject || undefined,
+          semester: Number.isInteger(semesterValue) && semesterValue > 0 ? semesterValue : undefined,
+          limit: 5,
+        });
+
+        if (!cancelled) {
+          setSimilarDoubts(suggestions);
+        }
+      } catch {
+        if (!cancelled) {
+          setSimilarDoubts([]);
+        }
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [askModal, newDoubt.title, newDoubt.description, newDoubt.subject, newDoubt.semester]);
 
   const fetchPostingSettings = async () => {
     try {
@@ -122,6 +163,7 @@ const DoubtCommunity = () => {
       });
       message.success('Your doubt has been posted!');
       setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: '' });
+      setSimilarDoubts([]);
       setFormErrors({});
       setAskModal(false);
       fetchDoubts(); // Refresh the list
@@ -236,8 +278,23 @@ const DoubtCommunity = () => {
           </div>
         )}
 
-        <Modal open={askModal} onCancel={() => { setAskModal(false); setFormErrors({}); }} title="Ask a Doubt" onOk={handleAsk} okText="Post Doubt" confirmLoading={submitting} okButtonProps={{ disabled: !isApproved }}>
-          <div className="space-y-4">
+        <Modal
+          open={askModal}
+          onCancel={() => {
+            setAskModal(false);
+            setFormErrors({});
+          }}
+          title="Ask a Doubt"
+          onOk={handleAsk}
+          okText="Post Doubt"
+          confirmLoading={submitting}
+          okButtonProps={{ disabled: !isApproved, className: 'min-w-28' }}
+          cancelButtonProps={{ className: 'min-w-24' }}
+          centered
+          width="min(94vw, 760px)"
+          styles={{ body: { overflow: 'hidden' } }}
+        >
+          <div className="ask-doubt-scroll-area max-h-[70vh] overflow-y-auto pr-1 sm:pr-2 space-y-4 sm:space-y-5">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Title *</label>
               <Input placeholder="What's your question? (min 10 chars)" value={newDoubt.title} onChange={(e) => updateField('title', e.target.value)} status={formErrors.title ? 'error' : undefined} maxLength={200} />
@@ -248,6 +305,36 @@ const DoubtCommunity = () => {
               <TextArea rows={4} placeholder="Provide more details (min 20 chars)..." value={newDoubt.description} onChange={(e) => updateField('description', e.target.value)} status={formErrors.description ? 'error' : undefined} maxLength={2000} showCount />
               {formErrors.description && <p className="text-xs text-destructive mt-1">{formErrors.description}</p>}
             </div>
+            {similarDoubts.length > 0 && (
+              <div className="rounded-lg border border-dashed border-blue-300/70 bg-blue-50/40 p-3 sm:p-4 mt-8">
+                <p className="text-xs font-semibold text-blue-700">Similar doubts found</p>
+                <div className="mt-2 space-y-2">
+                  {similarDoubts.map((suggestion) => (
+                    <div key={suggestion.id} className="rounded-md border bg-background p-2.5 sm:p-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground line-clamp-2">{suggestion.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {suggestion.subject} • Sem {suggestion.semester} • {suggestion.answerCount} answers • {suggestion.views} views
+                          </p>
+                        </div>
+                        <Button
+                          size="small"
+                          type="link"
+                          className="self-start px-0 sm:px-2"
+                          onClick={() => {
+                            setAskModal(false);
+                            navigate(`/student/doubts/${suggestion.id}`);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">Subject *</label>

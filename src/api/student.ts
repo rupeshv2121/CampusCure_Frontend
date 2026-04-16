@@ -6,6 +6,17 @@ export interface StudentPostingSettings {
   doubtSubjects: string[];
 }
 
+export interface SimilarDoubtSuggestion {
+  id: string;
+  title: string;
+  subject: string;
+  semester: number;
+  views: number;
+  answerCount: number;
+  createdAt: string;
+  matchedKeywords: string[];
+}
+
 export const getStudentProfile = async () => {
   try {
     const response = await api.get("/students/me");
@@ -207,6 +218,40 @@ export const getDoubts = async (filters?: {
       "error" in e.response.data
         ? String((e.response.data as { error: string }).error)
         : "Failed to fetch doubts";
+    throw new Error(message);
+  }
+};
+
+export const getSimilarDoubtSuggestions = async (filters: {
+  query: string;
+  subject?: string;
+  semester?: number;
+  limit?: number;
+}): Promise<SimilarDoubtSuggestion[]> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("query", filters.query);
+    if (filters.subject) params.append("subject", filters.subject);
+    if (filters.semester) params.append("semester", String(filters.semester));
+    if (filters.limit) params.append("limit", String(filters.limit));
+
+    const response = await api.get(
+      `/students/doubts/suggestions?${params.toString()}`,
+    );
+    return response.data.suggestions;
+  } catch (e: unknown) {
+    const message =
+      e &&
+      typeof e === "object" &&
+      "response" in e &&
+      e.response &&
+      typeof e.response === "object" &&
+      "data" in e.response &&
+      e.response.data &&
+      typeof e.response.data === "object" &&
+      "error" in e.response.data
+        ? String((e.response.data as { error: string }).error)
+        : "Failed to fetch similar doubts";
     throw new Error(message);
   }
 };

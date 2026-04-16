@@ -449,3 +449,55 @@
   color: white;
   box-shadow: 0 14px 24px hsl(196 88% 32% / 0.22);
 }
+
+/* Ask doubt modal custom scrollbar */
+.ask-doubt-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(214 85% 56% / 0.75) hsl(218 25% 92% / 0.65);
+}
+
+.ask-doubt-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ask-doubt-scroll-area::-webkit-scrollbar-track {
+  border-radius: 9999px;
+  background: hsl(218 25% 92% / 0.65);
+}
+
+.ask-doubt-scroll-area::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #5aa0ff 0%, #2f76ff 100%);
+  border: 1px solid hsl(0 0% 100% / 0.45);
+}
+
+.ask-doubt-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3f91ff 0%, #1f66f1 100%);
+}
+
+@media (min-width: 1024px) {
+  .ask-doubt-scroll-area::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .ask-doubt-scroll-area::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 0 1px hsl(214 32% 86% / 0.7);
+  }
+
+  .ask-doubt-scroll-area::-webkit-scrollbar-thumb {
+    box-shadow: 0 2px 8px hsl(217 88% 52% / 0.28);
+  }
+}
+
+.dark .ask-doubt-scroll-area {
+  scrollbar-color: hsl(214 86% 63% / 0.85) hsl(220 10% 24% / 0.75);
+}
+
+.dark .ask-doubt-scroll-area::-webkit-scrollbar-track {
+  background: hsl(220 10% 24% / 0.75);
+}
+
+.dark .ask-doubt-scroll-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #67adff 0%, #4585ff 100%);
+  border-color: hsl(220 15% 16% / 0.6);
+}
