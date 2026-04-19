@@ -1,5 +1,5 @@
 import { api } from '@/api/auth';
-import { getMyComplaints } from '@/api/student';
+import { getMyComplaints, submitComplaintFeedback } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Complaint, ComplaintStatus } from '@/types';
@@ -34,6 +34,8 @@ const MyComplaints = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionInput, setShowRejectionInput] = useState(false);
+  const [feedbackRatingInput, setFeedbackRatingInput] = useState<number>(0);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   const filtered = complaints.filter((c) => {
     const matchStatus = !statusFilter || c.status === statusFilter;
@@ -55,6 +57,10 @@ const MyComplaints = () => {
     };
     fetchComplaints();
   }, []);
+
+  useEffect(() => {
+    setFeedbackRatingInput(0);
+  }, [selected?.id]);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -110,6 +116,41 @@ const MyComplaints = () => {
       alert(errorMsg);
     } finally {
       setConfirmLoading(false);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!selected) return;
+
+    if (selected.status !== 'RESOLVED') {
+      alert('Feedback can only be submitted after complaint is resolved');
+      return;
+    }
+
+    if (feedbackRatingInput < 1 || feedbackRatingInput > 5) {
+      alert('Please select a rating between 1 and 5');
+      return;
+    }
+
+    try {
+      setFeedbackSubmitting(true);
+      await submitComplaintFeedback(selected.id, feedbackRatingInput);
+
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c.id === selected.id ? { ...c, feedbackRating: feedbackRatingInput } : c,
+        ),
+      );
+      setSelected((prev) =>
+        prev ? { ...prev, feedbackRating: feedbackRatingInput } : prev,
+      );
+      setFeedbackRatingInput(0);
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : 'Failed to submit feedback';
+      alert(errorMsg);
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -388,6 +429,33 @@ const MyComplaints = () => {
                           <span key={star} className={`text-xl ${star <= selected.feedbackRating! ? 'text-yellow-400' : 'text-muted-foreground/20'}`}>★</span>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {selected.status === 'RESOLVED' && !selected.feedbackRating && (
+                    <div className="rounded-xl border p-4 space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rate Resolution</p>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setFeedbackRatingInput(star)}
+                            className={`text-2xl leading-none cursor-pointer transition-colors ${star <= feedbackRatingInput ? 'text-yellow-400' : 'text-muted-foreground/30 hover:text-yellow-300'}`}
+                            aria-label={`Rate ${star} stars`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSubmitFeedback}
+                        disabled={feedbackSubmitting || feedbackRatingInput === 0}
+                        className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                      </button>
                     </div>
                   )}
                 </div>

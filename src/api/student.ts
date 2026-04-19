@@ -67,26 +67,27 @@ export const updateStudentProfile = async (data: {
   }
 };
 
-export const getStudentPostingSettings = async (): Promise<StudentPostingSettings> => {
-  try {
-    const response = await api.get("/students/settings/posting");
-    return response.data.settings;
-  } catch (e: unknown) {
-    const message =
-      e &&
-      typeof e === "object" &&
-      "response" in e &&
-      e.response &&
-      typeof e.response === "object" &&
-      "data" in e.response &&
-      e.response.data &&
-      typeof e.response.data === "object" &&
-      "error" in e.response.data
-        ? String((e.response.data as { error: string }).error)
-        : "Failed to fetch posting settings";
-    throw new Error(message);
-  }
-};
+export const getStudentPostingSettings =
+  async (): Promise<StudentPostingSettings> => {
+    try {
+      const response = await api.get("/students/settings/posting");
+      return response.data.settings;
+    } catch (e: unknown) {
+      const message =
+        e &&
+        typeof e === "object" &&
+        "response" in e &&
+        e.response &&
+        typeof e.response === "object" &&
+        "data" in e.response &&
+        e.response.data &&
+        typeof e.response.data === "object" &&
+        "error" in e.response.data
+          ? String((e.response.data as { error: string }).error)
+          : "Failed to fetch posting settings";
+      throw new Error(message);
+    }
+  };
 
 // ========== COMPLAINTS ==========
 
@@ -157,6 +158,35 @@ export const getMyComplaints = async () => {
       "error" in e.response.data
         ? String((e.response.data as { error: string }).error)
         : "Failed to fetch complaints";
+    throw new Error(message);
+  }
+};
+
+export const submitComplaintFeedback = async (
+  complaintId: string,
+  feedbackRating: number,
+) => {
+  try {
+    const response = await api.post(
+      `/students/complaints/${complaintId}/feedback`,
+      {
+        feedbackRating,
+      },
+    );
+    return response.data;
+  } catch (e: unknown) {
+    const message =
+      e &&
+      typeof e === "object" &&
+      "response" in e &&
+      e.response &&
+      typeof e.response === "object" &&
+      "data" in e.response &&
+      e.response.data &&
+      typeof e.response.data === "object" &&
+      "error" in e.response.data
+        ? String((e.response.data as { error: string }).error)
+        : "Failed to submit feedback";
     throw new Error(message);
   }
 };
