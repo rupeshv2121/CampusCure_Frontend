@@ -522,6 +522,27 @@ export const upvoteAnswer = async (answerId: string) => {
   }
 };
 
+export const upvoteDoubt = async (doubtId: string) => {
+  try {
+    const response = await api.post(`/students/doubts/${doubtId}/upvote`);
+    return response.data;
+  } catch (e: unknown) {
+    const message =
+      e &&
+      typeof e === "object" &&
+      "response" in e &&
+      e.response &&
+      typeof e.response === "object" &&
+      "data" in e.response &&
+      e.response.data &&
+      typeof e.response.data === "object" &&
+      "error" in e.response.data
+        ? String((e.response.data as { error: string }).error)
+        : "Failed to upvote doubt";
+    throw new Error(message);
+  }
+};
+
 export const markAnswerAsAccepted = async (
   doubtId: string,
   answerId: string,

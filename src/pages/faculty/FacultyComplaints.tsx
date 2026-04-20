@@ -1,5 +1,6 @@
 import { assignedComplaints, updateComplaintStatus } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
+import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -191,7 +192,9 @@ const FacultyComplaints = () => {
 
                       <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
                         <p><span className="font-medium">Assigned:</span> {formatDateTime(getAssignedTime(complaint))}</p>
-                        <p><span className="font-medium">Pending Confirmation:</span> {formatDateTime(complaint.pendingConfirmationAt)}</p>
+                        {complaint.pendingConfirmationAt && (
+                          <p><span className="font-medium">Pending Confirmation:</span> {formatDateTime(complaint.pendingConfirmationAt)}</p>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-2">
@@ -330,15 +333,14 @@ const FacultyComplaints = () => {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Timeline</p>
                     <p className="text-xs text-muted-foreground">Created: {formatDateTime(selectedComplaint.createdAt)}</p>
                     <p className="text-xs text-muted-foreground">Assigned: {formatDateTime(getAssignedTime(selectedComplaint))}</p>
-                    <p className="text-xs text-muted-foreground">Pending Confirmation: {formatDateTime(selectedComplaint.pendingConfirmationAt)}</p>
+                    {selectedComplaint.pendingConfirmationAt && (
+                      <p className="text-xs text-muted-foreground">Pending Confirmation: {formatDateTime(selectedComplaint.pendingConfirmationAt)}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">Last Updated: {formatDateTime(selectedComplaint.updatedAt)}</p>
                   </div>
 
                   {selectedComplaint.resolutionNote && (
-                    <div className="rounded-xl border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-200/30 p-4">
-                      <p className="text-xs font-semibold text-green-700 dark:text-green-800 uppercase tracking-wide mb-1">Resolution Note</p>
-                      <p className="text-sm text-foreground">{selectedComplaint.resolutionNote}</p>
-                    </div>
+                    <ResolutionNoteBlock note={selectedComplaint.resolutionNote} title="Resolution Note" variant="success" />
                   )}
 
                   <div className="pt-2">

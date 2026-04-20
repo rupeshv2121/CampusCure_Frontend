@@ -2,7 +2,7 @@ import { assignedComplaints as getAssignedComplaints, getDoubts } from '@/api/fa
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import { Complaint, Doubt } from '@/types';
-import { ArrowRightOutlined, BookOutlined, CheckCircleOutlined, ClockCircleOutlined, FileTextOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, BookOutlined, CheckCircleOutlined, ClockCircleOutlined, FileTextOutlined, LikeOutlined, MessageOutlined, QuestionCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Progress, Tag, Spin, message } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -235,9 +235,16 @@ const FacultyDashboard = () => {
                     <Tag color={d.status === 'ANSWERED' ? 'blue' : 'orange'} className="text-xs">{d.status}</Tag>
                   </div>
                   <p className="text-sm font-medium text-foreground line-clamp-2">{d.title}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span>💬 {d.answerCount}</span>
-                    <span>👁 {d.views}</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+                      <LikeOutlined /> {d.upVoteCount}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 font-semibold text-sky-800">
+                      <MessageOutlined /> {d.answerCount}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                      <EyeOutlined /> {d.views}
+                    </span>
                   </div>
                 </div>
               ))}

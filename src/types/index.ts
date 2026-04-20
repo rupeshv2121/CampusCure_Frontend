@@ -144,6 +144,7 @@ export interface Doubt {
   upVoteCount: number;
   answerCount: number;
   views: number;
+  isUpvotedByUser?: boolean;
   acceptedAnswerId?: string | null;
   edited: boolean;
   editHistory?: { title?: string; description?: string; editedAt: string }[];

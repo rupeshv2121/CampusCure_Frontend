@@ -1,5 +1,6 @@
 import { getApprovedFaculty, getEscalatedComplaints, reassignEscalatedComplaint } from '@/api/admin';
 import PageTransition from '@/components/animated/PageTransition';
+import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Complaint, ComplaintStatus, User } from '@/types';
 import {
@@ -340,10 +341,7 @@ const SuperAdminComplaints = () => {
 
                   {/* Resolution note from previous attempt */}
                   {selected.resolutionNote && (
-                    <div className="rounded-xl border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-300/20 p-4">
-                      <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-800 uppercase tracking-wide mb-1">Previous Resolution Attempt</p>
-                      <p className="text-sm text-foreground">{selected.resolutionNote}</p>
-                    </div>
+                    <ResolutionNoteBlock note={selected.resolutionNote} title="Previous Resolution Attempt" variant="warning" />
                   )}
 
                   <p className="text-xs text-muted-foreground">Created: {new Date(selected.createdAt).toLocaleDateString()}</p>

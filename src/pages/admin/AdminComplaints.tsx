@@ -1,5 +1,6 @@
 import { assignComplaint, getAllComplaints, getApprovedFaculty, updateComplaintStatus } from '@/api/admin';
 import PageTransition from '@/components/animated/PageTransition';
+import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Complaint, ComplaintStatus, User } from '@/types';
 import {
@@ -372,10 +373,7 @@ const AdminComplaints = () => {
 
                   {/* Resolution note */}
                   {selected.resolutionNote && (
-                    <div className="rounded-xl border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-200/30 p-4">
-                      <p className="text-xs font-semibold text-green-700 dark:text-green-800 uppercase tracking-wide mb-1">Resolution Note</p>
-                      <p className="text-sm text-foreground">{selected.resolutionNote}</p>
-                    </div>
+                    <ResolutionNoteBlock note={selected.resolutionNote} title="Resolution Note" variant="success" />
                   )}
 
                   <p className="text-xs text-muted-foreground">Created: {new Date(selected.createdAt).toLocaleDateString()}</p>

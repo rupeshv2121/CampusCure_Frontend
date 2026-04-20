@@ -1,6 +1,7 @@
 import { api } from '@/api/auth';
 import { getMyComplaints, submitComplaintFeedback } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Complaint, ComplaintStatus } from '@/types';
 import { CloseOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
@@ -379,10 +380,7 @@ const MyComplaints = () => {
                   )}
 
                   {selected.resolutionNote && (
-                    <div className="rounded-xl bg-green-50 dark:bg-green-90/30 border border-green-200 dark:border-green-900 p-4">
-                      <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider mb-2">Resolution Note</p>
-                      <p className="text-sm text-green-800 dark:text-green-700 leading-relaxed">{selected.resolutionNote}</p>
-                    </div>
+                    <ResolutionNoteBlock note={selected.resolutionNote} title="Resolution Note" variant="success" />
                   )}
 
                   {selected.status === 'PENDING_CONFIRMATION' && (

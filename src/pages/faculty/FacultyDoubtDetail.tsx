@@ -1,4 +1,4 @@
-import { deleteAnswer, editAnswer, getDoubtById, moderateAnswer, postAnswer } from '@/api/faculty';
+import { deleteAnswer, editAnswer, getDoubtById, moderateAnswer, postAnswer, upvoteDoubt } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,7 @@ import {
   EditOutlined,
   EyeOutlined,
   HistoryOutlined,
+  LikeOutlined,
   MessageOutlined,
   SafetyOutlined
 } from '@ant-design/icons';
@@ -38,6 +39,7 @@ const FacultyDoubtDetail = () => {
   const [answerModerationModalOpen, setAnswerModerationModalOpen] = useState(false);
   const [answerModerationSubmitting, setAnswerModerationSubmitting] = useState(false);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+  const [doubtUpvoteLoading, setDoubtUpvoteLoading] = useState(false);
   const [answerModerationForm, setAnswerModerationForm] = useState({
     approvalStatus: 'APPROVED' as 'APPROVED' | 'REJECTED',
     moderationNote: '',
@@ -159,6 +161,19 @@ const FacultyDoubtDetail = () => {
     }
   };
 
+  const handleDoubtUpvote = async () => {
+    if (!id) return;
+    try {
+      setDoubtUpvoteLoading(true);
+      await upvoteDoubt(id);
+      await fetchDoubt();
+    } catch (error) {
+      message.error('Failed to toggle doubt upvote');
+    } finally {
+      setDoubtUpvoteLoading(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -244,7 +259,18 @@ const FacultyDoubtDetail = () => {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-4 border-t">
             <span className="flex items-center gap-1"><EyeOutlined /> {doubt.views} views</span>
             <span className="flex items-center gap-1"><MessageOutlined /> {doubt.answerCount} answers</span>
-            {/* <span className="flex items-center gap-1"><LikeOutlined /> {doubt.upVoteCount} upvotes</span> */}
+            <Tooltip title="Upvote this doubt">
+              <Button
+                icon={<LikeOutlined />}
+                type={doubt.isUpvotedByUser ? 'primary' : 'default'}
+                size="small"
+                loading={doubtUpvoteLoading}
+                onClick={handleDoubtUpvote}
+                className="!px-2"
+              >
+                {doubt.upVoteCount}
+              </Button>
+            </Tooltip>
             <span>Posted by {doubt.postedBy.name || doubt.postedBy.userID}</span>
             <span>{formatDate(doubt.createdAt)}</span>
             {doubt.editHistory && doubt.editHistory.length > 0 && (

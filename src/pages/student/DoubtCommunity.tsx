@@ -281,7 +281,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'doubts'
-                ? 'bg-foreground text-background border-foreground'
+                ? 'bg-cyan-600 text-white border-cyan-600 shadow-md shadow-cyan-500/20 ring-2 ring-cyan-500/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -292,7 +292,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('my-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'my-doubts'
-                ? 'bg-foreground text-background border-foreground'
+                ? 'bg-cyan-600 text-white border-cyan-600 shadow-md shadow-cyan-500/20 ring-2 ring-cyan-500/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -303,7 +303,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('subjectwise-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'subjectwise-doubts'
-                ? 'bg-foreground text-background border-foreground'
+                ? 'bg-cyan-600 text-white border-cyan-600 shadow-md shadow-cyan-500/20 ring-2 ring-cyan-500/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -338,7 +338,7 @@ const DoubtCommunity = () => {
                       onClick={() => setCommonWindow(item.value)}
                       className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                         commonWindow === item.value
-                          ? 'bg-foreground text-background border-foreground'
+                          ? 'bg-cyan-600 text-white border-cyan-600 shadow-md shadow-cyan-500/20 ring-2 ring-cyan-500/20'
                           : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
                       }`}
                     >

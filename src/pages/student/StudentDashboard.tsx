@@ -1,8 +1,8 @@
-import { getComplaints, getStudentProfile } from '@/api/student';
+import { getComplaints, getDoubts, getStudentProfile } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import { Complaint, Doubt } from '@/types';
-import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, FireOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, CommentOutlined, EyeOutlined, ExclamationCircleOutlined, FileTextOutlined, FireOutlined, LikeOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -66,16 +66,28 @@ const StudentDashboard = () => {
   const { user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [trendingDoubts, setTrendingDoubts] = useState<Doubt[]>([]);
   
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileData, complaintsData] = await Promise.all([
+        const [profileData, complaintsData, doubtsData] = await Promise.all([
           getStudentProfile(),
           getComplaints(),
+          getDoubts(),
         ]);
         setProfile(profileData);
         setComplaints(complaintsData);
+        const topDoubts = (Array.isArray(doubtsData) ? doubtsData : [])
+          .slice()
+          .sort((a, b) => {
+            if (b.upVoteCount !== a.upVoteCount) return b.upVoteCount - a.upVoteCount;
+            if (b.answerCount !== a.answerCount) return b.answerCount - a.answerCount;
+            if (b.views !== a.views) return b.views - a.views;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          })
+          .slice(0, 5);
+        setTrendingDoubts(topDoubts);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -90,7 +102,6 @@ const StudentDashboard = () => {
   const resolvedDoubts = profile?.doubtsSolved ?? 0;
 
   const recentComplaints = complaints.slice(0, 4);
-  const recentDoubts: Doubt[] = []; // TODO: Fetch doubts when API is ready
 
   const initials = user?.name?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() ?? '??';
 
@@ -406,8 +417,8 @@ const StudentDashboard = () => {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {recentDoubts.length > 0 ? (
-              recentDoubts.map((d) => (
+            {trendingDoubts.length > 0 ? (
+              trendingDoubts.map((d) => (
                 <motion.div
                   key={d.id}
                   whileHover={{ y: -2 }}
@@ -419,10 +430,16 @@ const StudentDashboard = () => {
                     <Tag color={d.status === 'RESOLVED' ? 'green' : d.status === 'ANSWERED' ? 'blue' : 'orange'} className="text-xs">{d.status}</Tag>
                   </div>
                   <p className="text-sm font-medium text-foreground line-clamp-2">{d.title}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span>▲ {d.upVoteCount}</span>
-                    <span>💬 {d.answerCount}</span>
-                    <span>👁 {d.views}</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+                      <LikeOutlined /> {d.upVoteCount}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 font-semibold text-sky-800">
+                      <CommentOutlined /> {d.answerCount}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                      <EyeOutlined /> {d.views}
+                    </span>
                   </div>
                 </motion.div>
               ))
