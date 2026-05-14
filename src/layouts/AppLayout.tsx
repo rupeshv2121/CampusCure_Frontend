@@ -4,22 +4,22 @@ import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { UserRole } from '@/types';
 import {
-    BellOutlined,
-    CheckCircleOutlined,
-    DashboardOutlined,
-    DownOutlined,
-    FormOutlined,
-    LogoutOutlined,
-    MenuFoldOutlined,
-    MenuOutlined,
-    MenuUnfoldOutlined,
-    QuestionCircleOutlined,
-    SafetyCertificateOutlined, SearchOutlined,
-    SettingOutlined,
-    TeamOutlined,
-    UnorderedListOutlined,
-    UpOutlined,
-    UserOutlined
+  BellOutlined,
+  CheckCircleOutlined,
+  DashboardOutlined,
+  DownOutlined,
+  FormOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuOutlined,
+  MenuUnfoldOutlined,
+  QuestionCircleOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  UnorderedListOutlined,
+  UpOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import { Avatar, Badge, Button, Drawer, Dropdown, Input, Layout, Menu, Typography } from 'antd';
 import { motion } from 'framer-motion';
@@ -46,14 +46,13 @@ const getMenuItems = (role: UserRole): MenuItem[] => {
     { key: '/faculty/complaints', icon: <UnorderedListOutlined />, label: 'Complaints' },
     { key: '/faculty/doubts', icon: <QuestionCircleOutlined />, label: 'Doubts' },
   ];
-  // SUPER_ADMIN
+  // SUPER_ADMIN — limited to university-scoped controls (hide system-wide tabs)
   if (role === 'SUPER_ADMIN') return [
     { key: '/superadmin/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/superadmin/complaints', icon: <UnorderedListOutlined />, label: 'Escalated Complaints' },
     { key: '/admin/complaints', icon: <UnorderedListOutlined />, label: 'All Complaints' },
     // Analytics removed — use Dashboard graphs instead
     { key: '/admin/users', icon: <TeamOutlined />, label: 'Users' },
-    { key: '/superadmin/admins', icon: <SafetyCertificateOutlined />, label: 'Admin Management' },
     { key: '/superadmin/settings', icon: <SettingOutlined />, label: 'Settings' },
   ];
   // ADMIN (NORMAL)
