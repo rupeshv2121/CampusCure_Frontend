@@ -20,10 +20,13 @@ const benefits = [
   },
 ];
 
+// Only self-service roles are offered here. ADMIN and SUPER_ADMIN accounts are
+// created by an existing super admin — the backend rejects them from this
+// public endpoint with 403. See docs/specs/CC-01c-privileged-role-escalation.md
 const roleOptions: { label: string; value: UserRole }[] = [
   { label: 'Student', value: 'STUDENT' },
   { label: 'Faculty', value: 'FACULTY' },
-  { label: 'Admin', value: 'ADMIN' },
+  // { label: 'Admin', value: 'ADMIN' },
   // { label: 'Super Admin', value: 'SUPER_ADMIN' },
 ];
 
