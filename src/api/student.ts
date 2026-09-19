@@ -307,12 +307,18 @@ export const getCommonAcademicDoubts = async (
   }
 };
 
-export const getSimilarDoubtSuggestions = async (filters: {
-  query: string;
-  subject?: string;
-  semester?: number;
-  limit?: number;
-}): Promise<SimilarDoubtSuggestion[]> => {
+export const getSimilarDoubtSuggestions = async (
+  filters: {
+    query: string;
+    subject?: string;
+    semester?: number;
+    limit?: number;
+  },
+  // Lets the caller abort a request that is already in flight. Since CC-11 this
+  // endpoint may embed the query through a rate-limited third party, so a
+  // superseded request is real cost, not just a wasted response.
+  signal?: AbortSignal,
+): Promise<SimilarDoubtSuggestion[]> => {
   try {
     const params = new URLSearchParams();
     params.append("query", filters.query);
@@ -322,6 +328,7 @@ export const getSimilarDoubtSuggestions = async (filters: {
 
     const response = await api.get(
       `/students/doubts/suggestions?${params.toString()}`,
+      signal ? { signal } : undefined,
     );
     return response.data.suggestions;
   } catch (e: unknown) {

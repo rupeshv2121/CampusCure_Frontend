@@ -43,6 +43,15 @@ const parseTab = (tabValue: string | null): DoubtTab => {
   return 'doubts';
 };
 
+/**
+ * Debounce for duplicate-doubt suggestions.
+ *
+ * Raised from 350ms in CC-11: the endpoint now embeds the query through a
+ * free-tier provider, so each keystroke burst that slips through costs a real
+ * API call. 600ms still feels responsive while typing a title.
+ */
+const SUGGESTION_DEBOUNCE_MS = 600;
+
 const DoubtCommunity = () => {
   const { user } = useAuth();
   const isApproved = user?.approvalStatus === 'APPROVED';
@@ -112,30 +121,39 @@ const DoubtCommunity = () => {
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     const timer = window.setTimeout(async () => {
       try {
         const semesterValue = Number(newDoubt.semester);
-        const suggestions = await getSimilarDoubtSuggestions({
-          query,
-          subject: newDoubt.subject || undefined,
-          semester: Number.isInteger(semesterValue) && semesterValue > 0 ? semesterValue : undefined,
-          limit: 5,
-        });
+        const suggestions = await getSimilarDoubtSuggestions(
+          {
+            query,
+            subject: newDoubt.subject || undefined,
+            semester: Number.isInteger(semesterValue) && semesterValue > 0 ? semesterValue : undefined,
+            limit: 5,
+          },
+          controller.signal,
+        );
 
         if (!cancelled) {
           setSimilarDoubts(suggestions);
         }
       } catch {
+        // Includes the abort case, where there is nothing to report.
         if (!cancelled) {
           setSimilarDoubts([]);
         }
       }
-    }, 350);
+    }, SUGGESTION_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      // Abort the request itself, not just its result. Since CC-11 each call may
+      // embed the query through a rate-limited free-tier provider, so letting a
+      // superseded request finish spends quota on an answer nobody reads.
+      controller.abort();
     };
   }, [askModal, newDoubt.title, newDoubt.description, newDoubt.subject, newDoubt.semester]);
 
