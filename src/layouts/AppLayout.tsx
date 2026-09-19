@@ -40,6 +40,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import AssistantWidget from "@/components/chat/AssistantWidget";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -526,6 +527,9 @@ const AppLayout = () => {
           <Outlet />
         </Content>
       </Layout>
+      {/* CC-15: student assistant. Students only - its tools are scoped to a
+          student's own records, so it has nothing to offer other roles. */}
+      {user.role === "STUDENT" && <AssistantWidget />}
     </Layout>
   );
 };
