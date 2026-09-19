@@ -632,3 +632,45 @@ export const getMyAnswerForDoubt = async (
     throw new Error(message);
   }
 };
+
+/** CC-13: a possible duplicate of a complaint being drafted. */
+export interface DuplicateComplaintSuggestion {
+  id: string;
+  title: string;
+  status: string;
+  similarity: number;
+  createdAt: string;
+}
+
+/**
+ * Advisory duplicate check for the complaint form.
+ *
+ * Deliberately swallows every error and returns []. This must never stop a
+ * student filing a complaint: if detection is unavailable, the correct
+ * behaviour is "no duplicates found", not an error.
+ */
+export const getSimilarComplaints = async (
+  filters: {
+    title: string;
+    description: string;
+    block: string;
+    classroomNumber: string;
+  },
+  signal?: AbortSignal,
+): Promise<DuplicateComplaintSuggestion[]> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("title", filters.title);
+    params.append("description", filters.description);
+    params.append("block", filters.block);
+    params.append("classroomNumber", filters.classroomNumber);
+
+    const response = await api.get(
+      `/students/complaints/similar?${params.toString()}`,
+      signal ? { signal } : undefined,
+    );
+    return response.data.duplicates ?? [];
+  } catch {
+    return [];
+  }
+};

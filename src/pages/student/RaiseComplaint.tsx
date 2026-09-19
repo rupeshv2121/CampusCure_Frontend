@@ -1,4 +1,4 @@
-import { getStudentPostingSettings, raiseComplaint } from '@/api/student';
+import { getSimilarComplaints, getStudentPostingSettings, raiseComplaint, type DuplicateComplaintSuggestion } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import blockClassroomData from '@/data/block_classroom.json';
@@ -9,6 +9,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 const { TextArea } = Input;
+
+/**
+ * CC-13: debounce for the duplicate check.
+ *
+ * Each call may embed the text through a rate-limited free-tier provider, so
+ * this is the main quota guard on a field the student types into continuously.
+ */
+const DUPLICATE_CHECK_DEBOUNCE_MS = 700;
 
 const complaintSchema = z.object({
   title: z.string().trim().min(5, 'Title must be at least 5 characters').max(100, 'Title too long'),
@@ -37,6 +45,7 @@ const RaiseComplaint = () => {
   const [submitting, setSubmitting] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [allowedCategories, setAllowedCategories] = useState<string[]>(fallbackComplaintCategories);
+  const [duplicates, setDuplicates] = useState<DuplicateComplaintSuggestion[]>([]);
 
   const handleBlockChange = (value: string) => {
     update('block', value);
@@ -118,6 +127,42 @@ const RaiseComplaint = () => {
     [allowedCategories],
   );
 
+  /**
+   * CC-13: look for an existing open complaint about the same fault in the same
+   * room. Advisory only - it never blocks submission, and any failure simply
+   * shows nothing. A student who believes their problem is different is usually
+   * right.
+   */
+  useEffect(() => {
+    const { title, description, block, classroomNumber } = form;
+
+    // Location is required by the backend: a fault is physical, and text alone
+    // cannot distinguish the same words about two different rooms.
+    if (!block || !classroomNumber || (title + description).trim().length < 10) {
+      setDuplicates([]);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const timer = window.setTimeout(async () => {
+      const found = await getSimilarComplaints(
+        { title, description, block, classroomNumber },
+        controller.signal,
+      );
+      if (!cancelled) setDuplicates(found);
+    }, DUPLICATE_CHECK_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      // Abort the request itself, not just its result - a superseded call still
+      // costs provider quota.
+      controller.abort();
+    };
+  }, [form.title, form.description, form.block, form.classroomNumber]);
+
   const handleSubmit = async () => {
     try{
       const result = complaintSchema.safeParse({ ...form, priority: Number(form.priority) || 0 });
@@ -149,6 +194,7 @@ const RaiseComplaint = () => {
       message.success('Complaint submitted successfully! You can track it in My Complaints.');
       setForm({ classroomNumber: '', block: '', category: '', title: '', description: '', priority: '' });
       setErrors({});
+      setDuplicates([]);
     } catch(e) {
       console.error('Error submitting complaint:', e);
       message.error(e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.');
@@ -314,6 +360,38 @@ const RaiseComplaint = () => {
               </div>
             </div>
           </div>
+
+          {duplicates.length > 0 && (
+            <Alert
+              type="info"
+              showIcon
+              className="mb-4"
+              message={
+                duplicates.length === 1
+                  ? 'A similar complaint has already been reported for this room'
+                  : `${duplicates.length} similar complaints have already been reported for this room`
+              }
+              description={
+                <div className="space-y-2">
+                  <ul className="list-disc pl-4 space-y-1">
+                    {duplicates.map((d) => (
+                      <li key={d.id} className="text-sm">
+                        <span className="font-medium">{d.title}</span>
+                        <span className="text-slate-500">
+                          {' '}— {d.status.replace(/_/g, ' ').toLowerCase()}, reported{' '}
+                          {new Date(d.createdAt).toLocaleDateString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-slate-500">
+                    If your problem is different, please carry on and submit — this
+                    is only a suggestion.
+                  </p>
+                </div>
+              }
+            />
+          )}
 
           <motion.button
             whileHover={{ scale: 1.01 }}
