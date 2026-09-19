@@ -322,3 +322,70 @@ export const getMyAnswers = async (): Promise<Answer[]> => {
     throw new Error(message);
   }
 };
+
+/* ------------------------------------------------------------------ *
+ * CC-12: AI answer drafts (faculty only)
+ * ------------------------------------------------------------------ */
+
+export interface AnswerDraftSource {
+  answerId: string;
+  doubtId: string;
+  doubtTitle: string;
+  excerpt: string;
+}
+
+export interface AnswerDraft {
+  id: string;
+  content: string;
+  model: string;
+  createdAt: string;
+  sources: AnswerDraftSource[];
+}
+
+/**
+ * Fetch the pending draft for a doubt, if any.
+ *
+ * Returns null on any failure: a draft is an assist, and the doubt page must
+ * still work when AI is unavailable.
+ */
+export const getAnswerDraft = async (
+  doubtId: string,
+): Promise<AnswerDraft | null> => {
+  try {
+    const response = await api.get(`/faculty/doubts/${doubtId}/draft`);
+    return response.data.draft ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/** Generate a draft on demand. Returns whether one was created. */
+export const generateAnswerDraft = async (
+  doubtId: string,
+): Promise<{ created: boolean; reason?: string }> => {
+  try {
+    const response = await api.post(`/faculty/doubts/${doubtId}/draft/generate`);
+    return response.data;
+  } catch {
+    return { created: false, reason: "Draft generation is unavailable" };
+  }
+};
+
+/**
+ * Approve a draft, publishing it as an answer authored by this faculty member.
+ * `content` is whatever is on screen, so edits are preserved and the backend
+ * can record whether the text was changed.
+ */
+export const approveAnswerDraft = async (doubtId: string, content: string) => {
+  const response = await api.post(`/faculty/doubts/${doubtId}/draft/approve`, {
+    content,
+  });
+  return response.data;
+};
+
+export const rejectAnswerDraft = async (doubtId: string, note?: string) => {
+  const response = await api.post(`/faculty/doubts/${doubtId}/draft/reject`, {
+    note,
+  });
+  return response.data;
+};
