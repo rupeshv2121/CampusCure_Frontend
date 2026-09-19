@@ -2,7 +2,9 @@ import {
   assignComplaint,
   getAllComplaints,
   getApprovedFaculty,
+  getDuplicateClusters,
   updateComplaintStatus,
+  type DuplicateCluster,
 } from "@/api/admin";
 import PageTransition from "@/components/animated/PageTransition";
 import ResolutionNoteBlock from "@/components/complaints/ResolutionNoteBlock";
@@ -84,10 +86,19 @@ const AdminComplaints = () => {
   const [newStatus, setNewStatus] = useState<ComplaintStatus | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  // CC-13: open complaints that look like the same fault. Empty is the normal
+  // state — it means no duplicates, not a failure.
+  const [duplicateClusters, setDuplicateClusters] = useState<DuplicateCluster[]>(
+    [],
+  );
+  const [clustersOpen, setClustersOpen] = useState(false);
 
   useEffect(() => {
     fetchComplaints();
     fetchFaculty();
+    // Never awaited or error-handled here: getDuplicateClusters swallows
+    // failures and returns [], so this cannot break the page.
+    void getDuplicateClusters().then(setDuplicateClusters);
   }, []);
 
   const fetchComplaints = async () => {
@@ -227,6 +238,80 @@ const AdminComplaints = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* CC-13: possible duplicate reports of the same fault. Advisory and
+            read-only — nothing here merges or closes a complaint. */}
+        {duplicateClusters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-amber-300 bg-amber-50 p-4"
+          >
+            <button
+              type="button"
+              onClick={() => setClustersOpen((open) => !open)}
+              className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+            >
+              <div>
+                <h2 className="text-sm font-semibold text-amber-900">
+                  {duplicateClusters.length} possible duplicate{" "}
+                  {duplicateClusters.length === 1 ? "group" : "groups"}
+                </h2>
+                <p className="text-xs text-amber-700/80 mt-0.5">
+                  {duplicateClusters.reduce((sum, c) => sum + c.size, 0)} open
+                  complaints may describe{" "}
+                  {duplicateClusters.length === 1 ? "one fault" : "fewer faults"}{" "}
+                  than the queue suggests. Assign the oldest and close the rest
+                  as you see fit.
+                </p>
+              </div>
+              <span className="text-xs font-medium text-amber-800 shrink-0">
+                {clustersOpen ? "Hide" : "Review"}
+              </span>
+            </button>
+
+            {clustersOpen && (
+              <div className="mt-4 space-y-3">
+                {duplicateClusters.map((cluster) => (
+                  <div
+                    key={`${cluster.block}-${cluster.classroomNumber}-${cluster.complaints[0]?.id}`}
+                    className="rounded-xl bg-white border border-amber-200 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-xs font-semibold text-slate-700">
+                        {cluster.block} / {cluster.classroomNumber}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {cluster.size} reports · closest match{" "}
+                        {(cluster.topSimilarity * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <ol className="space-y-1">
+                      {cluster.complaints.map((member, index) => (
+                        <li key={member.id} className="text-sm flex gap-2">
+                          <span className="text-slate-400 shrink-0">
+                            {index === 0 ? "first" : `#${index + 1}`}
+                          </span>
+                          <span className="text-slate-800">{member.title}</span>
+                          <span className="text-slate-400 text-xs self-center">
+                            {member.raisedBy ?? "unknown"} ·{" "}
+                            {new Date(member.createdAt).toLocaleDateString()} ·{" "}
+                            {member.status.replace(/_/g, " ").toLowerCase()}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+                <p className="text-xs text-amber-700/70">
+                  These are suggestions based on wording and location. Check each
+                  one before acting — two students can report genuinely different
+                  problems in the same room.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Status Strip */}
         <div className="flex gap-2 flex-wrap">

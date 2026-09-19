@@ -461,3 +461,39 @@ export const reassignEscalatedComplaint = async (
     throw new Error(message);
   }
 };
+
+/* ------------------------------------------------------------------ *
+ * CC-13: duplicate complaint clusters
+ * ------------------------------------------------------------------ */
+
+export interface DuplicateClusterMember {
+  id: string;
+  title: string;
+  status: string;
+  category: string;
+  createdAt: string;
+  raisedBy: string | null;
+}
+
+export interface DuplicateCluster {
+  block: string;
+  classroomNumber: string;
+  topSimilarity: number;
+  size: number;
+  complaints: DuplicateClusterMember[];
+}
+
+/**
+ * Open complaints that look like the same fault, grouped.
+ *
+ * Read-only: nothing here merges or closes a complaint. Returns [] on any
+ * failure, because the complaints page must not break when AI is unavailable.
+ */
+export const getDuplicateClusters = async (): Promise<DuplicateCluster[]> => {
+  try {
+    const response = await api.get("/admin/complaints/duplicates");
+    return response.data.clusters ?? [];
+  } catch {
+    return [];
+  }
+};
