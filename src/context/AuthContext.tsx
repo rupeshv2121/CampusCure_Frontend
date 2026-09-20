@@ -1,11 +1,11 @@
-import { getCurrentUser, logoutUser } from '@/api/auth';
+import { getCurrentUser, logoutUser, storeTokens, clearTokens } from '@/api/auth';
 import { User } from '@/types';
 import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
-  login: (token: string, userData: User) => void;
+  login: (token: string, userData: User, refreshToken?: string) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(userData.user || userData);
         } catch (error) {
           console.error('Failed to restore session:', error);
-          localStorage.removeItem('token');
+          clearTokens();
         }
       }
       setLoading(false);
@@ -85,8 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
       }, [refreshUser, user]);
 
-  const login = (token: string, userData: User): void => {
-    localStorage.setItem('token', token);
+  const login = (token: string, userData: User, refreshToken?: string): void => {
+    // CC-01b: the refresh token is the revocable half of the session.
+    storeTokens(token, refreshToken);
     setUser(userData);
     // Pull full user payload (including approval status/profile flags) right after login.
     void refreshUser();
@@ -98,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
-      localStorage.removeItem('token');
+      clearTokens();
       setUser(null);
       navigate('/');
     }

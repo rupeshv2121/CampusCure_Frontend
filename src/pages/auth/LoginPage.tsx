@@ -45,7 +45,7 @@ const LoginPage = () => {
     try {
       setLoading(true);
       const response = await loginUser(email, password);
-      login(response.token, response.user);
+      login(response.token, response.user, response.refreshToken);
       toast.success(`Welcome back, ${response.user.name}!`);
       navigate(getRoleRedirect(response.user.role, response.user));
     } catch (error) {
