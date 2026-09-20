@@ -164,7 +164,7 @@ const FaceLoginPage = () => {
           setStatusMsg(`Welcome, ${response.user.name}!`);
           toast.success(`Welcome back, ${response.user.name}!`);
           stopCamera();
-          login(response.token, response.user);
+          login(response.token, response.user, response.refreshToken);
           navigate(getRoleRedirect(response.user.role, response.user));
           return;
         }
