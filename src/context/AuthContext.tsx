@@ -1,4 +1,4 @@
-import { getCurrentUser, logoutUser, storeTokens, clearTokens } from '@/api/auth';
+import { getAccessToken, getCurrentUser, logoutUser, storeTokens, clearTokens } from '@/api/auth';
 import { User } from '@/types';
 import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   const refreshUser = useCallback(async (): Promise<void> => {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check for existing session on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAccessToken();
       if (token) {
         try {
           const userData = await getCurrentUser();
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Poll while account is pending to reflect approval changes in near real-time.
       useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
         if (!token || !user || user.approvalStatus !== 'PENDING') return;
 
         const timer = window.setInterval(() => {

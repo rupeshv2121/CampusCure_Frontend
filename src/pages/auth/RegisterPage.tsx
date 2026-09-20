@@ -1,4 +1,4 @@
-import { loginUser, registerUser } from '@/api/auth';
+import { loginUser, registerUser, storeTokens, clearTokens } from '@/api/auth';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import FaceRegister from '@/components/FaceRegister';
 import { UserRole, departments } from '@/types';
@@ -96,7 +96,9 @@ const RegisterPage = () => {
 
       try {
         const loginResponse = await loginUser(userData.email, userData.password);
-        localStorage.setItem('token', loginResponse.token);
+        // CC-01b: store BOTH tokens. Storing only the access token would give
+        // this just-registered user a 15-minute session with no way to renew.
+        storeTokens(loginResponse.token, loginResponse.refreshToken);
         setShowFaceRegister(true);
       } catch {
         setTimeout(() => navigate('/login'), 1000);
@@ -110,13 +112,14 @@ const RegisterPage = () => {
 
   const handleFaceSuccess = () => {
     toast.success('Face registered! Your account is pending approval.');
-    localStorage.removeItem('token');
+    // Clear both, or a stale refresh token is left behind in storage.
+    clearTokens();
     setTimeout(() => navigate('/login'), 1000);
   };
 
   const handleFaceSkip = () => {
     toast.info('Skipped face setup. You can register your face later from your profile.');
-    localStorage.removeItem('token');
+    clearTokens();
     setTimeout(() => navigate('/login'), 800);
   };
 

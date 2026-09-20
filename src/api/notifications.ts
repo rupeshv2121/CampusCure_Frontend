@@ -1,22 +1,19 @@
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+/**
+ * Notifications now use the shared `api` instance from ./auth.
+ *
+ * This file previously created its own axios instance, which had two problems:
+ *
+ *  1. It read VITE_API_URL, which is not set anywhere — only VITE_BACKEND_URL
+ *     is. It therefore fell back to http://localhost:5000, so notifications
+ *     were pointed at localhost in every deployed environment.
+ *  2. It had only a request interceptor. Since CC-01b shortened access tokens
+ *     to 15 minutes, it would have started 401ing after a quarter of an hour
+ *     with no refresh and no recovery.
+ *
+ * The shared instance has both interceptors and the correct base URL, so
+ * duplicating it here was never buying anything.
+ */
+import { api } from "./auth";
 
 export interface Notification {
   id: string;
@@ -49,8 +46,8 @@ export const getNotifications = async (
   limit?: number,
 ): Promise<NotificationsResponse> => {
   const url = limit
-    ? `/api/notifications?limit=${limit}`
-    : "/api/notifications";
+    ? `/notifications?limit=${limit}`
+    : "/notifications";
   const response = await api.get<NotificationsResponse>(url);
   return response.data;
 };
@@ -58,25 +55,25 @@ export const getNotifications = async (
 // Get unread notification count
 export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
   const response = await api.get<UnreadCountResponse>(
-    "/api/notifications/unread-count",
+    "/notifications/unread-count",
   );
   return response.data;
 };
 
 // Mark notification as read
 export const markAsRead = async (notificationId: string): Promise<void> => {
-  await api.patch(`/api/notifications/${notificationId}/read`);
+  await api.patch(`/notifications/${notificationId}/read`);
 };
 
 // Mark all notifications as read
 export const markAllAsRead = async (): Promise<void> => {
-  await api.patch("/api/notifications/mark-all-read");
+  await api.patch("/notifications/mark-all-read");
 };
 
 // Test endpoint to create a sample notification
 export const createTestNotification = async (): Promise<void> => {
   console.log("Frontend: Creating test notification...");
-  const response = await api.post("/api/notifications/test");
+  const response = await api.post("/notifications/test");
   console.log("Frontend: Test notification response:", response.data);
 };
 
