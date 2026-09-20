@@ -674,3 +674,39 @@ export const getSimilarComplaints = async (
     return [];
   }
 };
+
+/* ------------------------------------------------------------------ *
+ * CC-14: free text -> structured complaint fields
+ * ------------------------------------------------------------------ */
+
+export interface ParsedComplaintFields {
+  category: string | null;
+  priority: 1 | 2 | 3 | null;
+  block: string | null;
+  classroomNumber: string | null;
+  /** "rules" | "model" | "none" — which path answered. */
+  source: string;
+}
+
+/**
+ * Ask the backend to extract complaint fields from a description.
+ *
+ * Advisory: the result pre-fills the form for the student to check and correct.
+ * Never throws — if extraction is unavailable the student simply fills the form
+ * as before.
+ */
+export const parseComplaintText = async (
+  text: string,
+  signal?: AbortSignal,
+): Promise<ParsedComplaintFields | null> => {
+  try {
+    const response = await api.post(
+      "/students/complaints/parse",
+      { text },
+      signal ? { signal } : undefined,
+    );
+    return response.data;
+  } catch {
+    return null;
+  }
+};

@@ -1,9 +1,9 @@
-import { getSimilarComplaints, getStudentPostingSettings, raiseComplaint, type DuplicateComplaintSuggestion } from '@/api/student';
+import { getSimilarComplaints, getStudentPostingSettings, parseComplaintText, raiseComplaint, type DuplicateComplaintSuggestion } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import blockClassroomData from '@/data/block_classroom.json';
 import { ClockCircleOutlined, SendOutlined } from '@ant-design/icons';
-import { Alert, Input, message, Select, Spin } from 'antd';
+import { Alert, Button, Input, message, Select, Spin } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
@@ -46,6 +46,10 @@ const RaiseComplaint = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [allowedCategories, setAllowedCategories] = useState<string[]>(fallbackComplaintCategories);
   const [duplicates, setDuplicates] = useState<DuplicateComplaintSuggestion[]>([]);
+  // CC-14: free-text intake. Fills the form; never submits it.
+  const [intakeText, setIntakeText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [parseNote, setParseNote] = useState('');
 
   const handleBlockChange = (value: string) => {
     update('block', value);
@@ -166,6 +170,62 @@ const RaiseComplaint = () => {
     };
   }, [title, description, block, classroomNumber]);
 
+  /**
+   * CC-14: extract fields from the description and pre-fill the form.
+   *
+   * Only ever FILLS — it never submits, and every field it touches stays
+   * editable. A wrong suggestion the student corrects is cheap; a silent
+   * miscategorisation is not.
+   */
+  const handleParse = async () => {
+    const text = intakeText.trim();
+    if (text.length < 10) return;
+
+    setParsing(true);
+    setParseNote('');
+
+    const parsed = await parseComplaintText(text);
+
+    if (!parsed || parsed.source === 'none') {
+      setParseNote('Could not work that out — please fill the form below.');
+      setParsing(false);
+      return;
+    }
+
+    const filled: string[] = [];
+    setForm((prev) => {
+      const next = { ...prev };
+      // Use the description as the starting point for title and description,
+      // so the student is not asked to type it twice.
+      if (!next.description) next.description = text;
+      if (!next.title) next.title = text.slice(0, 80);
+      if (parsed.category && allowedCategories.includes(parsed.category)) {
+        next.category = parsed.category;
+        filled.push('category');
+      }
+      if (parsed.block) {
+        next.block = parsed.block;
+        filled.push('block');
+      }
+      if (parsed.classroomNumber) {
+        next.classroomNumber = parsed.classroomNumber;
+        filled.push('room');
+      }
+      if (parsed.priority) {
+        next.priority = String(parsed.priority);
+        filled.push('priority');
+      }
+      return next;
+    });
+
+    setParseNote(
+      filled.length > 0
+        ? `Filled ${filled.join(', ')} — please check before submitting.`
+        : 'Nothing could be filled automatically; please complete the form.',
+    );
+    setParsing(false);
+  };
+
   const handleSubmit = async () => {
     try{
       const result = complaintSchema.safeParse({ ...form, priority: Number(form.priority) || 0 });
@@ -241,6 +301,43 @@ const RaiseComplaint = () => {
             className="rounded-xl"
           />
         )}
+
+        {/* CC-14: describe the problem in plain language and let the system
+            fill the form. Everything it fills stays editable, and nothing is
+            submitted until the student presses the button below. */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-4"
+        >
+          <label className="text-sm font-semibold text-slate-800">
+            Describe the problem
+          </label>
+          <p className="text-xs text-slate-500 mt-0.5 mb-2">
+            Type it however you like — for example "the projector in ML03 won't
+            turn on". We'll fill in the form below, and you can correct anything.
+          </p>
+          <TextArea
+            rows={3}
+            value={intakeText}
+            onChange={(e) => setIntakeText(e.target.value)}
+            placeholder="What is wrong, and where?"
+            maxLength={500}
+            disabled={!isApproved || parsing}
+          />
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <Button
+              onClick={handleParse}
+              loading={parsing}
+              disabled={!isApproved || intakeText.trim().length < 10}
+            >
+              Fill the form for me
+            </Button>
+            {parseNote && (
+              <span className="text-xs text-slate-600">{parseNote}</span>
+            )}
+          </div>
+        </motion.div>
 
         {/* Form card */}
         <motion.div
