@@ -133,9 +133,12 @@ const RaiseComplaint = () => {
    * shows nothing. A student who believes their problem is different is usually
    * right.
    */
-  useEffect(() => {
-    const { title, description, block, classroomNumber } = form;
+  // Destructured outside the effect so the dependency array can name the exact
+  // fields it reads, rather than the whole `form` object — which would re-run
+  // the check (and spend a provider call) on every unrelated keystroke.
+  const { title, description, block, classroomNumber } = form;
 
+  useEffect(() => {
     // Location is required by the backend: a fault is physical, and text alone
     // cannot distinguish the same words about two different rooms.
     if (!block || !classroomNumber || (title + description).trim().length < 10) {
@@ -161,7 +164,7 @@ const RaiseComplaint = () => {
       // costs provider quota.
       controller.abort();
     };
-  }, [form.title, form.description, form.block, form.classroomNumber]);
+  }, [title, description, block, classroomNumber]);
 
   const handleSubmit = async () => {
     try{
