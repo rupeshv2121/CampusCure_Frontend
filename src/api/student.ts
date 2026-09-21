@@ -227,6 +227,8 @@ export const postDoubt = async (data: {
   subject: string;
   semester: number;
   labels?: string[];
+  /** CC-24: ids of files already uploaded to storage, not the files. */
+  attachmentIds?: string[];
 }) => {
   try {
     const response = await api.post("/students/doubts", data);
@@ -449,10 +451,15 @@ export const getMyDoubts = async (): Promise<Doubt[]> => {
 
 // ========== ANSWERS ==========
 
-export const postAnswer = async (doubtId: string, content: string) => {
+export const postAnswer = async (
+  doubtId: string,
+  content: string,
+  attachmentIds?: string[],
+) => {
   try {
     const response = await api.post(`/students/doubts/${doubtId}/answers`, {
       content,
+      attachmentIds,
     });
     return response.data;
   } catch (e: unknown) {

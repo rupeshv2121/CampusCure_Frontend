@@ -86,14 +86,16 @@ const AttachmentThumb = ({ attachment }: { attachment: AttachmentSummary }) => {
 export const AttachmentList = ({
   attachments,
   label = "Attachments",
+  className,
 }: {
   attachments?: AttachmentSummary[];
   label?: string;
+  className?: string;
 }) => {
   if (!attachments || attachments.length === 0) return null;
 
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${className ?? ""}`}>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="flex flex-wrap gap-2">
         {attachments.map((attachment) => (

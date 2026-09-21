@@ -159,6 +159,8 @@ export interface Doubt {
   isUpvotedByUser?: boolean;
   /** CC-21. Private to the caller; no count is ever exposed. */
   isBookmarkedByUser?: boolean;
+  /** CC-24: files on the doubt itself. Empty while CC-02 is dormant. */
+  attachments?: AttachmentSummary[];
   savedAt?: string;
   acceptedAnswerId?: string | null;
   edited: boolean;
@@ -172,6 +174,8 @@ export interface Answer {
   id: string;
   doubtId: string;
   content: string;
+  /** CC-24: files on this answer. */
+  attachments?: AttachmentSummary[];
   answeredById: string;
   answeredBy: {
     id: string;
