@@ -33,6 +33,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PostBody } from '@/components/content/PostBody';
+import { TagChipList } from '@/components/tags/TagChip';
 
 const { TextArea } = Input;
 
@@ -343,9 +344,10 @@ const FacultyDoubtDetail = () => {
           <div className="flex gap-2 mb-4 flex-wrap">
             <Tag color="purple">{doubt.subject}</Tag>
             <Tag>Sem {doubt.semester}</Tag>
-            {doubt.labels?.map((label) => (
-              <Tag key={label} color="blue">{label}</Tag>
-            ))}
+            <TagChipList
+              labels={doubt.labels}
+              labelsNormalized={doubt.labelsNormalized}
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-4 border-t">

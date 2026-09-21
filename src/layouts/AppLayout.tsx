@@ -20,6 +20,7 @@ import {
   MenuFoldOutlined,
   MenuOutlined,
   MenuUnfoldOutlined,
+  BookOutlined,
   QuestionCircleOutlined,
   SettingOutlined,
   TeamOutlined,
@@ -72,6 +73,13 @@ const getMenuItems = (role: UserRole): MenuItem[] => {
         key: "/student/doubts",
         icon: <QuestionCircleOutlined />,
         label: "Doubt Community",
+      },
+      {
+        // CC-21. Private to this student; nothing here is visible to anyone
+        // else, including the author of a saved doubt.
+        key: "/student/doubts/saved",
+        icon: <BookOutlined />,
+        label: "Saved Doubts",
       },
     ];
   if (role === "FACULTY")

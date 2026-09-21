@@ -18,6 +18,8 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PostBody } from '@/components/content/PostBody';
+import { TagChipList } from '@/components/tags/TagChip';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
 
@@ -280,8 +282,19 @@ const DoubtDetail = () => {
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
                 <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  {/* CC-21: private save. No count is shown, deliberately. */}
+                  <BookmarkButton
+                    doubtId={doubt.id}
+                    bookmarked={Boolean(doubt.isBookmarkedByUser)}
+                    showLabel
+                    onChange={(next) =>
+                      setDoubt((current) =>
+                        current ? { ...current, isBookmarkedByUser: next } : current,
+                      )
+                    }
+                  />
                   {isDoubtOwner && (
                     <>
                       <Button icon={<EditOutlined />} size="small" onClick={() => setEditMode(true)}>Edit</Button>
@@ -296,9 +309,14 @@ const DoubtDetail = () => {
               <div className="flex gap-2 mb-4 flex-wrap">
                 <Tag color="purple">{doubt.subject}</Tag>
                 <Tag>Sem {doubt.semester}</Tag>
-                {doubt.labels?.map((label) => (
-                  <Tag key={label} color="blue">{label}</Tag>
-                ))}
+                {/* CC-20: clicking a tag returns to the community filtered by it. */}
+                <TagChipList
+                  labels={doubt.labels}
+                  labelsNormalized={doubt.labelsNormalized}
+                  onTagClick={(tag) =>
+                    navigate(`/student/doubts?tag=${encodeURIComponent(tag)}`)
+                  }
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-4 border-t">

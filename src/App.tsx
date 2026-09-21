@@ -22,6 +22,7 @@ const FacultyDoubts = lazy(() => import("@/pages/faculty/FacultyDoubts"));
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const DoubtCommunity = lazy(() => import("@/pages/student/DoubtCommunity"));
 const DoubtDetail = lazy(() => import("@/pages/student/DoubtDetail"));
+const SavedDoubts = lazy(() => import("@/pages/student/SavedDoubts"));
 const MyComplaints = lazy(() => import("@/pages/student/MyComplaints"));
 const RaiseComplaint = lazy(() => import("@/pages/student/RaiseComplaint"));
 const StudentDashboard = lazy(() => import("@/pages/student/StudentDashboard"));
@@ -55,6 +56,9 @@ const App = () => (
               <Route path="/student/complaints/new" element={<RaiseComplaint />} />
               <Route path="/student/complaints" element={<MyComplaints />} />
               <Route path="/student/doubts" element={<DoubtCommunity />} />
+              {/* CC-21: the static segment must be matched before /doubts/:id,
+                  the same hazard the backend route ordering guards against. */}
+              <Route path="/student/doubts/saved" element={<SavedDoubts />} />
               <Route path="/student/doubts/:id" element={<DoubtDetail />} />
             </Route>
 
