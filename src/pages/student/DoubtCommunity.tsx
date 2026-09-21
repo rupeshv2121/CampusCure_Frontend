@@ -22,6 +22,7 @@ import { stripCodeBlocks } from '@/lib/codeBlocks';
 import { TagChipList } from '@/components/tags/TagChip';
 import { TagInput } from '@/components/tags/TagInput';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
+import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 
 const { TextArea } = Input;
 
@@ -66,6 +67,9 @@ const DoubtCommunity = () => {
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [askModal, setAskModal] = useState(false);
   const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: [] as string[] });
+  // CC-24: ids of files already uploaded; the form never carries bytes.
+  const [doubtFiles, setDoubtFiles] = useState<string[]>([]);
+  const [doubtUploaderKey, setDoubtUploaderKey] = useState(0);
   // CC-20: tag filter lives in the URL, so a filtered list is shareable and
   // survives a refresh. getAll gives the repeated ?tag= form the API expects.
   const activeTags = searchParams.getAll('tag');
@@ -277,9 +281,12 @@ const DoubtCommunity = () => {
         subject: newDoubt.subject,
         semester: Number(newDoubt.semester),
         labels: labelsArray,
+        attachmentIds: doubtFiles,
       });
       message.success('Your doubt has been posted!');
       setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: [] });
+      setDoubtFiles([]);
+      setDoubtUploaderKey((k) => k + 1);
       setSimilarDoubts([]);
       setFormErrors({});
       setAskModal(false);
@@ -629,6 +636,16 @@ const DoubtCommunity = () => {
               <TagInput
                 value={newDoubt.labels}
                 onChange={(tags) => setNewDoubt((p) => ({ ...p, labels: tags }))}
+                disabled={submitting}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Screenshots or notes (optional)</label>
+              <AttachmentUploader
+                key={doubtUploaderKey}
+                entityType="DOUBT"
+                onChange={setDoubtFiles}
                 disabled={submitting}
               />
             </div>

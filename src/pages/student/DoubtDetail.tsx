@@ -19,6 +19,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PostBody } from '@/components/content/PostBody';
 import { TagChipList } from '@/components/tags/TagChip';
+import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
+import { AttachmentList } from '@/components/attachments/AttachmentList';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
@@ -35,6 +37,10 @@ const DoubtDetail = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedDoubt, setEditedDoubt] = useState({ title: '', description: '' });
   const [answerText, setAnswerText] = useState('');
+  // CC-24: files are already in storage by the time this submits - the form
+  // carries ids, never bytes.
+  const [answerFiles, setAnswerFiles] = useState<string[]>([]);
+  const [answerUploaderKey, setAnswerUploaderKey] = useState(0);
   const [answerSubmitting, setAnswerSubmitting] = useState(false);
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editedAnswerText, setEditedAnswerText] = useState('');
@@ -103,9 +109,11 @@ const DoubtDetail = () => {
 
     try {
       setAnswerSubmitting(true);
-      await postAnswer(id, answerText.trim());
+      await postAnswer(id, answerText.trim(), answerFiles);
       message.success('Answer submitted for faculty review');
       setAnswerText('');
+      setAnswerFiles([]);
+      setAnswerUploaderKey((k) => k + 1);
       fetchDoubt();
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Failed to submit answer');
@@ -306,6 +314,9 @@ const DoubtDetail = () => {
 
               <PostBody content={doubt.description} className="mb-4" />
 
+              {/* CC-24: empty and invisible while CC-02 is dormant. */}
+              <AttachmentList attachments={doubt.attachments} className="mb-4" />
+
               <div className="flex gap-2 mb-4 flex-wrap">
                 <Tag color="purple">{doubt.subject}</Tag>
                 <Tag>Sem {doubt.semester}</Tag>
@@ -404,6 +415,7 @@ const DoubtDetail = () => {
                       <div className="flex flex-col gap-2.5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
                           <PostBody content={answer.content} />
+                          <AttachmentList attachments={answer.attachments} />
                           <Tooltip title="Upvote this answer">
                             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                               <Button
@@ -513,6 +525,15 @@ const DoubtDetail = () => {
               maxLength={2000}
               showCount
             />
+            <div className="mt-3">
+              <AttachmentUploader
+                key={answerUploaderKey}
+                entityType="ANSWER"
+                onChange={setAnswerFiles}
+                disabled={answerSubmitting}
+              />
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={answerText.trim().length < 10}>
                 Submit for Review
