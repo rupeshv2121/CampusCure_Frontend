@@ -1,4 +1,5 @@
 import { getSimilarComplaints, getStudentPostingSettings, parseComplaintText, raiseComplaint, type DuplicateComplaintSuggestion } from '@/api/student';
+import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 import PageTransition from '@/components/animated/PageTransition';
 import { useAuth } from '@/context/AuthContext';
 import blockClassroomData from '@/data/block_classroom.json';
@@ -50,6 +51,12 @@ const RaiseComplaint = () => {
   const [intakeText, setIntakeText] = useState('');
   const [parsing, setParsing] = useState(false);
   const [parseNote, setParseNote] = useState('');
+  // CC-02: ids of files already uploaded to storage. The form carries ids, not
+  // bytes — the upload finished before submit was ever pressed.
+  const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
+  // Bumped after a successful submit to remount the uploader: it owns its own
+  // file tray, so clearing the id list alone would leave stale thumbnails.
+  const [uploaderKey, setUploaderKey] = useState(0);
 
   const handleBlockChange = (value: string) => {
     update('block', value);
@@ -147,6 +154,8 @@ const RaiseComplaint = () => {
     // cannot distinguish the same words about two different rooms.
     if (!block || !classroomNumber || (title + description).trim().length < 10) {
       setDuplicates([]);
+      setAttachmentIds([]);
+      setUploaderKey((k) => k + 1);
       return;
     }
 
@@ -252,12 +261,15 @@ const RaiseComplaint = () => {
         priority: result.data.priority,
         classroomNumber: result.data.classroomNumber,
         block: result.data.block,
+        attachmentIds,
       });
       
       message.success('Complaint submitted successfully! You can track it in My Complaints.');
       setForm({ classroomNumber: '', block: '', category: '', title: '', description: '', priority: '' });
       setErrors({});
       setDuplicates([]);
+      setAttachmentIds([]);
+      setUploaderKey((k) => k + 1);
     } catch(e) {
       console.error('Error submitting complaint:', e);
       message.error(e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.');
@@ -492,6 +504,16 @@ const RaiseComplaint = () => {
               }
             />
           )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Photos or documents (optional)</label>
+            <AttachmentUploader
+              key={uploaderKey}
+              entityType="COMPLAINT"
+              onChange={setAttachmentIds}
+              disabled={submitting || !isApproved}
+            />
+          </div>
 
           <motion.button
             whileHover={{ scale: 1.01 }}

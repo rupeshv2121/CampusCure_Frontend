@@ -8,6 +8,7 @@ import { CloseOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/ico
 import { Select } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { AttachmentList } from '@/components/attachments/AttachmentList';
 
 const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
   RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700',   label: 'Raised' },
@@ -361,6 +362,12 @@ const MyComplaints = () => {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</p>
                     <p className="text-sm text-foreground leading-relaxed">{selected.description}</p>
                   </div>
+
+                  {/* CC-02: evidence the student attached when filing. */}
+                  <AttachmentList
+                    attachments={selected.attachments}
+                    label="Photos & documents"
+                  />
 
                   {selected.assignedTo && (
                     <div className="rounded-xl border p-4">

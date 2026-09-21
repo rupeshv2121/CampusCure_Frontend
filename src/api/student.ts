@@ -143,6 +143,8 @@ export const raiseComplaint = async (data: {
   priority: number;
   classroomNumber: string;
   block: string;
+  /** CC-02: ids of files already uploaded to storage, not the files themselves. */
+  attachmentIds?: string[];
 }) => {
   try {
     const response = await api.post("/students/complaints/new", data);
