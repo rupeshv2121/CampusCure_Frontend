@@ -23,6 +23,7 @@ const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const DoubtCommunity = lazy(() => import("@/pages/student/DoubtCommunity"));
 const DoubtDetail = lazy(() => import("@/pages/student/DoubtDetail"));
 const SavedDoubts = lazy(() => import("@/pages/student/SavedDoubts"));
+const ReputationPage = lazy(() => import("@/pages/student/ReputationPage"));
 const MyComplaints = lazy(() => import("@/pages/student/MyComplaints"));
 const RaiseComplaint = lazy(() => import("@/pages/student/RaiseComplaint"));
 const StudentDashboard = lazy(() => import("@/pages/student/StudentDashboard"));
@@ -59,6 +60,9 @@ const App = () => (
               {/* CC-21: the static segment must be matched before /doubts/:id,
                   the same hazard the backend route ordering guards against. */}
               <Route path="/student/doubts/saved" element={<SavedDoubts />} />
+              {/* CC-25: the backend authorizes STUDENT and FACULTY, so both
+                  roles get the page rather than only students. */}
+              <Route path="/student/reputation" element={<ReputationPage />} />
               <Route path="/student/doubts/:id" element={<DoubtDetail />} />
             </Route>
 
@@ -69,6 +73,7 @@ const App = () => (
               <Route path="/faculty/complaints" element={<FacultyComplaints />} />
               <Route path="/faculty/doubts" element={<FacultyDoubts />} />
               <Route path="/faculty/doubts/:id" element={<FacultyDoubtDetail />} />
+              <Route path="/faculty/reputation" element={<ReputationPage />} />
             </Route>
 
             {/* Admin Routes */}

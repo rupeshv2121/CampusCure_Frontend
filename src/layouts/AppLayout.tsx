@@ -21,6 +21,7 @@ import {
   MenuOutlined,
   MenuUnfoldOutlined,
   BookOutlined,
+  TrophyOutlined,
   QuestionCircleOutlined,
   SettingOutlined,
   TeamOutlined,
@@ -81,6 +82,11 @@ const getMenuItems = (role: UserRole): MenuItem[] => {
         icon: <BookOutlined />,
         label: "Saved Doubts",
       },
+      {
+        key: "/student/reputation",
+        icon: <TrophyOutlined />,
+        label: "Reputation",
+      },
     ];
   if (role === "FACULTY")
     return [
@@ -98,6 +104,13 @@ const getMenuItems = (role: UserRole): MenuItem[] => {
         key: "/faculty/doubts",
         icon: <QuestionCircleOutlined />,
         label: "Doubts",
+      },
+      {
+        // CC-25: faculty earn reputation too. Suppressing it would make a
+        // faculty member's answers look worthless to the student reading them.
+        key: "/faculty/reputation",
+        icon: <TrophyOutlined />,
+        label: "Reputation",
       },
     ];
   // SUPER_ADMIN — focused ops nav (escalations, complaints, users)
