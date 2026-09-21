@@ -1,11 +1,11 @@
-import { faceLogin } from '@/api/auth';
+import { verifyFace, type FaceChallenge } from '@/api/auth';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleRedirect } from '@/lib/authUtils';
 import { Spin } from 'antd';
 import * as faceapi from 'face-api.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type Status =
@@ -18,14 +18,26 @@ type Status =
 
 const SCAN_TIMEOUT_MS = 30_000; // stop scanning after 30 seconds
 
+/**
+ * CC-60: samples taken from separate moments, not one frame.
+ *
+ * A photograph held to the camera produces near-identical descriptors every
+ * frame; a live face does not sit that still. The server rejects a set whose
+ * members are too alike. Must match FACE_REQUIRED_SAMPLES on the backend.
+ */
+const REQUIRED_SAMPLES = 3;
+const SAMPLE_GAP_MS = 450;
+
 const features = [
   {
-    title: 'Biometric sign-in in seconds',
-    description: 'Authenticate quickly without remembering passwords or OTPs.',
+    title: 'A second step, not a shortcut',
+    description:
+      'Your password has already been checked. This confirms it is you.',
   },
   {
-    title: 'Descriptor-based matching',
-    description: 'Descriptor-based matching used for authentication.',
+    title: 'Matched against your account only',
+    description:
+      'Compared with your own enrolled face, never searched across users.',
   },
   {
     title: 'Designed for campus use',
@@ -43,9 +55,28 @@ const FaceLoginPage = () => {
   const [statusMsg, setStatusMsg] = useState('Loading face recognition models…');
   const [faceWarning, setFaceWarning] = useState<string | null>(null);
   const scanStartRef = useRef<number>(0);
+  const samplesRef = useRef<number[][]>([]);
+  const [collected, setCollected] = useState(0);
 
   const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * CC-60: this page is no longer reachable on its own.
+   *
+   * The challenge is handed over by the password step. Without one there is
+   * nothing to verify against, so there is nowhere to go but back to login -
+   * which is the point: a face alone is not a way in.
+   */
+  const challenge = (location.state as { challenge?: FaceChallenge } | null)
+    ?.challenge;
+
+  useEffect(() => {
+    if (!challenge && !isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [challenge, isAuthenticated, navigate]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -151,14 +182,32 @@ const FaceLoginPage = () => {
         } else if (detections.length > 1) {
           setFaceWarning('Multiple faces detected — only one face should be visible.');
         } else {
-          // Exactly one face — attempt login
+          // Exactly one face. CC-60: collect several samples spaced apart
+          // rather than authenticating on the first frame - a still photo
+          // yields near-identical descriptors and the server rejects that.
           setFaceWarning(null);
-          scanningRef.current = false;
           setStatus('scanning');
-          setStatusMsg('Face detected! Authenticating…');
 
-          const descriptor = Array.from(detections[0].descriptor);
-          const response = await faceLogin(descriptor);
+          samplesRef.current.push(Array.from(detections[0].descriptor));
+          setCollected(samplesRef.current.length);
+
+          if (samplesRef.current.length < REQUIRED_SAMPLES) {
+            setStatusMsg(
+              `Hold still — ${samplesRef.current.length} of ${REQUIRED_SAMPLES} captured`,
+            );
+            setTimeout(scan, SAMPLE_GAP_MS);
+            return;
+          }
+
+          scanningRef.current = false;
+          setStatusMsg('Verifying…');
+
+          if (!challenge) {
+            navigate('/login', { replace: true });
+            return;
+          }
+
+          const response = await verifyFace(challenge, samplesRef.current);
 
           setStatus('success');
           setStatusMsg(`Welcome, ${response.user.name}!`);
@@ -170,17 +219,25 @@ const FaceLoginPage = () => {
         }
       } catch (err) {
         if (!scanningRef.current) return;
-        const msg = err instanceof Error ? err.message : 'Authentication failed.';
-        if (msg.includes('not recognized') || msg.includes('pending approval')) {
+        const msg = err instanceof Error ? err.message : 'Verification failed.';
+
+        // A rejected verification is terminal for this challenge - it is
+        // attempt-capped server-side, so silently rescanning would burn the
+        // remaining tries without telling anyone.
+        if (msg.toLowerCase().includes('verification failed')) {
           scanningRef.current = false;
           setFaceWarning(null);
           setStatus('error');
-          setStatusMsg(msg);
+          setStatusMsg(
+            'We could not verify your face. Sign in again to retry.',
+          );
           toast.error(msg);
           stopCamera();
           return;
         }
-        // Transient error — keep scanning
+        // Transient detection error — drop the partial set and keep scanning.
+        samplesRef.current = [];
+        setCollected(0);
       }
 
       // Schedule next scan frame
@@ -190,12 +247,12 @@ const FaceLoginPage = () => {
     };
 
     setTimeout(scan, 800);
-  }, [login, navigate, stopCamera]);
+  }, [challenge, login, navigate, stopCamera]);
 
   const handleRetry = () => {
-    setStatus('loading-models');
-    setStatusMsg('Reloading…');
-    window.location.reload();
+    // Reloading would land here with no challenge in history state, and the
+    // challenge is attempt-capped anyway - the password step is the way back.
+    navigate('/login', { replace: true });
   };
 
   const isLoading = ['loading-models', 'starting-camera', 'scanning'].includes(status);
@@ -267,6 +324,24 @@ const FaceLoginPage = () => {
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             {statusMsg}
+          </div>
+        )}
+
+        {/* CC-60: the capture is several samples, so it needs to look like
+            several samples - otherwise a user moves away after the first. */}
+        {(status === 'scanning' || collected > 0) && status !== 'success' && (
+          <div className="flex w-full flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              {Array.from({ length: REQUIRED_SAMPLES }, (_, i) => (
+                <span
+                  key={i}
+                  className={`h-2 w-8 rounded-full transition-colors ${
+                    i < collected ? 'bg-emerald-500' : 'bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-slate-600">{statusMsg}</span>
           </div>
         )}
 
