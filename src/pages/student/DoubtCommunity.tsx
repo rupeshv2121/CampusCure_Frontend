@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
+import { stripCodeBlocks } from '@/lib/codeBlocks';
 
 const { TextArea } = Input;
 
@@ -449,7 +450,9 @@ const DoubtCommunity = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground text-base">{doubt.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{doubt.description}</p>
+                    {/* CC-22: cards show prose only. A truncated code block is noise, and
+                        highlighting one per card is the cost the lazy highlighter avoids. */}
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{stripCodeBlocks(doubt.description)}</p>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
                       <Tag color="purple">{doubt.subject}</Tag>
                       <Tag>Sem {doubt.semester}</Tag>

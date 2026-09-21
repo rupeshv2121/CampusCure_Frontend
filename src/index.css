@@ -562,3 +562,35 @@
   background: linear-gradient(180deg, #67adff 0%, #4585ff 100%);
   border-color: hsl(220 15% 16% / 0.6);
 }
+
+/* ------------------------------------------------------------------ *
+ * CC-22: syntax highlighting.
+ *
+ * Shiki is rendered with `defaultColor: false`, so each token carries BOTH
+ * themes as CSS custom properties. Switching light/dark is therefore pure CSS
+ * — the highlighter never runs twice and there is no flash on toggle.
+ * ------------------------------------------------------------------ */
+
+.cc22-shiki .shiki,
+.cc22-shiki .shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+.dark .cc22-shiki .shiki,
+.dark .cc22-shiki .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+/* Code must scroll, never wrap: a wrapped line breaks indentation, and in
+   Python indentation is syntax. */
+.cc22-shiki .shiki code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}

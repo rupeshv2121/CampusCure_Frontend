@@ -17,6 +17,7 @@ import { Avatar, Button, Card, Empty, Input, message, Modal, Tag, Tooltip } from
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PostBody } from '@/components/content/PostBody';
 
 const { TextArea } = Input;
 
@@ -290,7 +291,7 @@ const DoubtDetail = () => {
                 </div>
               </div>
 
-              <p className="text-foreground whitespace-pre-wrap mb-4">{doubt.description}</p>
+              <PostBody content={doubt.description} className="mb-4" />
 
               <div className="flex gap-2 mb-4 flex-wrap">
                 <Tag color="purple">{doubt.subject}</Tag>
@@ -384,7 +385,7 @@ const DoubtDetail = () => {
                     ) : (
                       <div className="flex flex-col gap-2.5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
-                          <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
+                          <PostBody content={answer.content} />
                           <Tooltip title="Upvote this answer">
                             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                               <Button
