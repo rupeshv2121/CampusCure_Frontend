@@ -594,3 +594,94 @@
   overflow-wrap: normal;
   word-break: normal;
 }
+
+/* ------------------------------------------------------------------ *
+ * CC-23: rich text.
+ *
+ * Styles the sanitised HTML a post carries. The tag list here mirrors the
+ * server's allow-list in services/content/sanitize.ts - anything not on that
+ * list never reaches the browser, so there is nothing else to style.
+ * ------------------------------------------------------------------ */
+
+.cc23-prose p {
+  margin: 0 0 0.75rem;
+  line-height: 1.6;
+}
+
+.cc23-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.cc23-prose h3,
+.cc23-prose h4 {
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.cc23-prose h3 { font-size: 1.05rem; }
+.cc23-prose h4 { font-size: 0.98rem; }
+
+.cc23-prose ul,
+.cc23-prose ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.cc23-prose ul { list-style: disc; }
+.cc23-prose ol { list-style: decimal; }
+.cc23-prose li { margin: 0.2rem 0; }
+
+.cc23-prose blockquote {
+  margin: 0 0 0.75rem;
+  padding-left: 0.9rem;
+  border-left: 3px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+
+.cc23-prose a {
+  color: #1677ff;
+  text-decoration: underline;
+}
+
+/* Inline code. Fenced blocks inside rich text keep the same treatment CC-22
+   gives them elsewhere. */
+.cc23-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: hsl(var(--muted));
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+.cc23-prose pre {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: hsl(var(--muted));
+  overflow-x: auto;
+}
+
+.cc23-prose pre code {
+  background: none;
+  padding: 0;
+  /* Code must scroll, never wrap - in Python indentation is syntax. */
+  white-space: pre;
+}
+
+/* Placeholder for the empty editor. */
+.cc23-prose[data-placeholder]:empty::before,
+.cc23-prose .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* Block math gets its own line; inline math sits in the sentence. */
+.cc23-prose .math-block {
+  display: block;
+  margin: 0.75rem 0;
+  text-align: center;
+  overflow-x: auto;
+}
