@@ -76,7 +76,7 @@ const runRefresh = (): Promise<string | null> => {
 };
 
 /** Endpoints where a 401 is the answer, not a stale-token signal. */
-const NO_REFRESH_PATHS = ["/auth/login", "/auth/refresh", "/auth/face-login"];
+const NO_REFRESH_PATHS = ["/auth/login", "/auth/refresh", "/auth/face/verify"];
 
 api.interceptors.response.use(
   (response) => response,
@@ -218,9 +218,30 @@ export const saveFaceDescriptor = async (descriptor: number[]) => {
   }
 };
 
-export const faceLogin = async (descriptor: number[]) => {
+/**
+ * CC-60: the second step of login.
+ *
+ * `POST /auth/face-login` is gone. It was unauthenticated, matched against
+ * every enrolled user, and issued a full session to the nearest match - which
+ * meant a descriptor alone was a credential. This runs only after a password
+ * has verified, against the one account the challenge names.
+ */
+export interface FaceChallenge {
+  challengeId: string;
+  nonce: string;
+  expiresInSeconds: number;
+}
+
+export const verifyFace = async (
+  challenge: FaceChallenge,
+  descriptors: number[][],
+) => {
   try {
-    const response = await api.post("/auth/face-login", { descriptor });
+    const response = await api.post("/auth/face/verify", {
+      challengeId: challenge.challengeId,
+      nonce: challenge.nonce,
+      descriptors,
+    });
     return response.data;
   } catch (error: unknown) {
     const message =
@@ -233,7 +254,13 @@ export const faceLogin = async (descriptor: number[]) => {
             (error as { response: { data: { error: string } } }).response.data
               .error,
           )
-        : "Face login failed";
+        : "Face verification failed";
     throw new Error(message);
   }
+};
+
+/** CC-60: un-enrol, the way out for someone who can no longer present it. */
+export const deleteFaceDescriptor = async () => {
+  const response = await api.delete("/auth/face-descriptor");
+  return response.data;
 };

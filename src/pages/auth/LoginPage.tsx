@@ -45,6 +45,23 @@ const LoginPage = () => {
     try {
       setLoading(true);
       const response = await loginUser(email, password);
+
+      // CC-60: an enrolled user gets a challenge here, not a session. The
+      // password alone is no longer enough, and no token exists to store yet.
+      if (response.requiresFace) {
+        navigate('/face-login', {
+          replace: true,
+          state: {
+            challenge: {
+              challengeId: response.challengeId,
+              nonce: response.nonce,
+              expiresInSeconds: response.expiresInSeconds,
+            },
+          },
+        });
+        return;
+      }
+
       login(response.token, response.user, response.refreshToken);
       toast.success(`Welcome back, ${response.user.name}!`);
       navigate(getRoleRedirect(response.user.role, response.user));
@@ -125,21 +142,13 @@ className="flex h-13 w-full cursor-pointer items-center justify-center gap-2 rou
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">or</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <button
-        onClick={() => navigate('/face-login')}
-       className="flex h-13 w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition-colors hover:border-cyan-300 hover:bg-cyan-50/60"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-base">
-          <LockOutlined />
-        </span>
-        Login with Face ID
-      </button>
+      {/* CC-60: there is no longer a "log in with your face" entry point.
+          Face is the second step for users who enrolled one, reached
+          automatically after the password verifies - never a way in on its
+          own. The endpoint behind the old button is deleted, not hidden. */}
+      <p className="text-center text-xs text-slate-400">
+        If you have set up Face ID, you will be asked for it after your password.
+      </p>
     </AuthSplitLayout>
   );
 };
