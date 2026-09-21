@@ -145,6 +145,8 @@ export interface Doubt {
     name: string;
     userID: string;
     role?: UserRole;
+    /** CC-25: shown beside the author so a reader can weigh the source. */
+    reputation?: number;
     studentProfile?: {
       semester: number;
       branch: string;
@@ -186,6 +188,8 @@ export interface Answer {
     name: string;
     userID: string;
     role: UserRole;
+    /** CC-25. */
+    reputation?: number;
     facultyProfile?: {
       department: string;
       subjects: string[];

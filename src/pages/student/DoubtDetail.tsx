@@ -22,6 +22,7 @@ import { TagChipList } from '@/components/tags/TagChip';
 import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 import { AttachmentList } from '@/components/attachments/AttachmentList';
 import { RichTextEditor, RICH_TEXT_FORMAT } from '@/components/content/RichTextEditor';
+import { AuthorReputation } from '@/components/reputation/AuthorReputation';
 import { plainTextLength } from '@/lib/codeBlocks';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
@@ -438,6 +439,9 @@ const DoubtDetail = () => {
                               {answer.answeredBy.name || answer.answeredBy.userID}
                               &nbsp;&nbsp;&nbsp;
                               {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
+                              {/* CC-25: reputation beside the author is where
+                                  it helps a reader weigh the answer. */}
+                              <AuthorReputation reputation={answer.answeredBy.reputation} />
                             </span>
                             <span>{formatDate(answer.createdAt)}</span>
                             {answer.editHistory && answer.editHistory.length > 0 && (
