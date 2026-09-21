@@ -32,6 +32,7 @@ import { Alert, Avatar, Button, Card, Empty, Input, message, Modal, Select, Tag,
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PostBody } from '@/components/content/PostBody';
 
 const { TextArea } = Input;
 
@@ -337,7 +338,7 @@ const FacultyDoubtDetail = () => {
             </div>
           </div>
 
-          <p className="text-foreground whitespace-pre-wrap mb-4">{doubt.description}</p>
+          <PostBody content={doubt.description} className="mb-4" />
 
           <div className="flex gap-2 mb-4 flex-wrap">
             <Tag color="purple">{doubt.subject}</Tag>
@@ -411,7 +412,7 @@ const FacultyDoubtDetail = () => {
                     ) : (
                       <div className="flex-1">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
-                          <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
+                          <PostBody content={answer.content} />
                           <div className="flex flex-wrap items-center justify-start gap-2 sm:flex-col sm:items-end sm:justify-start shrink-0">
                             {/* <span className="text-lg font-semibold">{answer.upvotes}</span> */}
                             {answer.isAccepted && (

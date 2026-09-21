@@ -9,6 +9,7 @@ import { Button, Empty, Input, Select, Tag, message } from 'antd';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { stripCodeBlocks } from '@/lib/codeBlocks';
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
@@ -166,7 +167,9 @@ const FacultyDoubts = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground text-base">{doubt.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{doubt.description}</p>
+                    {/* CC-22: cards show prose only. A truncated code block is noise, and
+                        highlighting one per card is the cost the lazy highlighter avoids. */}
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{stripCodeBlocks(doubt.description)}</p>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
                       <Tag color="purple">{doubt.subject}</Tag>
                       <Tag>Sem {doubt.semester}</Tag>
