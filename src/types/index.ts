@@ -136,6 +136,8 @@ export interface Doubt {
   subject: Subject;
   semester: number;
   labels: string[];
+  /// CC-20: lookup key for canonical display and filtering. Never rendered.
+  labelsNormalized?: string[];
   status: DoubtStatus;
   postedById: string;
   postedBy: {
@@ -155,6 +157,9 @@ export interface Doubt {
   answerCount: number;
   views: number;
   isUpvotedByUser?: boolean;
+  /** CC-21. Private to the caller; no count is ever exposed. */
+  isBookmarkedByUser?: boolean;
+  savedAt?: string;
   acceptedAnswerId?: string | null;
   edited: boolean;
   editHistory?: { title?: string; description?: string; editedAt: string }[];
@@ -199,6 +204,9 @@ export interface Answer {
   isVerified: boolean;
   isAccepted: boolean;
   isUpvotedByUser?: boolean;
+  /** CC-21. Private to the caller; no count is ever exposed. */
+  isBookmarkedByUser?: boolean;
+  savedAt?: string;
   edited: boolean;
   editHistory?: { content: string; editedAt: string }[];
   createdAt: string;

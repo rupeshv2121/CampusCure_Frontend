@@ -253,6 +253,8 @@ export const getDoubts = async (filters?: {
   subject?: string;
   semester?: number;
   search?: string;
+  /** CC-20: normalized tags. Repeated, and ANDed together by the backend. */
+  tags?: string[];
 }): Promise<Doubt[]> => {
   try {
     const params = new URLSearchParams();
@@ -260,6 +262,9 @@ export const getDoubts = async (filters?: {
     if (filters?.subject) params.append("subject", filters.subject);
     if (filters?.semester) params.append("semester", String(filters.semester));
     if (filters?.search) params.append("search", filters.search);
+    // Repeated rather than comma-separated: adding a tag must narrow the list,
+    // and the backend ANDs them with hasEvery.
+    filters?.tags?.forEach((tag) => params.append("tag", tag));
 
     const response = await api.get(`/students/doubts?${params.toString()}`);
     const list = response.data?.doubts;
@@ -711,4 +716,56 @@ export const parseComplaintText = async (
   } catch {
     return null;
   }
+};
+
+/* ------------------------------------------------------------------ *
+ * CC-20: tag vocabulary
+ * ------------------------------------------------------------------ */
+
+export interface TagVocabularyEntry {
+  /** Canonical key — what you filter by. */
+  tag: string;
+  /** Most common original casing — what you render. */
+  display: string;
+  count: number;
+}
+
+/**
+ * Every tag in use, uncapped.
+ *
+ * This is a display map as well as an autocomplete source: a chip resolves its
+ * canonical casing through it, so a tag missing from the response would render
+ * in whatever casing its author happened to type.
+ */
+export const getDoubtTags = async (): Promise<TagVocabularyEntry[]> => {
+  const response = await api.get("/students/doubts/tags");
+  const tags = response.data?.tags;
+  return Array.isArray(tags) ? tags : [];
+};
+
+/* ------------------------------------------------------------------ *
+ * CC-21: bookmarks
+ * ------------------------------------------------------------------ */
+
+/**
+ * Save or unsave a doubt.
+ *
+ * Both directions are idempotent server-side, which is what lets the UI toggle
+ * optimistically without worrying about a double-tap on bad wifi.
+ */
+export const setDoubtBookmark = async (
+  doubtId: string,
+  bookmarked: boolean,
+): Promise<void> => {
+  if (bookmarked) {
+    await api.post(`/students/doubts/${doubtId}/bookmark`);
+  } else {
+    await api.delete(`/students/doubts/${doubtId}/bookmark`);
+  }
+};
+
+export const getBookmarkedDoubts = async (): Promise<Doubt[]> => {
+  const response = await api.get("/students/doubts/bookmarked");
+  const list = response.data?.doubts;
+  return Array.isArray(list) ? list : [];
 };

@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { stripCodeBlocks } from '@/lib/codeBlocks';
+import { TagChipList } from '@/components/tags/TagChip';
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
@@ -173,9 +174,12 @@ const FacultyDoubts = () => {
                     <div className="flex gap-1.5 mt-2 flex-wrap">
                       <Tag color="purple">{doubt.subject}</Tag>
                       <Tag>Sem {doubt.semester}</Tag>
-                      {doubt.labels?.map((label) => (
-                        <Tag key={label} color="blue" className="rounded-full text-xs">{label}</Tag>
-                      ))}
+                      {/* CC-20: canonical casing, so faculty see the same
+                          tag the students do. */}
+                      <TagChipList
+                        labels={doubt.labels}
+                        labelsNormalized={doubt.labelsNormalized}
+                      />
                     </div>
                   </div>
                   <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>

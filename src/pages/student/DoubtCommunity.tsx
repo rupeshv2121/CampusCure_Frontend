@@ -19,6 +19,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { stripCodeBlocks } from '@/lib/codeBlocks';
+import { TagChipList } from '@/components/tags/TagChip';
+import { TagInput } from '@/components/tags/TagInput';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
 
@@ -27,7 +30,7 @@ const doubtSchema = z.object({
   description: z.string().trim().min(20, 'Description must be at least 20 characters').max(2000, 'Description too long'),
   subject: z.string().trim().min(1, 'Subject is required'),
   semester: z.number().min(1, 'Semester must be 1-8').max(8),
-  labels: z.string().optional(),
+  labels: z.array(z.string()).optional(),
 });
 
 const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
@@ -62,7 +65,10 @@ const DoubtCommunity = () => {
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [askModal, setAskModal] = useState(false);
-  const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: '' });
+  const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: [] as string[] });
+  // CC-20: tag filter lives in the URL, so a filtered list is shareable and
+  // survives a refresh. getAll gives the repeated ?tag= form the API expects.
+  const activeTags = searchParams.getAll('tag');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,9 +81,16 @@ const DoubtCommunity = () => {
   const [commonLoading, setCommonLoading] = useState(false);
 
   useEffect(() => {
-    fetchDoubts();
     fetchPostingSettings();
   }, []);
+
+  // Re-runs whenever the tag filter changes. Filtering happens server-side
+  // against the GIN-indexed normalized column, not over an already-fetched
+  // page, so it stays correct as the corpus grows.
+  useEffect(() => {
+    fetchDoubts(searchParams.getAll('tag'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   useEffect(() => {
     const nextTab = parseTab(searchParams.get('tab'));
@@ -174,10 +187,10 @@ const DoubtCommunity = () => {
     }
   };
 
-  const fetchDoubts = async () => {
+  const fetchDoubts = async (tags: string[] = []) => {
     try {
       setLoading(true);
-      const data = await getDoubts();
+      const data = await getDoubts(tags.length > 0 ? { tags } : undefined);
       setDoubts(Array.isArray(data) ? data : []);
     } catch {
       message.error('Failed to fetch doubts');
@@ -211,6 +224,24 @@ const DoubtCommunity = () => {
   };
 
   const q = search.trim().toLowerCase();
+  /** Toggle a tag in the URL. Adding one must narrow the list, never replace it. */
+  const toggleTag = (tag: string) => {
+    const next = new URLSearchParams(searchParams);
+    const current = next.getAll('tag');
+    next.delete('tag');
+    const updated = current.includes(tag)
+      ? current.filter((t) => t !== tag)
+      : [...current, tag];
+    updated.forEach((t) => next.append('tag', t));
+    setSearchParams(next);
+  };
+
+  const clearTags = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('tag');
+    setSearchParams(next);
+  };
+
   const filtered = doubts.filter((d) => {
     const title = (d.title ?? '').toLowerCase();
     const desc = (d.description ?? '').toLowerCase();
@@ -236,7 +267,10 @@ const DoubtCommunity = () => {
 
     try {
       setSubmitting(true);
-      const labelsArray = newDoubt.labels ? newDoubt.labels.split(',').map(l => l.trim()).filter(Boolean) : [];
+      // CC-20: already a list. The server normalizes and stores both forms -
+      // splitting a comma-separated string here is what produced the
+      // near-duplicate tags this replaces.
+      const labelsArray = newDoubt.labels;
       await postDoubt({
         title: newDoubt.title,
         description: newDoubt.description,
@@ -245,7 +279,7 @@ const DoubtCommunity = () => {
         labels: labelsArray,
       });
       message.success('Your doubt has been posted!');
-      setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: '' });
+      setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: [] });
       setSimilarDoubts([]);
       setFormErrors({});
       setAskModal(false);
@@ -336,6 +370,37 @@ const DoubtCommunity = () => {
           <div className="flex gap-3 flex-wrap mt-4">
             <Input.Search placeholder="Search doubts..." value={search} className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" onChange={(e) => setSearch(e.target.value)} allowClear />
             <Select placeholder="Filter by subject" value={subjectFilter || undefined} className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} loading={subjectsLoading} />
+          </div>
+        )}
+
+        {/* CC-20: the active tag filter, shown next to the other filters so it
+            is obvious why the list is short, and dismissible. */}
+        {activeTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Filtered by</span>
+            {activeTags.map((tag) => (
+              <Tag
+                key={tag}
+                color="blue"
+                closable
+                onClose={(e) => {
+                  e.preventDefault();
+                  toggleTag(tag);
+                }}
+                className="rounded-full text-xs"
+              >
+                {tag}
+              </Tag>
+            ))}
+            {activeTags.length > 1 && (
+              <button
+                type="button"
+                onClick={clearTags}
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Clear all
+              </button>
+            )}
           </div>
         )}
 
@@ -456,10 +521,28 @@ const DoubtCommunity = () => {
                     <div className="flex gap-1.5 mt-2 flex-wrap">
                       <Tag color="purple">{doubt.subject}</Tag>
                       <Tag>Sem {doubt.semester}</Tag>
-                      {doubt.labels?.map((label) => <Tag key={label} color="blue" className="rounded-full text-xs">{label}</Tag>)}
+                      <TagChipList
+                        labels={doubt.labels}
+                        labelsNormalized={doubt.labelsNormalized}
+                        onTagClick={toggleTag}
+                        activeTags={activeTags}
+                      />
                     </div>
                   </div>
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  <div className="flex items-center gap-1">
+                    <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                    <BookmarkButton
+                      doubtId={doubt.id}
+                      bookmarked={Boolean(doubt.isBookmarkedByUser)}
+                      onChange={(next) =>
+                        setDoubts((current) =>
+                          current.map((d) =>
+                            d.id === doubt.id ? { ...d, isBookmarkedByUser: next } : d,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MessageOutlined /> {doubt.answerCount} answers</span>
@@ -543,7 +626,11 @@ const DoubtCommunity = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Labels (comma-separated)</label>
-              <Input placeholder="e.g. Sorting, Complexity, Searching" value={newDoubt.labels} onChange={(e) => updateField('labels', e.target.value)} />
+              <TagInput
+                value={newDoubt.labels}
+                onChange={(tags) => setNewDoubt((p) => ({ ...p, labels: tags }))}
+                disabled={submitting}
+              />
             </div>
           </div>
         </Modal>
