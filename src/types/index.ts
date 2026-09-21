@@ -60,10 +60,20 @@ export interface AdminProfile {
   adminLevel: AdminLevel;
 }
 
+/** CC-02. Mirrors what the backend returns alongside an entity. */
+export interface AttachmentSummary {
+  id: string;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+}
+
 export interface Complaint {
   id: string;
   title: string;
   description: string;
+  /** CC-02: evidence photos/PDFs. No URLs — those are signed per view. */
+  attachments?: AttachmentSummary[];
   type?: string;
   category?: string;
   status: ComplaintStatus;
