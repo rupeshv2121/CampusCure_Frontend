@@ -18,17 +18,22 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { stripCodeBlocks } from '@/lib/codeBlocks';
+import { stripCodeBlocks, plainTextLength } from '@/lib/codeBlocks';
+import { RichTextEditor, RICH_TEXT_FORMAT } from '@/components/content/RichTextEditor';
 import { TagChipList } from '@/components/tags/TagChip';
 import { TagInput } from '@/components/tags/TagInput';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 
-const { TextArea } = Input;
 
 const doubtSchema = z.object({
   title: z.string().trim().min(10, 'Title must be at least 10 characters').max(200, 'Title too long'),
-  description: z.string().trim().min(20, 'Description must be at least 20 characters').max(2000, 'Description too long'),
+  // CC-23: the editor produces HTML, so a raw length check would measure
+  // markup. <p></p> is seven characters of nothing.
+  description: z
+    .string()
+    .refine((value) => plainTextLength(value) >= 20, 'Description must be at least 20 characters')
+    .refine((value) => plainTextLength(value) <= 2000, 'Description too long'),
   subject: z.string().trim().min(1, 'Subject is required'),
   semester: z.number().min(1, 'Semester must be 1-8').max(8),
   labels: z.array(z.string()).optional(),
@@ -282,6 +287,7 @@ const DoubtCommunity = () => {
         semester: Number(newDoubt.semester),
         labels: labelsArray,
         attachmentIds: doubtFiles,
+        descriptionFormat: RICH_TEXT_FORMAT,
       });
       message.success('Your doubt has been posted!');
       setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: [] });
@@ -586,7 +592,13 @@ const DoubtCommunity = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Description *</label>
-              <TextArea rows={4} placeholder="Provide more details (min 20 chars)..." value={newDoubt.description} onChange={(e) => updateField('description', e.target.value)} status={formErrors.description ? 'error' : undefined} maxLength={2000} showCount />
+              {/* CC-23: produces HTML; the SERVER sanitises it on write. */}
+              <RichTextEditor
+                value={newDoubt.description}
+                onChange={(html) => setNewDoubt((p) => ({ ...p, description: html }))}
+                placeholder="Provide more details — use the toolbar for lists, code and maths"
+                disabled={submitting}
+              />
               {formErrors.description && <p className="text-xs text-destructive mt-1">{formErrors.description}</p>}
             </div>
             {similarDoubts.length > 0 && (

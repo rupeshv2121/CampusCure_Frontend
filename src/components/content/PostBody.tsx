@@ -7,12 +7,13 @@
  * See campus_cure_backend/docs/specs/CC-22-code-highlighting.md.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { resolveLanguage, splitCodeBlocks } from "@/lib/codeBlocks";
 import { highlightCode } from "@/lib/highlighter";
+import { containsMath, renderMathIn } from "@/lib/math";
 
 const CodeBlock = ({
   code,
@@ -101,14 +102,49 @@ const CodeBlock = ({
   );
 };
 
+/**
+ * CC-23: a post written with the editor.
+ *
+ * The HTML was sanitised by the SERVER on write - see services/content/
+ * sanitize.ts. That is the only reason this may use dangerouslySetInnerHTML,
+ * and sanitising here instead would be sanitising after the dangerous string
+ * had already been stored.
+ */
+const RichBody = ({ html, className }: { html: string; className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current || !containsMath(html)) return;
+
+    void renderMathIn(ref.current);
+  }, [html]);
+
+  return (
+    <div
+      ref={ref}
+      className={cn("cc23-prose text-foreground", className)}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
 export const PostBody = ({
   content,
+  format = "TEXT",
   className,
 }: {
   content: string;
+  /** CC-23. TEXT rows predate the editor and keep the CC-22 renderer. */
+  format?: "TEXT" | "HTML";
   className?: string;
 }) => {
   const segments = useMemo(() => splitCodeBlocks(content), [content]);
+
+  // Branching on the stored format, never on the content: "does it start with
+  // <" is wrong for anyone who legitimately types one.
+  if (format === "HTML") {
+    return <RichBody html={content} className={className} />;
+  }
 
   return (
     <div className={cn("space-y-1", className)}>

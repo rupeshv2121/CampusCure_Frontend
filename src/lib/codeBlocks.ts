@@ -161,3 +161,22 @@ export const stripCodeBlocks = (source: string): string =>
     .map((segment) => segment.content)
     .join("\n")
     .trim();
+
+/**
+ * Visible text length of a post body (CC-23).
+ *
+ * A minimum-length check against raw HTML measures markup, not writing:
+ * `<p>hi</p>` is nine characters of which two are the answer. Used for the
+ * "minimum N characters" rules on the doubt and answer forms.
+ */
+export const plainTextLength = (body: string): number => {
+  if (!body) return 0;
+
+  return body
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim().length;
+};

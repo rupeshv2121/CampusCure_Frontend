@@ -21,6 +21,8 @@ import { PostBody } from '@/components/content/PostBody';
 import { TagChipList } from '@/components/tags/TagChip';
 import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 import { AttachmentList } from '@/components/attachments/AttachmentList';
+import { RichTextEditor, RICH_TEXT_FORMAT } from '@/components/content/RichTextEditor';
+import { plainTextLength } from '@/lib/codeBlocks';
 import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
@@ -102,14 +104,15 @@ const DoubtDetail = () => {
 
   const handlePostAnswer = async () => {
     if (!id) return;
-    if (!answerText.trim() || answerText.trim().length < 10) {
+    // CC-23: measure the writing, not the markup.
+    if (plainTextLength(answerText) < 10) {
       message.warning('Answer must be at least 10 characters long');
       return;
     }
 
     try {
       setAnswerSubmitting(true);
-      await postAnswer(id, answerText.trim(), answerFiles);
+      await postAnswer(id, answerText.trim(), answerFiles, RICH_TEXT_FORMAT);
       message.success('Answer submitted for faculty review');
       setAnswerText('');
       setAnswerFiles([]);
@@ -312,7 +315,7 @@ const DoubtDetail = () => {
                 </div>
               </div>
 
-              <PostBody content={doubt.description} className="mb-4" />
+              <PostBody content={doubt.description} format={doubt.descriptionFormat} className="mb-4" />
 
               {/* CC-24: empty and invisible while CC-02 is dormant. */}
               <AttachmentList attachments={doubt.attachments} className="mb-4" />
@@ -414,7 +417,7 @@ const DoubtDetail = () => {
                     ) : (
                       <div className="flex flex-col gap-2.5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
-                          <PostBody content={answer.content} />
+                          <PostBody content={answer.content} format={answer.contentFormat} />
                           <AttachmentList attachments={answer.attachments} />
                           <Tooltip title="Upvote this answer">
                             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
@@ -517,13 +520,12 @@ const DoubtDetail = () => {
         {canPostAnswer && (
           <Card className="rounded-2xl">
             <h3 className="text-lg font-semibold mb-3">Your Answer</h3>
-            <TextArea
-              rows={6}
+            {/* CC-23: produces HTML; the SERVER sanitises it on write. */}
+            <RichTextEditor
               value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              placeholder="Write your answer here (minimum 10 characters)..."
-              maxLength={2000}
-              showCount
+              onChange={setAnswerText}
+              placeholder="Write your answer here…"
+              disabled={answerSubmitting}
             />
             <div className="mt-3">
               <AttachmentUploader
@@ -535,7 +537,7 @@ const DoubtDetail = () => {
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={answerText.trim().length < 10}>
+              <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={plainTextLength(answerText) < 10}>
                 Submit for Review
               </Button>
               <span className="text-xs text-muted-foreground">

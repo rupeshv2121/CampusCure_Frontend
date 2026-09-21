@@ -161,6 +161,8 @@ export interface Doubt {
   isBookmarkedByUser?: boolean;
   /** CC-24: files on the doubt itself. Empty while CC-02 is dormant. */
   attachments?: AttachmentSummary[];
+  /** CC-23. TEXT rows predate the editor. */
+  descriptionFormat?: "TEXT" | "HTML";
   savedAt?: string;
   acceptedAnswerId?: string | null;
   edited: boolean;
@@ -176,6 +178,8 @@ export interface Answer {
   content: string;
   /** CC-24: files on this answer. */
   attachments?: AttachmentSummary[];
+  /** CC-23. See Doubt.descriptionFormat. */
+  contentFormat?: "TEXT" | "HTML";
   answeredById: string;
   answeredBy: {
     id: string;

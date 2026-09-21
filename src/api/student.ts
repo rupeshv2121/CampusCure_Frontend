@@ -229,6 +229,8 @@ export const postDoubt = async (data: {
   labels?: string[];
   /** CC-24: ids of files already uploaded to storage, not the files. */
   attachmentIds?: string[];
+  /** CC-23: HTML when written with the editor. Sanitised server-side. */
+  descriptionFormat?: "TEXT" | "HTML";
 }) => {
   try {
     const response = await api.post("/students/doubts", data);
@@ -455,11 +457,13 @@ export const postAnswer = async (
   doubtId: string,
   content: string,
   attachmentIds?: string[],
+  contentFormat?: "TEXT" | "HTML",
 ) => {
   try {
     const response = await api.post(`/students/doubts/${doubtId}/answers`, {
       content,
       attachmentIds,
+      contentFormat,
     });
     return response.data;
   } catch (e: unknown) {
