@@ -78,7 +78,7 @@ const SummaryCard = () => {
               {data.next.needed} more to {data.next.name}
             </span>
           </div>
-          <Progress percent={percent} showInfo={false} strokeColor="#1677ff" />
+          <Progress percent={percent} showInfo={false} strokeColor="#0785B0" />
         </div>
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">

@@ -9,10 +9,12 @@ import {
   SimilarDoubtSuggestion,
 } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { DOUBT_STATUS } from "@/lib/statusStyles";
+import { Badge, PageHeader, PageShell } from "@/components/app/PageShell";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
-import { ClockCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, QuestionCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons';
 import { Alert, Button, Empty, Input, message, Modal, Select, Tag } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -39,7 +41,6 @@ const doubtSchema = z.object({
   labels: z.array(z.string()).optional(),
 });
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
 type DoubtTab = 'doubts' | 'my-doubts' | 'subjectwise-doubts';
 
@@ -323,14 +324,23 @@ const DoubtCommunity = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Doubt Community</h1>
-            <p className="text-muted-foreground">Ask, answer, and learn together.</p>
-          </div>
-          <Button type="primary" icon={<PlusOutlined />} className="rounded-xl w-full sm:w-auto" disabled={!isApproved} title={!isApproved ? 'Account approval required' : undefined} onClick={() => setAskModal(true)}>Ask a Doubt</Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          icon={<QuestionCircleOutlined />}
+          title="Doubt Community"
+          description="Ask, answer, and learn together"
+          actions={
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!isApproved}
+              title={!isApproved ? 'Account approval required' : undefined}
+              onClick={() => setAskModal(true)}
+            >
+              Ask a Doubt
+            </Button>
+          }
+        />
 
         {!isApproved && (
           <Alert
@@ -349,7 +359,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -360,7 +370,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('my-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'my-doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -371,7 +381,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('subjectwise-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'subjectwise-doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -382,7 +392,7 @@ const DoubtCommunity = () => {
         {activeTab !== 'subjectwise-doubts' && (
           <div className="flex gap-3 flex-wrap mt-4">
             <Input.Search placeholder="Search doubts..." value={search} className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" onChange={(e) => setSearch(e.target.value)} allowClear />
-            <Select placeholder="Filter by subject" value={subjectFilter || undefined} className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} loading={subjectsLoading} />
+            <Select placeholder="Filter by subject" value={subjectFilter || undefined} className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-foreground! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} loading={subjectsLoading} />
           </div>
         )}
 
@@ -437,7 +447,7 @@ const DoubtCommunity = () => {
                       onClick={() => setCommonWindow(item.value)}
                       className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                         commonWindow === item.value
-                          ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                          ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                           : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
                       }`}
                     >
@@ -475,7 +485,7 @@ const DoubtCommunity = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-sm font-bold text-foreground truncate">{topic.label}</h3>
-                      <span className="rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-90/40 dark:text-cyan-700 px-2.5 py-0.5 text-xs font-semibold">
+                      <span className="rounded-full bg-cyan-100 text-primary dark:bg-cyan-900/40 dark:text-primary px-2.5 py-0.5 text-xs font-semibold">
                         {topic.count} doubts
                       </span>
                     </div>
@@ -524,7 +534,7 @@ const DoubtCommunity = () => {
               <Empty description={activeTab === 'my-doubts' ? 'You have not posted any doubts yet' : 'No doubts found'} />
             )}
             {filtered.map((doubt, i) => (
-              <motion.div key={doubt.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} whileHover={{ scale: 1.01, boxShadow: '0 4px 20px rgba(22,119,255,0.08)' }} className="bg-card rounded-2xl border  p-5 cursor-pointer transition" onClick={() => navigate(`/student/doubts/${doubt.id}`)}>
+              <motion.div key={doubt.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} whileHover={{ scale: 1.01, boxShadow: '0 4px 20px rgba(22,119,255,0.08)' }} className="bg-card rounded-2xl border p-5 cursor-pointer transition" onClick={() => navigate(`/student/doubts/${doubt.id}`)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground text-base">{doubt.title}</h3>
@@ -532,7 +542,7 @@ const DoubtCommunity = () => {
                         highlighting one per card is the cost the lazy highlighter avoids. */}
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{stripCodeBlocks(doubt.description)}</p>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
-                      <Tag color="purple">{doubt.subject}</Tag>
+                      <Badge tone="escalate">{doubt.subject}</Badge>
                       <Tag>Sem {doubt.semester}</Tag>
                       <TagChipList
                         labels={doubt.labels}
@@ -543,7 +553,7 @@ const DoubtCommunity = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                    <Badge tone={DOUBT_STATUS[doubt.status]?.tone ?? "neutral"}>{DOUBT_STATUS[doubt.status]?.label ?? doubt.status}</Badge>
                     <BookmarkButton
                       doubtId={doubt.id}
                       bookmarked={Boolean(doubt.isBookmarkedByUser)}
@@ -602,8 +612,8 @@ const DoubtCommunity = () => {
               {formErrors.description && <p className="text-xs text-destructive mt-1">{formErrors.description}</p>}
             </div>
             {similarDoubts.length > 0 && (
-              <div className="rounded-lg border border-dashed border-blue-300/70 bg-blue-50/40 p-3 sm:p-4 mt-8">
-                <p className="text-xs font-semibold text-blue-700">Similar doubts found</p>
+              <div className="rounded-lg border border-dashed border-blue-300/70 bg-accent/40 p-3 sm:p-4 mt-8">
+                <p className="text-xs font-semibold text-primary">Similar doubts found</p>
                 <div className="mt-2 space-y-2">
                   {similarDoubts.map((suggestion) => (
                     <div key={suggestion.id} className="rounded-md border bg-background p-2.5 sm:p-3">
@@ -663,7 +673,7 @@ const DoubtCommunity = () => {
             </div>
           </div>
         </Modal>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

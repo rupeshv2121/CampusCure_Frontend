@@ -20,7 +20,7 @@ export const AuthorReputation = ({
 
   return (
     <Tooltip title={`${reputation} reputation earned by helping other students`}>
-      <span className="ml-2 inline-flex items-center gap-0.5 align-middle text-xs text-amber-600 dark:text-amber-500">
+      <span className="ml-2 inline-flex items-center gap-0.5 align-middle text-xs text-amber-600 dark:text-amber-400">
         <Award className="h-3 w-3" />
         {reputation}
       </span>

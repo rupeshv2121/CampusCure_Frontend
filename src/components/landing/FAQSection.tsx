@@ -1,96 +1,113 @@
-import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { PlusOutlined } from "@ant-design/icons";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 
-const faqs = [
+const FAQS = [
   {
-    question: 'Who can use CampusCure?',
-    answer: 'CampusCure is designed for students, faculty members, and administrators in educational institutions. Each user type has specific features tailored to their needs.',
+    question: "Who can use CampusCure?",
+    answer:
+      "Students, faculty members and administrators at an educational institution. Each role signs in to a different dashboard scoped to what that role is responsible for.",
   },
   {
-    question: 'How do I track my complaint status?',
-    answer: "Once you submit a complaint, you can track its progress from your dashboard. View detailed updates and status changes throughout the resolution process.",
+    question: "How do I track my complaint status?",
+    answer:
+      "Every complaint you raise appears on your dashboard with its current status. You are notified when it is assigned, when it moves, and when it closes — you never have to ask anyone for an update.",
   },
   {
-    question: 'Is there a mobile app available?',
-    answer: "CampusCure is currently a responsive web application that works seamlessly on all devices — desktop, tablet, and mobile. A dedicated mobile app is planned for future release.",
+    question: "Is there a mobile app?",
+    answer:
+      "CampusCure is a responsive web application and works on phones, tablets and desktops today. A dedicated mobile app is planned but not yet released.",
   },
   {
-    question: 'How does the doubt community work?',
-    answer: 'Students can post academic doubts which can be answered by peers and verified by faculty members. This creates a collaborative learning environment with quality-assured answers.',
+    question: "How does the doubt community work?",
+    answer:
+      "Students post academic questions. Other students answer, and faculty can verify an answer as correct. Verified answers stay searchable, so the same question does not have to be asked again next term.",
   },
   {
-    question: 'What types of complaints can I submit?',
-    answer: 'You can submit various types of complaints including infrastructure issues like projectors, fans, lights, smart boards, and seating.',
+    question: "What kinds of complaints can I submit?",
+    answer:
+      "Campus infrastructure issues — projectors, fans, lights, smart boards, seating and similar. Each is tagged to a block and classroom so it routes to the team that maintains it.",
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const FAQSection = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-24 px-6">
-      <div className="max-w-3xl mx-auto">
+    <section id="faq" className="cc-section">
+      <div className="cc-container">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-14"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.55, ease: EASE }}
+          className="cc-section-head"
         >
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#00639B]/10 text-[#00639B] dark:text-[#009BB0] text-xs font-semibold uppercase tracking-wider mb-4">
-            FAQ
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Frequently Asked{' '}
-            <span className="bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] bg-clip-text text-transparent">
-              Questions
-            </span>
+          <span className="cc-eyebrow">FAQ</span>
+          <h2 className="cc-h2">
+            Frequently asked <span className="cc-gradient-text">questions</span>
           </h2>
-          <p className="text-muted-foreground">
-            Find quick answers to common questions about CampusCure.
-          </p>
         </motion.div>
 
-        <div className="space-y-3">
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.4, delay: index * 0.06 }}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-accent/40 transition-colors cursor-pointer"
-              >
-                <span className="font-semibold text-foreground pr-4 text-sm sm:text-base">{faq.question}</span>
-                <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 ${
-                  openIndex === index
-                    ? 'bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] text-white'
-                    : 'bg-accent text-muted-foreground'
-                }`}>
-                  {openIndex === index
-                    ? <MinusOutlined style={{ fontSize: 10 }} />
-                    : <PlusOutlined style={{ fontSize: 10 }} />
-                  }
-                </div>
-              </button>
-
+        <div className="mx-auto max-w-3xl space-y-3">
+          {FAQS.map((faq, index) => {
+            const open = openIndex === index;
+            return (
               <motion.div
-                initial={false}
-                animate={{ height: openIndex === index ? 'auto' : 0, opacity: openIndex === index ? 1 : 0 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-                className="overflow-hidden"
+                key={faq.question}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.45, delay: index * 0.06, ease: EASE }}
+                className={
+                  "cc-card overflow-hidden transition-colors " +
+                  (open ? "border-brand-500/40" : "")
+                }
               >
-                <div className="px-6 pb-5 pt-1 text-sm text-muted-foreground leading-relaxed border-t border-border/50">
-                  {faq.answer}
-                </div>
+                <h3>
+                  <button
+                    onClick={() => setOpenIndex(open ? null : index)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-accent/50 sm:px-6"
+                  >
+                    <span className="font-display text-[15px] font-semibold tracking-tight sm:text-base">
+                      {faq.question}
+                    </span>
+                    <span
+                      className={
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,color] duration-300 " +
+                        (open
+                          ? "rotate-45 bg-brand-600 text-white"
+                          : "bg-accent text-brand-700")
+                      }
+                    >
+                      {/* One icon rotated 45° instead of swapping plus for
+                          minus — the transition reads as a single motion. */}
+                      <PlusOutlined style={{ fontSize: 11 }} />
+                    </span>
+                  </button>
+                </h3>
+
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: EASE }}
+                      className="overflow-hidden"
+                    >
+                      <p className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground sm:px-6">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

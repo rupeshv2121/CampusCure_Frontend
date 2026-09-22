@@ -1,5 +1,7 @@
 import { deleteAnswer as deleteStudentAnswer, deleteDoubt, editAnswer as editStudentAnswer, editDoubt, getDoubtById, markAnswerAsAccepted, postAnswer, upvoteAnswer, upvoteDoubt as upvoteStudentDoubt } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { DOUBT_STATUS } from "@/lib/statusStyles";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
@@ -28,7 +30,6 @@ import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const DoubtDetail = () => {
@@ -295,7 +296,7 @@ const DoubtDetail = () => {
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
                 <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  <Badge tone={(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).tone}>{(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).label}</Badge>
                   {/* CC-21: private save. No count is shown, deliberately. */}
                   <BookmarkButton
                     doubtId={doubt.id}
@@ -322,7 +323,7 @@ const DoubtDetail = () => {
               <AttachmentList attachments={doubt.attachments} className="mb-4" />
 
               <div className="flex gap-2 mb-4 flex-wrap">
-                <Tag color="purple">{doubt.subject}</Tag>
+                <Badge tone="escalate">{doubt.subject}</Badge>
                 <Tag>Sem {doubt.semester}</Tag>
                 {/* CC-20: clicking a tag returns to the community filtered by it. */}
                 <TagChipList
@@ -503,7 +504,7 @@ const DoubtDetail = () => {
                           </div>
                         </div>
                         {showApprovedNoteToEveryone && (
-                          <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                          <div className="rounded-lg bg-accent px-3 py-2 text-xs text-blue-800">
                             <span className="font-medium">Faculty Note:</span> {answer.moderationNote}
                           </div>
                         )}

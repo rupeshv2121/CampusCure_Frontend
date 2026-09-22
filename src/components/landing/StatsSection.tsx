@@ -1,68 +1,136 @@
-import { ClockCircleOutlined, CustomerServiceOutlined, SafetyOutlined, TeamOutlined } from '@ant-design/icons';
-import { useInView } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import {
+  ClockCircleOutlined,
+  CustomerServiceOutlined,
+  SafetyOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import { motion, useInView } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
-const useCountUp = (end: number, duration = 1.4) => {
-  const [count, setCount] = useState(0);
+/**
+ * Counts up to `end` once the element scrolls into view.
+ *
+ * Driven by rAF rather than a 60Hz interval: the old version assumed every
+ * tick fired on time, so on a loaded main thread it both ran long and landed
+ * on a value that depended on frame timing.
+ */
+const useCountUp = (end: number, durationMs = 1400) => {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-40px' });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
     if (!inView) return;
-    let start = 0;
-    const step = end / (duration * 60);
-    const id = setInterval(() => {
-      start += step;
-      if (start >= end) { setCount(end); clearInterval(id); }
-      else setCount(Math.floor(start));
-    }, 1000 / 60);
-    return () => clearInterval(id);
-  }, [inView, end, duration]);
 
-  return { count, ref };
+    // Respect the OS setting — an animated number is decoration.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setValue(end);
+      return;
+    }
+
+    let frame = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / durationMs, 1);
+      // easeOutCubic: fast first, settles on the final number.
+      setValue(Math.round(end * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [inView, end, durationMs]);
+
+  return { value, ref };
 };
 
-const stats = [
-  { end: 500, suffix: '+', label: 'Active Students', icon: <TeamOutlined className="text-xl" />, gradient: 'from-[#00639B] to-[#009BB0]' },
-  { end: 98, suffix: '%', label: 'Resolution Rate', icon: <SafetyOutlined className="text-xl" />, gradient: 'from-green-600 to-emerald-500' },
-  { end: 24, suffix: '/7', label: 'Support Available', icon: <CustomerServiceOutlined className="text-xl" />, gradient: 'from-violet-600 to-purple-500' },
-  { end: 150, suffix: '+', label: 'Issues Resolved Weekly', icon: <ClockCircleOutlined className="text-xl" />, gradient: 'from-orange-500 to-amber-400' },
+const STATS = [
+  {
+    end: 500,
+    suffix: "+",
+    label: "Active students",
+    icon: <TeamOutlined />,
+    tile: "",
+  },
+  {
+    end: 98,
+    suffix: "%",
+    label: "Resolution rate",
+    icon: <SafetyOutlined />,
+    tile: "cc-icon-tile--emerald",
+  },
+  {
+    end: 24,
+    suffix: "/7",
+    label: "Support available",
+    icon: <CustomerServiceOutlined />,
+    tile: "cc-icon-tile--violet",
+  },
+  {
+    end: 150,
+    suffix: "+",
+    label: "Issues resolved weekly",
+    icon: <ClockCircleOutlined />,
+    tile: "cc-icon-tile--amber",
+  },
 ];
 
-const StatItem = ({ stat }: { stat: typeof stats[number] }) => {
-  const { count, ref } = useCountUp(stat.end);
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const StatItem = ({ stat }: { stat: (typeof STATS)[number] }) => {
+  const { value, ref } = useCountUp(stat.end);
+
   return (
-    <div ref={ref} className="text-center space-y-3">
-      <div className={`inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-linear-to-br ${stat.gradient} text-white mb-2 shadow-lg`}>
-        {stat.icon}
+    <div ref={ref} className="text-center">
+      <span className={"cc-icon-tile " + stat.tile}>{stat.icon}</span>
+      <div className="mt-4 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+        {value}
+        {stat.suffix}
       </div>
-      <div className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-        {count}{stat.suffix}
+      <div className="mt-1.5 text-sm font-medium text-brand-100/70">
+        {stat.label}
       </div>
-      <div className="text-sm text-slate-200/85 font-medium">{stat.label}</div>
     </div>
   );
 };
 
 const StatsSection = () => (
-  <section id="stats" className="py-24 px-6 relative overflow-hidden bg-linear-to-br from-slate-900 via-[#06264F] to-[#041A47] landing-dark-bg">
-    {/* Grid pattern */}
-    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px]" />
-    {/* Top glow */}
-    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-48 bg-[#009BB0]/20 blur-3xl rounded-full" />
+  <section
+    id="stats"
+    className="cc-section cc-section--dark landing-dark-bg"
+  >
+    <div className="cc-grid cc-grid--dark" aria-hidden="true" />
+    <div
+      aria-hidden="true"
+      className="cc-orb left-1/2 top-0 h-56 w-xl -translate-x-1/2 bg-brand-400/20"
+    />
 
-    <div className="relative max-w-5xl mx-auto">
-      <div className="text-center mb-14">
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold uppercase tracking-wider mb-4 border border-white/10">
-          By The Numbers
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-bold text-white">
+    <div className="cc-container relative">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="cc-section-head"
+      >
+        <span className="cc-eyebrow cc-eyebrow--onDark">By the numbers</span>
+        <h2 className="cc-h2 text-white">
           Trusted by the campus community
         </h2>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-16">
-        {stats.map((s) => (
-          <StatItem key={s.label} stat={s} />
+      </motion.div>
+
+      <div className="grid grid-cols-2 gap-10 lg:grid-cols-4 lg:gap-14">
+        {STATS.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: i * 0.08, ease: EASE }}
+          >
+            <StatItem stat={s} />
+          </motion.div>
         ))}
       </div>
     </div>

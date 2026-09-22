@@ -6,10 +6,12 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import { DOUBT_STATUS } from "@/lib/statusStyles";
+import { Badge, PageHeader, PageShell } from "@/components/app/PageShell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Empty, Spin, Tag } from "antd";
-import { EyeOutlined, MessageOutlined } from "@ant-design/icons";
+import { BookOutlined, EyeOutlined, MessageOutlined } from "@ant-design/icons";
 import { Bookmark } from "lucide-react";
 import { getBookmarkedDoubts } from "@/api/student";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
@@ -17,11 +19,6 @@ import { TagChipList } from "@/components/tags/TagChip";
 import { stripCodeBlocks } from "@/lib/codeBlocks";
 import type { Doubt } from "@/types";
 
-const statusColors: Record<string, string> = {
-  OPEN: "orange",
-  ANSWERED: "blue",
-  RESOLVED: "green",
-};
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -51,13 +48,12 @@ export const SavedDoubts = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Saved doubts</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Only you can see this list.
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        icon={<BookOutlined />}
+        title="Saved Doubts"
+        description="Your private shelf — nobody else can see this list"
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-16">
@@ -102,7 +98,7 @@ export const SavedDoubts = () => {
                     {stripCodeBlocks(doubt.description)}
                   </p>
                   <div className="flex gap-1.5 mt-2 flex-wrap">
-                    <Tag color="purple">{doubt.subject}</Tag>
+                    <Badge tone="escalate">{doubt.subject}</Badge>
                     <Tag>Sem {doubt.semester}</Tag>
                     <TagChipList
                       labels={doubt.labels}
@@ -111,7 +107,7 @@ export const SavedDoubts = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  <Badge tone={DOUBT_STATUS[doubt.status]?.tone ?? "neutral"}>{DOUBT_STATUS[doubt.status]?.label ?? doubt.status}</Badge>
                   <BookmarkButton
                     doubtId={doubt.id}
                     bookmarked
@@ -134,7 +130,7 @@ export const SavedDoubts = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 };
 

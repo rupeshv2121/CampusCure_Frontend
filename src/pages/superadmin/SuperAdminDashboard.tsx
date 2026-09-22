@@ -33,7 +33,7 @@ import {
   YAxis,
 } from 'recharts';
 
-const COLORS = ['#1677FF', '#52c41a', '#fa8c16', '#722ed1', '#eb2f96'];
+const COLORS = ['#0785B0', '#25A179', '#F58B0A', '#7B55E0', '#DE4179'];
 
 const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   const [count, setCount] = useState(0);
@@ -108,12 +108,12 @@ const SuperAdminDashboard = () => {
   const hasDepartmentData = analytics.complaintsByDept.some((item) => (item.count ?? 0) > 0);
 
   const topStats = [
-    { label: 'Total Students', value: s.totalStudents, pending: s.pendingStudents, icon: <UserOutlined />, iconColor: 'text-cyan-600 dark:text-cyan-400', lightBg: 'bg-cyan-50 dark:bg-cyan-90/30' },
-    { label: 'Total Faculty', value: s.totalFaculty, pending: s.pendingFaculty, icon: <TeamOutlined />, iconColor: 'text-green-600 dark:text-green-400', lightBg: 'bg-green-50 dark:bg-green-90/30' },
-    { label: 'Total Admins', value: s.totalAdmins, pending: s.pendingAdmins, icon: <SafetyCertificateOutlined />, iconColor: 'text-purple-600 dark:text-purple-400', lightBg: 'bg-purple-50 dark:bg-purple-90/30' },
-    { label: 'Total Doubts', value: s.totalDoubts, pending: 0, icon: <QuestionCircleOutlined />, iconColor: 'text-orange-600 dark:text-orange-400', lightBg: 'bg-orange-50 dark:bg-orange-90/30' },
-    { label: 'Total Complaints', value: s.totalComplaints, pending: 0, icon: <FileTextOutlined />, iconColor: 'text-red-600 dark:text-red-400', lightBg: 'bg-red-50 dark:bg-red-90/30' },
-    { label: 'Resolved', value: s.resolvedComplaints, pending: 0, icon: <CheckCircleOutlined />, iconColor: 'text-teal-600 dark:text-teal-400', lightBg: 'bg-teal-50 dark:bg-teal-90/30' },
+    { label: 'Total Students', value: s.totalStudents, pending: s.pendingStudents, icon: <UserOutlined />, iconColor: 'text-primary dark:text-primary', lightBg: 'bg-accent dark:bg-cyan-900/30' },
+    { label: 'Total Faculty', value: s.totalFaculty, pending: s.pendingFaculty, icon: <TeamOutlined />, iconColor: 'text-green-600 dark:text-green-400', lightBg: 'bg-green-50 dark:bg-green-900/30' },
+    { label: 'Total Admins', value: s.totalAdmins, pending: s.pendingAdmins, icon: <SafetyCertificateOutlined />, iconColor: 'text-violet-600 dark:text-violet-400', lightBg: 'bg-violet-50 dark:bg-violet-900/30' },
+    { label: 'Total Doubts', value: s.totalDoubts, pending: 0, icon: <QuestionCircleOutlined />, iconColor: 'text-orange-600 dark:text-orange-400', lightBg: 'bg-orange-50 dark:bg-orange-900/30' },
+    { label: 'Total Complaints', value: s.totalComplaints, pending: 0, icon: <FileTextOutlined />, iconColor: 'text-red-600 dark:text-red-400', lightBg: 'bg-red-50 dark:bg-red-900/30' },
+    { label: 'Resolved', value: s.resolvedComplaints, pending: 0, icon: <CheckCircleOutlined />, iconColor: 'text-teal-600 dark:text-teal-400', lightBg: 'bg-teal-50 dark:bg-teal-900/30' },
   ];
 
   return (
@@ -126,18 +126,18 @@ const SuperAdminDashboard = () => {
           className="dashboard-hero"
         >
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[48px_48px]" />
-          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-cyan-600/20 blur-3xl" />
-          <div className="absolute -bottom-8 right-1/3 h-40 w-40 rounded-full bg-violet-600/15 blur-2xl" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--primary" aria-hidden="true" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--secondary" aria-hidden="true" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">Super Admin Control Center</h1>
               <Tag color="gold" className="font-semibold">SUPER ADMIN</Tag>
             </div>
-            <p className="text-cyan-200/80 mt-1 text-sm">Welcome, {user?.name} · Full system access</p>
+            <p className="text-brand-100/75 mt-1 text-sm">Welcome, {user?.name} · Full system access</p>
             <div className="grid grid-cols-1 min-[460px]:grid-cols-2 gap-3 mt-4">
               <button
                 onClick={() => navigate('/superadmin/settings')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/20 transition-colors cursor-pointer w-full"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-900 shadow-lg shadow-brand-950/25 transition-colors hover:bg-brand-50 w-full"
               >
                 <SettingOutlined /> System Config
               </button>
@@ -156,13 +156,13 @@ const SuperAdminDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-orange-200 bg-orange-50 dark:bg-orange-40/20 dark:border-orange-800 p-4 flex items-center justify-between flex-wrap gap-3"
+            className="rounded-2xl border border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 p-4 flex items-center justify-between flex-wrap gap-3"
           >
             <div className="flex items-center gap-3">
               <ClockCircleOutlined className="text-orange-500 text-lg" />
               <div>
                 <p className="font-semibold text-orange-800 dark:text-orange-300">Pending Approvals</p>
-                <p className="text-xs text-orange-600 dark:text-orange-700">
+                <p className="text-xs text-orange-600 dark:text-orange-300">
                   {s.pendingStudents} students · {s.pendingFaculty} faculty · {s.pendingAdmins} admins
                 </p>
               </div>
@@ -214,7 +214,7 @@ const SuperAdminDashboard = () => {
                 <Progress
                   type="dashboard"
                   percent={s.resolutionRate}
-                  strokeColor={{ '0%': '#722ed1', '100%': '#52c41a' }}
+                  strokeColor={{ '0%': '#7B55E0', '100%': '#25A179' }}
                   format={(p) => <span className="text-2xl font-bold text-foreground">{p}%</span>}
                   size={140}
                 />
@@ -242,20 +242,20 @@ const SuperAdminDashboard = () => {
                 <AreaChart data={analytics.complaintsByMonth}>
                   <defs>
                     <linearGradient id="saColorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1677FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1677FF" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0785B0" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#0785B0" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="saColorResolved" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#52c41a" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#52c41a" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#25A179" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#25A179" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 20% 91%)" />
                   <XAxis dataKey="month" tick={{ fontSize: isMobile ? 11 : 12 }} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: isMobile ? 11 : 12 }} width={isMobile ? 28 : 36} />
                   <Tooltip />
-                  <Area type="monotone" dataKey="complaints" stroke="#1677FF" fillOpacity={1} fill="url(#saColorTotal)" strokeWidth={2} name="Total" />
-                  <Area type="monotone" dataKey="resolved" stroke="#52c41a" fillOpacity={1} fill="url(#saColorResolved)" strokeWidth={2} name="Resolved" />
+                  <Area type="monotone" dataKey="complaints" stroke="#0785B0" fillOpacity={1} fill="url(#saColorTotal)" strokeWidth={2} name="Total" />
+                  <Area type="monotone" dataKey="resolved" stroke="#25A179" fillOpacity={1} fill="url(#saColorResolved)" strokeWidth={2} name="Resolved" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -321,7 +321,7 @@ const SuperAdminDashboard = () => {
                   <XAxis type="number" label={{ value: 'Count', position: 'insideBottom', offset: -15, fontSize: 15 }} tick={{ fontSize: isMobile ? 11 : 12 }} />
                   <YAxis type="category" dataKey="dept" width={1} tick={false} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#722ed1" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="count" fill="#7B55E0" radius={[0, 6, 6, 0]}>
                     <LabelList dataKey="dept" position="insideLeft" offset={8} style={{ fill: 'white', fontSize: 12, fontWeight: 500 }} />
                   </Bar>
                 </BarChart>
@@ -356,7 +356,7 @@ const SuperAdminDashboard = () => {
               {superStats!.adminProfiles.slice(0, 5).map((admin) => (
                 <div key={admin.id} className="flex items-center justify-between gap-4 p-3 rounded-xl border bg-muted/10 hover:bg-muted/20 transition">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-sm shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold text-sm shrink-0">
                       {admin.user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">

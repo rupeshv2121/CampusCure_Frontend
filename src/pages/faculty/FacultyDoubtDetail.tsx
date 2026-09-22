@@ -12,6 +12,8 @@ import {
   type AnswerDraft,
 } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { DOUBT_STATUS } from "@/lib/statusStyles";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
@@ -37,7 +39,6 @@ import { TagChipList } from '@/components/tags/TagChip';
 
 const { TextArea } = Input;
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const FacultyDoubtDetail = () => {
@@ -335,14 +336,14 @@ const FacultyDoubtDetail = () => {
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
             <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
             <div className="flex flex-wrap gap-2">
-              <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+              <Badge tone={(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).tone}>{(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).label}</Badge>
             </div>
           </div>
 
           <PostBody content={doubt.description} className="mb-4" />
 
           <div className="flex gap-2 mb-4 flex-wrap">
-            <Tag color="purple">{doubt.subject}</Tag>
+            <Badge tone="escalate">{doubt.subject}</Badge>
             <Tag>Sem {doubt.semester}</Tag>
             <TagChipList
               labels={doubt.labels}
@@ -510,7 +511,7 @@ const FacultyDoubtDetail = () => {
                             className={`mt-2 rounded-lg px-3 py-2 text-xs ${
                               answer.approvalStatus === 'REJECTED'
                                 ? 'bg-red-50 text-red-700'
-                                : 'bg-blue-50 text-blue-800'
+                                : 'bg-accent text-blue-800'
                             }`}
                           >
                             <span className="font-medium">Moderation Note:</span> {answer.moderationNote}
@@ -534,7 +535,7 @@ const FacultyDoubtDetail = () => {
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <RobotOutlined /> AI-drafted answer
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Written from {draft.sources.length} previously approved{' '}
                   {draft.sources.length === 1 ? 'answer' : 'answers'} on this
                   campus. Nothing is published until you approve it, and it will
@@ -579,10 +580,10 @@ const FacultyDoubtDetail = () => {
                         key={source.answerId}
                         className="rounded-xl bg-white/70 border border-amber-200 p-3"
                       >
-                        <p className="text-xs font-medium text-slate-600">
+                        <p className="text-xs font-medium text-muted-foreground">
                           In reply to: {source.doubtTitle}
                         </p>
-                        <p className="text-sm text-slate-700 mt-1">
+                        <p className="text-sm text-foreground mt-1">
                           {source.excerpt}…
                         </p>
                       </div>
@@ -604,7 +605,7 @@ const FacultyDoubtDetail = () => {
               <Button onClick={handleRejectDraft} disabled={draftBusy}>
                 Reject draft
               </Button>
-              <span className="text-xs text-slate-400 self-center ml-1">
+              <span className="text-xs text-muted-foreground self-center ml-1">
                 {draft.model}
               </span>
             </div>

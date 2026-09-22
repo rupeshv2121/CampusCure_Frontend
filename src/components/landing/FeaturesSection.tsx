@@ -1,91 +1,111 @@
-import { BarChartOutlined, BellOutlined, MessageOutlined, TeamOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
+import {
+  BarChartOutlined,
+  BellOutlined,
+  CustomerServiceOutlined,
+  MessageOutlined,
+  SafetyCertificateOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 
-const features = [
+type Feature = {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+  /** Tonal variant of `.cc-icon-tile`; brand blue when omitted. */
+  tile?: string;
+  /** Bento span. The first two entries are wide, the rest are single cells. */
+  wide?: boolean;
+};
+
+const FEATURES: Feature[] = [
   {
     icon: <MessageOutlined />,
-    title: 'Complaint Management',
-    desc: 'Submit, track, and resolve campus issues effortlessly with our system.',
-    gradient: 'from-[#041A47] via-[#00639B] to-[#009BB0]',
-    glow: 'group-hover:shadow-cyan-600/15',
+    title: "Complaint management",
+    desc: "Raise an issue, watch it route to the right desk, and follow every status change to resolution — no chasing anyone for an update.",
+    wide: true,
   },
   {
     icon: <TeamOutlined />,
-    title: 'Doubt Community',
-    desc: 'Collaborative learning platform where students help each other with faculty oversight.',
-    gradient: 'from-violet-600 to-purple-500',
-    glow: 'group-hover:shadow-violet-500/15',
+    title: "Doubt community",
+    desc: "Students answer students, faculty verify what is correct, and the good answers stay searchable for the next cohort.",
+    tile: "cc-icon-tile--violet",
+    wide: true,
   },
   {
     icon: <BarChartOutlined />,
-    title: 'Analytics Dashboard',
-    desc: 'Real-time insights and data visualization for informed decision-making.',
-    gradient: 'from-orange-500 to-amber-400',
-    glow: 'group-hover:shadow-orange-500/15',
+    title: "Analytics",
+    desc: "Recurring issues, resolution times and engagement, charted for the people who decide budgets.",
+    tile: "cc-icon-tile--amber",
   },
   {
     icon: <BellOutlined />,
-    title: 'Status Updates',
-    desc: 'Track complaint progress and doubt responses with clear status indicators.',
-    gradient: 'from-green-600 to-emerald-500',
-    glow: 'group-hover:shadow-green-500/15',
+    title: "Status updates",
+    desc: "Notifications the moment a complaint moves or a doubt is answered.",
+    tile: "cc-icon-tile--emerald",
   },
   {
-    icon: <MessageOutlined />,
-    title: 'Help & Support',
-    desc: 'Responsive support and documentation for admins and users.',
-    gradient: 'from-indigo-600 to-blue-600',
-    glow: 'group-hover:shadow-indigo-500/15',
+    icon: <SafetyCertificateOutlined />,
+    title: "Role-based access",
+    desc: "Students, faculty, admins and super admins each see exactly their own scope.",
+  },
+  {
+    icon: <CustomerServiceOutlined />,
+    title: "Help & support",
+    desc: "An in-app assistant for students, plus documentation for the people running it.",
+    tile: "cc-icon-tile--rose",
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const FeaturesSection = () => (
-  <section id="features" className="py-24 px-6">
-    <div className="max-w-6xl mx-auto">
+  <section id="features" className="cc-section">
+    <div className="cc-container">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16"
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="cc-section-head"
       >
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#00639B]/10 text-[#00639B] dark:text-[#009BB0] text-xs font-semibold uppercase tracking-wider mb-4">
-          Features
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-          Everything your campus needs,{' '}
-          <span className="bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] bg-clip-text text-transparent">
-            in one place
-          </span>
+        <span className="cc-eyebrow">Features</span>
+        <h2 className="cc-h2">
+          Everything your campus needs,{" "}
+          <span className="cc-gradient-text">in one place</span>
         </h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          A comprehensive platform built to handle every aspect of campus management efficiently.
+        <p className="cc-lede">
+          Two things break down on every campus: issues nobody owns, and
+          questions nobody answers. CampusCure gives both a home, and a paper
+          trail.
         </p>
       </motion.div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {features.map((f, i) => (
-          <motion.div
+      {/* Bento layout: the two headline capabilities get double-width cells on
+          large screens, the supporting four sit underneath at equal weight. */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {FEATURES.map((f, i) => (
+          <motion.article
             key={f.title}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.45, delay: i * 0.08 }}
-            whileHover={{ y: -5 }}
-            className={`group relative rounded-3xl border border-gray-500 bg-card p-7 overflow-hidden cursor-default transition-all hover:shadow-2xl ${f.glow}`}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: Math.min(i, 4) * 0.07, ease: EASE }}
+            className={
+              "cc-card cc-card--interactive cc-card--accent group p-6 sm:p-7 " +
+              (f.wide ? "lg:col-span-2" : "")
+            }
           >
-            {/* Subtle gradient overlay on hover */}
-            <div className={`absolute inset-0 bg-linear-to-br ${f.gradient} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 rounded-3xl`} />
-            {/* Top accent line */}
-            <div className={`absolute top-0 inset-x-0 h-0.5 bg-linear-to-r ${f.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+            <span className={"cc-icon-tile " + (f.tile ?? "")}>{f.icon}</span>
 
-            <div className={`relative h-12 w-12 rounded-2xl bg-linear-to-br ${f.gradient} flex items-center justify-center text-white text-xl mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-              {f.icon}
-            </div>
-
-            <h3 className="text-lg font-semibold text-foreground mb-2">{f.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-          </motion.div>
+            <h3 className="mt-5 font-display text-lg font-bold tracking-tight">
+              {f.title}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {f.desc}
+            </p>
+          </motion.article>
         ))}
       </div>
     </div>

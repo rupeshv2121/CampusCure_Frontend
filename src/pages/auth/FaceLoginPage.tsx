@@ -264,14 +264,14 @@ const FaceLoginPage = () => {
     : isError
     ? 'ring-red-500'
     : status === 'camera-ready'
-    ? 'ring-cyan-500'
-    : 'ring-slate-600';
+    ? 'ring-brand-500'
+    : 'ring-border';
 
   return (
     <AuthSplitLayout
       showcaseTitle={
         <>
-          <span className="bg-linear-to-r from-cyan-200 via-white to-cyan-300 bg-clip-text text-transparent">Face ID</span>
+          <span className="cc-gradient-text--onDark">Face ID</span>
         </>
       }
       showcaseDescription="Look at your camera and sign in instantly with a biometric flow built for campus operations."
@@ -281,15 +281,15 @@ const FaceLoginPage = () => {
       formDescription="Center your face in the frame and hold steady while we verify your identity."
       footer={
         <div className="flex flex-col items-center gap-1 text-sm">
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             Use password instead?{' '}
-            <Link to="/login" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+            <Link to="/login" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
               Password Login
             </Link>
           </span>
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             No account?{' '}
-            <Link to="/register" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+            <Link to="/register" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
               Register
             </Link>
           </span>
@@ -309,19 +309,19 @@ const FaceLoginPage = () => {
           />
 
           {(isLoading || isSuccess) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/62 px-4 text-center text-white backdrop-blur-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brand-950/70 px-4 text-center text-white backdrop-blur-sm">
               {isSuccess ? <span className="text-5xl">✅</span> : <Spin size="large" />}
               <span className="text-sm font-medium">{statusMsg}</span>
             </div>
           )}
 
           {status === 'camera-ready' && !isError && (
-            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-cyan-300/45 animate-pulse" />
+            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-brand-300/50 animate-pulse" />
           )}
         </div>
 
         {status === 'camera-ready' && !faceWarning && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             {statusMsg}
           </div>
@@ -336,12 +336,12 @@ const FaceLoginPage = () => {
                 <span
                   key={i}
                   className={`h-2 w-8 rounded-full transition-colors ${
-                    i < collected ? 'bg-emerald-500' : 'bg-slate-200'
+                    i < collected ? 'bg-emerald-500' : 'bg-border'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-slate-600">{statusMsg}</span>
+            <span className="text-sm text-muted-foreground">{statusMsg}</span>
           </div>
         )}
 
@@ -360,7 +360,7 @@ const FaceLoginPage = () => {
             </div>
             <button
               onClick={handleRetry}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#06204d_0%,#0c5d8e_52%,#16b3c6_100%)] text-sm font-semibold text-white shadow-[0_14px_34px_rgba(8,79,120,0.30)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(8,79,120,0.36)]"
+              className="cc-btn cc-btn-primary w-full"
             >
               Try Again
             </button>

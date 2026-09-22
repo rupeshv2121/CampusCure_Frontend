@@ -85,7 +85,7 @@ const LoginPage = () => {
       showcaseTitle={
         <>
           The Smarter Way to{' '}
-        <span className="bg-linear-to-r from-cyan-200 via-white to-cyan-300 bg-clip-text text-transparent">
+        <span className="cc-gradient-text--onDark">
             Manage Campus Life
           </span>
         </>
@@ -96,9 +96,9 @@ const LoginPage = () => {
       formTitle="Welcome back"
       formDescription="Access your dashboard, continue active conversations, and keep campus operations moving."
       footer={
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+          <Link to="/register" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
             Register
           </Link>
         </p>
@@ -107,36 +107,36 @@ const LoginPage = () => {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email address</label>
+          <label className="cc-label">Email address</label>
           <Input
             size="large"
-            prefix={<UserOutlined className="text-slate-400" />}
+            prefix={<UserOutlined className="text-muted-foreground" />}
             placeholder="you@campus.edu"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onPressEnter={handleLogin}
-            className="h-13 rounded-2xl border-slate-200 bg-slate-50/70 px-2 shadow-none"
+            className="cc-field"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="cc-label">Password</label>
           <Input.Password
             size="large"
-            prefix={<LockOutlined className="text-slate-400" />}
+            prefix={<LockOutlined className="text-muted-foreground" />}
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onPressEnter={handleLogin}
-          className="h-13 rounded-2xl border-slate-200 bg-slate-50/70 px-2 shadow-none"
+          className="cc-field"
           />
         </div>
 
         <button
           onClick={handleLogin}
           disabled={loading}
-className="flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#06204d_0%,#0c5d8e_52%,#16b3c6_100%)] text-base font-semibold text-white shadow-[0_16px_36px_rgba(8,79,120,0.28)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(8,79,120,0.34)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+className="cc-btn cc-btn-primary cc-btn--lg w-full"
         >
           {loading ? <Spin size="small" /> : 'Sign In'}
         </button>
@@ -146,7 +146,7 @@ className="flex h-13 w-full cursor-pointer items-center justify-center gap-2 rou
           Face is the second step for users who enrolled one, reached
           automatically after the password verifies - never a way in on its
           own. The endpoint behind the old button is deleted, not hidden. */}
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-xs text-muted-foreground">
         If you have set up Face ID, you will be asked for it after your password.
       </p>
     </AuthSplitLayout>

@@ -287,17 +287,17 @@ const RaiseComplaint = () => {
     <PageTransition>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-6 text-white">
+        <div className="dashboard-hero">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px]" />
           <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-cyan-600/15 blur-2xl" />
           <div className="relative flex gap-4">
-            <div className="inline-flex h-10 w-10 rounded-xl bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] items-center justify-center mb-3 shadow-md shadow-cyan-600/30">
+            <div className="inline-flex h-10 w-10 rounded-xl bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] items-center justify-center mb-3 shadow-md shadow-cyan-600/30">
               <SendOutlined style={{ fontSize: 16, color: 'white' }} />
             </div>
             <div>
               
             <h1 className="text-xl font-bold">Raise a Complaint</h1>
-            <p className="text-cyan-200/70 text-sm mt-0.5">Report classroom or facility issues to the administration</p>
+            <p className="text-brand-100/75 text-sm mt-0.5">Report classroom or facility issues to the administration</p>
           </div>
             </ div>
         </div>
@@ -320,12 +320,12 @@ const RaiseComplaint = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-4"
+          className="mt-4 rounded-2xl border border-cyan-200 bg-accent/40 p-4"
         >
-          <label className="text-sm font-semibold text-slate-800">
+          <label className="text-sm font-semibold text-foreground">
             Describe the problem
           </label>
-          <p className="text-xs text-slate-500 mt-0.5 mb-2">
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
             Type it however you like — for example "the projector in ML03 won't
             turn on". We'll fill in the form below, and you can correct anything.
           </p>
@@ -346,7 +346,7 @@ const RaiseComplaint = () => {
               Fill the form for me
             </Button>
             {parseNote && (
-              <span className="text-xs text-slate-600">{parseNote}</span>
+              <span className="text-xs text-muted-foreground">{parseNote}</span>
             )}
           </div>
         </motion.div>
@@ -489,14 +489,14 @@ const RaiseComplaint = () => {
                     {duplicates.map((d) => (
                       <li key={d.id} className="text-sm">
                         <span className="font-medium">{d.title}</span>
-                        <span className="text-slate-500">
+                        <span className="text-muted-foreground">
                           {' '}— {d.status.replace(/_/g, ' ').toLowerCase()}, reported{' '}
                           {new Date(d.createdAt).toLocaleDateString()}
                         </span>
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     If your problem is different, please carry on and submit — this
                     is only a suggestion.
                   </p>
@@ -520,7 +520,7 @@ const RaiseComplaint = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
             disabled={submitting || !isApproved || categoriesLoading}
-            className="w-full h-11 rounded-xl bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-cyan-600/20"
+            className="w-full h-11 rounded-xl bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-cyan-600/20"
           >
             {submitting ? <Spin size="small" /> : <SendOutlined />}
             {submitting ? 'Submitting…' : 'Submit Complaint'}

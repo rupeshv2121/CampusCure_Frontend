@@ -1,5 +1,6 @@
 import { getAllUsers, toggleUserActiveStatus, updateUserApprovalStatus } from '@/api/admin';
 import PageTransition from '@/components/animated/PageTransition';
+import { PageHeader, PageShell } from "@/components/app/PageShell";
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@/types';
 import {
@@ -13,14 +14,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const ROLE_STYLES: Record<string, { bg: string; text: string }> = {
-  STUDENT: { bg: 'bg-cyan-100 dark:bg-cyan-90/40',   text: 'text-cyan-700 dark:text-cyan-700' },
-  FACULTY: { bg: 'bg-green-100 dark:bg-green-90/40', text: 'text-green-700 dark:text-green-700' },
-  ADMIN:   { bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700' },
+  STUDENT: { bg: 'bg-cyan-100 dark:bg-cyan-900/40',   text: 'text-primary dark:text-primary' },
+  FACULTY: { bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300' },
+  ADMIN:   { bg: 'bg-violet-100 dark:bg-violet-900/40', text: 'text-violet-700 dark:text-violet-300' },
 };
 const APPROVAL_STYLES: Record<string, { bg: string; text: string }> = {
-  APPROVED: { bg: 'bg-green-100 dark:bg-green-90/40', text: 'text-green-700 dark:text-green-700' },
-  PENDING:  { bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700' },
-  REJECTED: { bg: 'bg-red-100 dark:bg-red-90/40',   text: 'text-red-700 dark:text-red-700' },
+  APPROVED: { bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300' },
+  PENDING:  { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300' },
+  REJECTED: { bg: 'bg-red-100 dark:bg-red-900/40',   text: 'text-red-700 dark:text-red-300' },
 };
 
 const isSuperAdminUser = (user: User) => user.role === 'SUPER_ADMIN';
@@ -113,25 +114,13 @@ const AdminUsers = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        {/* Header Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-7 text-white shadow-xl"
-        >
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[32px_32px]" />
-          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/10" />
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center shrink-0">
-              <TeamOutlined className="text-cyan-300 text-lg" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">User Management</h1>
-              <p className="text-cyan-200/70 text-xs mt-0.5">{visibleUsers.length} total users</p>
-            </div>
-          </div>
-        </motion.div>
+      <PageShell>
+        <PageHeader
+          variant="hero"
+          icon={<TeamOutlined />}
+          title="User Management"
+          description={`${visibleUsers.length} accounts on the platform`}
+        />
 
         {/* Role strip + search row */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -166,7 +155,7 @@ const AdminUsers = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search users..."
-              className="w-full sm:w-64 rounded-xl border border-border bg-card pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+              className="w-full sm:w-64 rounded-xl border border-border bg-card pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-brand-500/16 focus:border-brand-500"
             />
           </div>
         </div>
@@ -220,10 +209,10 @@ const AdminUsers = () => {
                     }
                     setPanelUser(u);
                   }}
-                  className="flex flex-col gap-3 rounded-2xl border-2 bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 transition-all sm:flex-row sm:items-center sm:gap-4"
+                  className="flex flex-col gap-3 rounded-2xl border-2 bg-card p-4 shadow-sm cursor-pointer hover:border-brand-500/40 transition-all sm:flex-row sm:items-center sm:gap-4"
                 >
                   <div className="flex items-center gap-3 w-full min-w-0 sm:w-auto sm:flex-1">
-                    <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] flex items-center justify-center text-white text-sm font-bold shrink-0">
                       {initial}
                     </div>
                     <div className="min-w-0">
@@ -234,7 +223,7 @@ const AdminUsers = () => {
                   <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:ml-auto sm:justify-end">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${rs.bg} ${rs.text}`}>{u.role}</span>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${as_.bg} ${as_.text}`}>{u.approvalStatus}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.isActive ? 'bg-green-100 text-green-700 dark:bg-green-90/40 dark:text-green-700' : 'bg-slate-100 text-slate-500 dark:bg-slate-500 dark:text-white'}`}>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-muted text-muted-foreground dark:bg-slate-500 dark:text-white'}`}>
                       {u.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -260,7 +249,7 @@ const AdminUsers = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed bg-white right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto"
+                className="fixed bg-card right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto"
               >
                 <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
                   <h2 className="font-bold text-foreground text-base">User Details</h2>
@@ -274,7 +263,7 @@ const AdminUsers = () => {
                 <div className="p-6 space-y-5">
                   {/* Avatar + name */}
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] flex items-center justify-center text-white text-xl font-bold shrink-0">
+                    <div className="h-14 w-14 rounded-2xl bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] flex items-center justify-center text-white text-xl font-bold shrink-0">
                       {(panelUser.name || panelUser.userID || 'U')[0].toUpperCase()}
                     </div>
                     <div>
@@ -287,7 +276,7 @@ const AdminUsers = () => {
                   <div className="flex gap-2 flex-wrap">
                     {(() => { const rs = ROLE_STYLES[panelUser.role] ?? ROLE_STYLES.STUDENT; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${rs.bg} ${rs.text}`}>{panelUser.role}</span>; })()}
                     {(() => { const as_ = APPROVAL_STYLES[panelUser.approvalStatus ?? 'PENDING']; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${as_.bg} ${as_.text}`}>{panelUser.approvalStatus}</span>; })()}
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${panelUser.isActive ? 'bg-green-100 text-green-700 dark:bg-green-90/40 dark:text-green-700' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${panelUser.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-muted text-muted-foreground dark:bg-slate-800 dark:text-muted-foreground'}`}>
                       {panelUser.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -324,7 +313,7 @@ const AdminUsers = () => {
                   {/* Actions */}
                   <button
                     onClick={() => { openApprovalModal(panelUser); }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-cyan-600/20"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-cyan-600/20"
                   >
                     Change Approval Status
                   </button>
@@ -365,7 +354,7 @@ const AdminUsers = () => {
             </div>
           )}
         </Modal>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

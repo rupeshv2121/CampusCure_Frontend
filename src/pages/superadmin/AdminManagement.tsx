@@ -1,7 +1,8 @@
 import { getSuperAdminStats, updateAdminPermissions, type SuperAdminStats } from '@/api/admin';
 import PageTransition from '@/components/animated/PageTransition';
+import { PageHeader, PageShell } from "@/components/app/PageShell";
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ReloadOutlined, UserOutlined } from '@ant-design/icons';
+import { SafetyCertificateOutlined, ReloadOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, message, Spin, Switch, Table, Tag, Tooltip } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -141,13 +142,17 @@ const AdminManagement = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Admin Management</h1>
-          <Button icon={<ReloadOutlined />} onClick={fetchAdmins} loading={loading} className="rounded-xl w-full sm:w-auto">
-            Refresh
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          icon={<SafetyCertificateOutlined />}
+          title="Admin Management"
+          description="Approve, review and manage administrator accounts"
+          actions={
+            <Button icon={<ReloadOutlined />} onClick={fetchAdmins} loading={loading}>
+              Refresh
+            </Button>
+          }
+        />
 
         {loading && admins.length === 0 ? (
           <div className="flex items-center justify-center h-64">
@@ -231,7 +236,7 @@ const AdminManagement = () => {
             )}
           </motion.div>
         )}
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

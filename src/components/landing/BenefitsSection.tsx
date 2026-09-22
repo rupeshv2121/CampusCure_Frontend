@@ -1,101 +1,109 @@
-import { BookOutlined, CheckOutlined, DeploymentUnitOutlined, TeamOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
+import {
+  BookOutlined,
+  CheckOutlined,
+  DeploymentUnitOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
 
-const benefits = [
+const BENEFITS = [
   {
-    icon: <TeamOutlined className="text-2xl" />,
-    title: 'For Students',
-    gradient: 'from-[#041A47] via-[#00639B] to-[#009BB0]',
-    shadow: 'hover:shadow-cyan-600/15',
+    icon: <TeamOutlined />,
+    title: "For students",
+    tile: "",
+    check: "bg-brand-600",
     items: [
-      'Submit and track complaints effortlessly',
-      'Get answers from the doubt community',
-      'Stay informed with status updates',
-      'Build knowledge through peer collaboration',
+      "Raise a complaint and follow it to resolution",
+      "Get answers from peers, verified by faculty",
+      "Keep a private shelf of saved doubts",
+      "Build reputation for answers that helped",
     ],
   },
   {
-    icon: <BookOutlined className="text-2xl" />,
-    title: 'For Faculty',
-    gradient: 'from-violet-600 to-purple-500',
-    shadow: 'hover:shadow-violet-500/15',
+    icon: <BookOutlined />,
+    title: "For faculty",
+    tile: "cc-icon-tile--violet",
+    check: "bg-violet-600",
     items: [
-      'Verify and guide student discussions',
-      'Monitor campus issues efficiently',
-      'Access analytics on student engagement',
-      'Streamline administrative workflows',
+      "Verify answers before they mislead a cohort",
+      "See which topics a class keeps getting stuck on",
+      "Handle complaints routed to your department",
+      "Earn reputation alongside your students",
     ],
   },
   {
-    icon: <DeploymentUnitOutlined className="text-2xl" />,
-    title: 'For Administrators',
-    gradient: 'from-orange-500 to-amber-400',
-    shadow: 'hover:shadow-orange-500/15',
+    icon: <DeploymentUnitOutlined />,
+    title: "For administrators",
+    tile: "cc-icon-tile--amber",
+    check: "bg-amber-600",
     items: [
-      'Centralized complaint management system',
-      'Data-driven insights and reporting',
-      'Efficient assignment and management',
-      'Improve campus services strategically',
+      "One queue for every complaint on campus",
+      "Assign work and track who is accountable",
+      "Spot the issues that keep coming back",
+      "Report on resolution times with real numbers",
     ],
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const BenefitsSection = () => (
-  <section id="benefits" className="py-24 px-6">
-    <div className="max-w-6xl mx-auto">
+  <section id="benefits" className="cc-section">
+    <div className="cc-container">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16"
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="cc-section-head"
       >
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-600/10 text-green-600 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          Why Choose Us
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-          Built for{' '}
-          <span className="bg-linear-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
-            every role
-          </span>
-          {' '}on campus
+        <span className="cc-eyebrow">Why choose us</span>
+        <h2 className="cc-h2">
+          Built for <span className="cc-gradient-text">every role</span> on
+          campus
         </h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Tailored features designed around the unique needs of each campus stakeholder.
+        <p className="cc-lede">
+          The same records, three different jobs. Each role gets the view that
+          matches what they are actually responsible for.
         </p>
       </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {benefits.map((b, i) => (
-          <motion.div
+      <div className="grid gap-5 md:grid-cols-3">
+        {BENEFITS.map((b, i) => (
+          <motion.article
             key={b.title}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.5, delay: i * 0.12 }}
-            whileHover={{ y: -6 }}
-            className={`relative group rounded-3xl bg-card border border-border p-8 overflow-hidden hover:shadow-2xl ${b.shadow} transition-all duration-300`}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: i * 0.1, ease: EASE }}
+            className="cc-card cc-card--interactive group flex flex-col p-7 sm:p-8"
           >
-            {/* Top gradient line */}
-            <div className={`absolute top-0 inset-x-0 h-0.75 bg-linear-to-r ${b.gradient}`} />
-
-            <div className={`h-14 w-14 rounded-2xl bg-linear-to-br ${b.gradient} flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+            <span className={"cc-icon-tile cc-icon-tile--lg " + b.tile}>
               {b.icon}
-            </div>
+            </span>
 
-            <h3 className="text-xl font-bold text-foreground mb-5">{b.title}</h3>
+            <h3 className="mt-6 font-display text-xl font-bold tracking-tight">
+              {b.title}
+            </h3>
 
-            <ul className="space-y-3">
-              {b.items.map((item, j) => (
-                <li key={j} className="flex items-start gap-3 text-sm text-muted-foreground">
-                  <div className={`shrink-0 h-5 w-5 rounded-full bg-linear-to-br ${b.gradient} flex items-center justify-center mt-0.5 shadow-sm`}>
-                    <CheckOutlined className="text-white" style={{ fontSize: 9 }} />
-                  </div>
-                  <span className="leading-relaxed">{item}</span>
+            <ul className="mt-5 space-y-3.5">
+              {b.items.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span
+                    className={
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white " +
+                      b.check
+                    }
+                  >
+                    <CheckOutlined style={{ fontSize: 9 }} />
+                  </span>
+                  <span className="text-sm leading-relaxed text-muted-foreground">
+                    {item}
+                  </span>
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </motion.article>
         ))}
       </div>
     </div>

@@ -7,6 +7,8 @@ import {
   type DuplicateCluster,
 } from "@/api/admin";
 import PageTransition from "@/components/animated/PageTransition";
+import { PageHeader, PageShell } from "@/components/app/PageShell";
+import { COMPLAINT_STATUS, badgeClass, dotClass } from "@/lib/statusStyles";
 import ResolutionNoteBlock from "@/components/complaints/ResolutionNoteBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Complaint, ComplaintStatus, User } from "@/types";
@@ -20,47 +22,6 @@ import { Input, Modal, Select, message } from "antd";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-const STATUS_STYLES: Record<
-  ComplaintStatus,
-  { dot: string; bg: string; text: string; label: string }
-> = {
-  RAISED: {
-    dot: "bg-orange-500",
-    bg: "bg-orange-100 dark:bg-orange-900/20",
-    text: "text-orange-800 dark:text-orange-800",
-    label: "Raised",
-  },
-  ASSIGNED: {
-    dot: "bg-cyan-500",
-    bg: "bg-cyan-100 dark:bg-cyan-900/20",
-    text: "text-cyan-800 dark:text-cyan-800",
-    label: "Assigned",
-  },
-  IN_PROGRESS: {
-    dot: "bg-cyan-500",
-    bg: "bg-cyan-100 dark:bg-cyan-900/20",
-    text: "text-cyan-800 dark:text-cyan-800",
-    label: "In Progress",
-  },
-  PENDING_CONFIRMATION: {
-    dot: "bg-slate-500",
-    bg: "bg-slate-200 dark:bg-slate-400/60",
-    text: "text-slate-800 dark:text-slate-800",
-    label: "Pending Confirmation",
-  },
-  ESCALATED_TO_SUPERADMIN: {
-    dot: "bg-purple-600",
-    bg: "bg-purple-200 dark:bg-purple-400/30",
-    text: "text-purple-800 dark:text-purple-800",
-    label: "Escalated To Super Admin",
-  },
-  RESOLVED: {
-    dot: "bg-green-500",
-    bg: "bg-green-100 dark:bg-green-400/20",
-    text: "text-green-800 dark:text-green-800",
-    label: "Resolved",
-  },
-};
 
 const ALL_STATUSES: ComplaintStatus[] = [
   "RAISED",
@@ -215,29 +176,13 @@ const AdminComplaints = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        {/* Header Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 p-7 text-white shadow-xl"
-        >
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[32px_32px]" />
-          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/10" />
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center shrink-0">
-              <FileTextOutlined className="text-cyan-300 text-lg" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">
-                Complaint Management
-              </h1>
-              <p className="text-cyan-200/70 text-xs mt-0.5">
-                {complaints.length} total complaints
-              </p>
-            </div>
-          </div>
-        </motion.div>
+      <PageShell>
+        <PageHeader
+          variant="hero"
+          icon={<FileTextOutlined />}
+          title="Complaint Management"
+          description={`${complaints.length} complaints across campus`}
+        />
 
         {/* CC-13: possible duplicate reports of the same fault. Advisory and
             read-only — nothing here merges or closes a complaint. */}
@@ -275,13 +220,13 @@ const AdminComplaints = () => {
                 {duplicateClusters.map((cluster) => (
                   <div
                     key={`${cluster.block}-${cluster.classroomNumber}-${cluster.complaints[0]?.id}`}
-                    className="rounded-xl bg-white border border-amber-200 p-3"
+                    className="rounded-xl bg-card border border-amber-200 p-3"
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-xs font-semibold text-foreground">
                         {cluster.block} / {cluster.classroomNumber}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {cluster.size} reports · closest match{" "}
                         {(cluster.topSimilarity * 100).toFixed(0)}%
                       </span>
@@ -289,11 +234,11 @@ const AdminComplaints = () => {
                     <ol className="space-y-1">
                       {cluster.complaints.map((member, index) => (
                         <li key={member.id} className="text-sm flex gap-2">
-                          <span className="text-slate-400 shrink-0">
+                          <span className="text-muted-foreground shrink-0">
                             {index === 0 ? "first" : `#${index + 1}`}
                           </span>
-                          <span className="text-slate-800">{member.title}</span>
-                          <span className="text-slate-400 text-xs self-center">
+                          <span className="text-foreground">{member.title}</span>
+                          <span className="text-muted-foreground text-xs self-center">
                             {member.raisedBy ?? "unknown"} ·{" "}
                             {new Date(member.createdAt).toLocaleDateString()} ·{" "}
                             {member.status.replace(/_/g, " ").toLowerCase()}
@@ -326,7 +271,7 @@ const AdminComplaints = () => {
             All ({complaints.length})
           </button>
           {ALL_STATUSES.map((s) => {
-            const st = STATUS_STYLES[s];
+            const st = (COMPLAINT_STATUS[s] ?? COMPLAINT_STATUS.RESOLVED);
             const active = statusFilter === s;
             return (
               <button
@@ -334,11 +279,11 @@ const AdminComplaints = () => {
                 onClick={() => setStatusFilter(active ? null : s)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                   active
-                    ? `${st.bg} ${st.text} border-current shadow-sm`
+                    ? `${badgeClass(st.tone)} border-current shadow-sm`
                     : "bg-card text-muted-foreground border-border hover:border-foreground/30"
                 }`}
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                <span className={dotClass(st.tone)} />
                 {st.label} ({statusCounts[s]})
               </button>
             );
@@ -352,7 +297,7 @@ const AdminComplaints = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search complaints..."
-            className="w-full rounded-xl border-2 bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full rounded-xl border-2 bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-brand-500/16 focus:border-brand-500"
           />
         </div>
 
@@ -390,7 +335,7 @@ const AdminComplaints = () => {
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {filtered.map((c, i) => {
-              const st = STATUS_STYLES[c.status];
+              const st = (COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED);
               return (
                 <motion.div
                   key={c.id}
@@ -399,12 +344,12 @@ const AdminComplaints = () => {
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ scale: 1.01 }}
                   onClick={() => setSelected(c)}
-                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm cursor-pointer hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all"
+                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm cursor-pointer hover:border-brand-500/40 transition-all"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2">
                       <span
-                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${st.dot}`}
+                        className={`mt-1.5 shrink-0 ${dotClass(st.tone)}`}
                       />
                       <p className="font-semibold text-sm text-foreground min-w-0 flex-1 truncate">
                         {c.title}
@@ -423,12 +368,12 @@ const AdminComplaints = () => {
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto sm:justify-end">
                     {Number(c.escalationCount ?? 0) > 0 &&
                       c.status !== "RESOLVED" && (
-                        <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-400/20 dark:text-red-800">
+                        <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-800">
                           Handled by Super Admin
                         </span>
                       )}
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}
+                      className={badgeClass(st.tone)}
                     >
                       {st.label}
                     </span>
@@ -458,7 +403,7 @@ const AdminComplaints = () => {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-white"
+                className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-card"
               >
                 <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">
@@ -475,10 +420,10 @@ const AdminComplaints = () => {
                   {/* Status + category pills */}
                   <div className="flex gap-2 flex-wrap">
                     {(() => {
-                      const st = STATUS_STYLES[selected.status];
+                      const st = (COMPLAINT_STATUS[selected.status] ?? COMPLAINT_STATUS.RESOLVED);
                       return (
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${st.bg} ${st.text}`}
+                          className={badgeClass(st.tone)}
                         >
                           {st.label}
                         </span>
@@ -491,13 +436,13 @@ const AdminComplaints = () => {
                       Block {selected.block}
                     </span>
                     {selected.category && (
-                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-700">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-primary dark:bg-cyan-900/20 dark:text-primary">
                         {selected.category.replace("_", " ")}
                       </span>
                     )}
                     {Number(selected.escalationCount ?? 0) > 0 &&
                       selected.status !== "RESOLVED" && (
-                        <span className="rounded-full px-3 py-1 text-[11px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-300/40 dark:text-indigo-900">
+                        <span className="rounded-full px-3 py-1 text-[11px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40/40 dark:text-indigo-900">
                           Escalated {selected.escalationCount}x
                         </span>
                       )}
@@ -658,7 +603,7 @@ const AdminComplaints = () => {
             )}
           </div>
         </Modal>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

@@ -1,7 +1,8 @@
 import AnimatedCard from '@/components/animated/AnimatedCard';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge, PageHeader, PageShell } from "@/components/app/PageShell";
 import { getSuperAdminSettings, updateSuperAdminSettings } from '@/api/admin';
-import { PlusOutlined } from '@ant-design/icons';
+import { SettingOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Input, message, Select, Spin, Tag } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
@@ -190,22 +191,19 @@ const SystemSettings = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-3xl mx-auto px-1 sm:px-0 space-y-6">
-        <div className="rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Manage departments, complaint categories, and doubt subjects available to users.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Tag color="blue" className="rounded-full px-3 py-1">{depts.length} departments</Tag>
-              <Tag color="geekblue" className="rounded-full px-3 py-1">{allowedCategories.length} complaint types</Tag>
-              <Tag color="purple" className="rounded-full px-3 py-1">{doubtSubjects.length} doubt subjects</Tag>
-            </div>
-          </div>
-        </div>
+      <PageShell className="mx-auto max-w-3xl">
+        <PageHeader
+          icon={<SettingOutlined />}
+          title="System Settings"
+          description="Departments, complaint categories and doubt subjects available to users"
+          actions={
+            <>
+              <Badge tone="info">{depts.length} departments</Badge>
+              <Badge tone="progress">{allowedCategories.length} complaint types</Badge>
+              <Badge tone="escalate">{doubtSubjects.length} doubt subjects</Badge>
+            </>
+          }
+        />
 
         <AnimatedCard delay={0.1}>
           <h3 className="font-semibold text-foreground">Department Management</h3>
@@ -282,7 +280,7 @@ const SystemSettings = () => {
             </div>
           </motion.div>
         </div>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

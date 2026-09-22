@@ -1,23 +1,17 @@
 import { assignedComplaints, updateComplaintStatus } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
+import { PageHeader, PageShell } from "@/components/app/PageShell";
+import { COMPLAINT_STATUS, badgeClass, dotClass } from "@/lib/statusStyles";
 import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Complaint, ComplaintStatus } from '@/types';
-import { ClockCircleOutlined, CloseOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, CloseOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { Alert, Select, message } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED: { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-800 dark:text-orange-800', label: 'Raised' },
-  ASSIGNED: { dot: 'bg-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-900/20', text: 'text-cyan-800 dark:text-cyan-800', label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-900/20', text: 'text-cyan-800 dark:text-cyan-800', label: 'In Progress' },
-  PENDING_CONFIRMATION: { dot: 'bg-slate-500', bg: 'bg-slate-200 dark:bg-slate-400/60', text: 'text-slate-800 dark:text-slate-800', label: 'Pending Confirmation' },
-  ESCALATED_TO_SUPERADMIN: { dot: 'bg-purple-600', bg: 'bg-purple-200 dark:bg-purple-400/30', text: 'text-purple-800 dark:text-purple-800', label: 'Escalated To Super Admin' },
-  RESOLVED: { dot: 'bg-green-500', bg: 'bg-green-100 dark:bg-green-400/20', text: 'text-green-800 dark:text-green-800', label: 'Resolved' },
-};
 
 const formatDateTime = (date?: string) => {
   if (!date) return '-';
@@ -81,7 +75,7 @@ const FacultyComplaints = () => {
         return refreshed.find((c) => c.id === prev.id) ?? prev;
       });
 
-      message.success(`Complaint status updated to ${newStatus.replace('_', ' ')}`);
+      message.success(`Complaint status updated to ${COMPLAINT_STATUS[newStatus]?.label ?? newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to update status';
@@ -115,11 +109,12 @@ const FacultyComplaints = () => {
 
   return (
     <PageTransition>
-      <div className="dashboard-surface space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Assigned Complaints</h1>
-          <p className="text-muted-foreground">Manage complaints assigned to you.</p>
-        </div>
+      <PageShell>
+        <PageHeader
+          icon={<UnorderedListOutlined />}
+          title="Assigned Complaints"
+          description="Issues routed to you, newest first"
+        />
         {!isApproved && (
           <Alert
             type="warning"
@@ -130,7 +125,7 @@ const FacultyComplaints = () => {
             className="rounded-xl"
           />
         )}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-card rounded-2xl border  shadow-sm overflow-hidden mt-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-card rounded-2xl border shadow-sm overflow-hidden mt-4">
           {loading ? (
             <div className="grid grid-cols-1 gap-3 p-3">
               {Array.from({ length: 6 }).map((_, idx) => (
@@ -165,7 +160,7 @@ const FacultyComplaints = () => {
               )}
 
               {assigned.map((complaint, i) => {
-                const st = STATUS_STYLES[complaint.status];
+                const st = (COMPLAINT_STATUS[complaint.status] ?? COMPLAINT_STATUS.RESOLVED);
                 const { isCurrentlyAssignedToMe, isHandledByAnother } = getReassignmentMeta(complaint, user?.id);
 
                 if (isMobile) {
@@ -177,11 +172,11 @@ const FacultyComplaints = () => {
                       transition={{ delay: i * 0.03 }}
                       whileHover={{ scale: 1.01 }}
                       onClick={() => setSelectedComplaint(complaint)}
-                      className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all cursor-pointer"
+                      className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm hover:border-brand-500/40 transition-all cursor-pointer"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-2">
-                          <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${st.dot}`} />
+                          <span className={`mt-1.5 shrink-0 ${dotClass(st.tone)}`} />
                           <p className="font-semibold text-sm text-foreground min-w-0 flex-1 truncate">{complaint.title}</p>
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -199,7 +194,7 @@ const FacultyComplaints = () => {
 
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                          <span className={badgeClass(st.tone)}>{st.label}</span>
                           {isHandledByAnother && (
                             <span className="inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800">
                               Handled by {complaint.assignedTo?.name ?? 'another faculty'}
@@ -214,7 +209,7 @@ const FacultyComplaints = () => {
                             value={complaint.status}
                             className="w-full"
                             onChange={(v) => updateStatus(complaint.id, v as 'IN_PROGRESS' | 'PENDING_CONFIRMATION')}
-                            options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: s.replace('_', ' '), value: s }))}
+                            options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: COMPLAINT_STATUS[s].label, value: s }))}
                           />
                         </div>
                       </div>
@@ -229,17 +224,17 @@ const FacultyComplaints = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
                     onClick={() => setSelectedComplaint(complaint)}
-                    className="grid grid-cols-[2fr_1.2fr_1fr_1.3fr_1.5fr_180px] items-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-sm hover:border-blue-500/30 hover:shadow-blue-500/5 transition-all cursor-pointer"
+                    className="grid grid-cols-[2fr_1.2fr_1fr_1.3fr_1.5fr_180px] items-center gap-3 rounded-2xl border bg-card px-4 py-3 shadow-sm hover:border-brand-500/40 transition-all cursor-pointer"
                   >
                     <div className="min-w-0 flex items-center gap-2">
-                      <span className={`h-2 w-2 rounded-full shrink-0 ${st.dot}`} />
+                      <span className={`shrink-0 ${dotClass(st.tone)}`} />
                       <p className="font-semibold text-sm text-foreground truncate">{complaint.title}</p>
                     </div>
 
                     <p className="text-sm text-foreground truncate">{complaint.classroomNumber} (Block {complaint.block})</p>
                     <p className="text-sm text-foreground truncate">{(complaint.category ?? 'GENERAL').replace('_', ' ')}</p>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                      <span className={badgeClass(st.tone)}>{st.label}</span>
                       {isHandledByAnother && (
                         <span className="inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800">
                           Handled by {complaint.assignedTo?.name ?? 'another faculty'}
@@ -258,7 +253,7 @@ const FacultyComplaints = () => {
                         value={complaint.status}
                         className="w-full"
                         onChange={(v) => updateStatus(complaint.id, v as 'IN_PROGRESS' | 'PENDING_CONFIRMATION')}
-                        options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: s.replace('_', ' '), value: s }))}
+                        options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: COMPLAINT_STATUS[s].label, value: s }))}
                       />
                     </div>
                   </motion.div>
@@ -283,7 +278,7 @@ const FacultyComplaints = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-white"
+                className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-card"
               >
                 <div className="sticky top-0 bg-card/90 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">{selectedComplaint.title}</h2>
@@ -298,11 +293,11 @@ const FacultyComplaints = () => {
                 <div className="p-6 space-y-5">
                   <div className="flex gap-2 flex-wrap">
                     {(() => {
-                      const st = STATUS_STYLES[selectedComplaint.status];
+                      const st = (COMPLAINT_STATUS[selectedComplaint.status] ?? COMPLAINT_STATUS.RESOLVED);
                       const { isHandledByAnother } = getReassignmentMeta(selectedComplaint, user?.id);
                       return (
                         <>
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                          <span className={badgeClass(st.tone)}>{st.label}</span>
                           {isHandledByAnother && (
                             <span className="rounded-full px-3 py-1 text-xs font-semibold bg-amber-100 text-amber-800">
                               Handled by {selectedComplaint.assignedTo?.name ?? 'another faculty'}
@@ -313,7 +308,7 @@ const FacultyComplaints = () => {
                     })()}
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Room {selectedComplaint.classroomNumber}</span>
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Block {selectedComplaint.block}</span>
-                    <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-700">
+                    <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-primary dark:bg-cyan-900/20 dark:text-primary">
                       {(selectedComplaint.category ?? 'GENERAL').replace('_', ' ')}
                     </span>
                   </div>
@@ -360,7 +355,7 @@ const FacultyComplaints = () => {
                         void updateStatus(selectedComplaint.id, v as 'IN_PROGRESS' | 'PENDING_CONFIRMATION');
                         setSelectedComplaint((prev) => (prev ? { ...prev, status: v as ComplaintStatus } : prev));
                       }}
-                      options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: s.replace('_', ' '), value: s }))}
+                      options={(['IN_PROGRESS', 'PENDING_CONFIRMATION'] as const).map((s) => ({ label: COMPLAINT_STATUS[s].label, value: s }))}
                     />
                   </div>
                 </div>
@@ -368,7 +363,7 @@ const FacultyComplaints = () => {
             </>
           )}
         </AnimatePresence>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

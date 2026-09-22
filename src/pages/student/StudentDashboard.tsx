@@ -1,5 +1,6 @@
 import { getComplaints, getDoubts, getStudentProfile } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { COMPLAINT_STATUS, badgeClass, dotClass } from "@/lib/statusStyles";
 import { useAuth } from '@/context/AuthContext';
 import { Complaint, Doubt } from '@/types';
 import { ArrowRightOutlined, CheckCircleOutlined, ClockCircleOutlined, CommentOutlined, EyeOutlined, ExclamationCircleOutlined, FileTextOutlined, FireOutlined, LikeOutlined, QuestionCircleOutlined } from '@ant-design/icons';
@@ -26,14 +27,6 @@ const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   return <>{count}</>;
 };
 
-const STATUS_STYLES: Record<string, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700', label: 'Raised' },
-  ASSIGNED:    { dot: 'bg-cyan-500',    bg: 'bg-cyan-100 dark:bg-cyan-90/40',     text: 'text-cyan-700 dark:text-cyan-700',     label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700', label: 'In Progress' },
-  PENDING_CONFIRMATION: { dot: 'bg-blue-500', bg: 'bg-blue-100 dark:bg-blue-90/40', text: 'text-blue-700 dark:text-blue-700', label: 'Pending Confirmation' },
-  ESCALATED_TO_SUPERADMIN: { dot: 'bg-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', label: 'Escalated' },
-  RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',   label: 'Resolved' },
-};
 
 interface StudentProfile {
   id: string;
@@ -161,34 +154,33 @@ const StudentDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="dashboard-hero"
         >
-          {/* Grid overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[48px_48px]" />
+          <div className="dashboard-hero__grid" aria-hidden="true" />
           {/* Glows */}
-          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-cyan-600/20 blur-3xl" />
-          <div className="absolute -bottom-8 right-1/3 h-40 w-40 rounded-full bg-violet-600/15 blur-2xl" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--primary" aria-hidden="true" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--secondary" aria-hidden="true" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             {/* Avatar + info */}
             <div className="flex items-center gap-5">
-              <div className="h-16 w-16 shrink-0 rounded-2xl bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] flex items-center justify-center text-xl font-bold shadow-lg shadow-cyan-600/40 ring-2 ring-white/20">
+              <div className="h-16 w-16 shrink-0 rounded-2xl dashboard-stat-icon !h-16 !w-16 text-xl font-bold ring-2 ring-white/20">
                 {initials}
               </div>
               <div>
-                <p className="text-cyan-200/70 text-sm font-medium tracking-wide">Welcome back !!</p>
+                <p className="text-brand-100/75 text-sm font-medium tracking-wide">Welcome back</p>
                 <h1 className="text-2xl font-bold text-white">{user?.name}</h1>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                   {profile?.enrollmentNumber && (
-                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-cyan-100 ring-1 ring-white/10">
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-brand-100 ring-1 ring-white/10">
                       Enrollment No. :{profile.enrollmentNumber}
                     </span>
                   )}
                   {profile?.department && (
-                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-cyan-100 ring-1 ring-white/10">
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-brand-100 ring-1 ring-white/10">
                       Department : {profile.department}
                     </span>
                   )}
                   {profile?.semester && (
-                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-cyan-100 ring-1 ring-white/10">
+                    <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-brand-100 ring-1 ring-white/10">
                       Sem {profile.semester}
                     </span>
                   )}
@@ -206,7 +198,7 @@ const StudentDashboard = () => {
               </button>
               <button
                 onClick={() => navigate('/student/doubts')}
-                className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-cyan-900 hover:bg-cyan-50 transition-colors cursor-pointer shadow-lg shadow-cyan-900/20"
+                className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 hover:bg-brand-50 transition-colors cursor-pointer shadow-lg shadow-brand-950/25"
               >
                 <QuestionCircleOutlined /> Ask a Doubt
               </button>
@@ -251,7 +243,7 @@ const StudentDashboard = () => {
               className="dashboard-card p-5"
             >
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="inline-flex h-5 w-5 rounded-md bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] items-center justify-center text-white text-[10px] font-bold">C</span>
+                <span className="inline-flex h-5 w-5 rounded-md bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] items-center justify-center text-white text-[10px] font-bold">C</span>
                 Student Profile
               </h3>
               <div className="space-y-2.5">
@@ -270,7 +262,7 @@ const StudentDashboard = () => {
                     <span className="text-muted-foreground shrink-0">{label}</span>
                     {value ? (
                       badge ? (
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge === 'green' ? 'bg-green-100 text-green-700 dark:bg-green-90/50 dark:text-green-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge === 'green' ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' : 'bg-muted text-muted-foreground dark:bg-slate-800 dark:text-muted-foreground'}`}>
                           {value}
                         </span>
                       ) : (
@@ -294,7 +286,7 @@ const StudentDashboard = () => {
               <Progress
                 type="dashboard"
                 percent={resolutionRate}
-                strokeColor={{ '0%': '#3b82f6', '100%': '#22c55e' }}
+                strokeColor={{ '0%': '#0785B0', '100%': '#25A179' }}
                 format={(p) => <span className="text-2xl font-bold text-foreground">{p}%</span>}
                 size={130}
               />
@@ -312,11 +304,11 @@ const StudentDashboard = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <ClockCircleOutlined className="text-cyan-500" /> Recent Complaints
+                <ClockCircleOutlined className="text-primary" /> Recent Complaints
               </h3>
               <button
                 onClick={() => navigate('/student/complaints')}
-                className="flex items-center gap-1 text-xs font-medium text-cyan-600 hover:text-cyan-700 transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary transition-colors cursor-pointer"
               >
                 View All <ArrowRightOutlined style={{ fontSize: 10 }} />
               </button>
@@ -324,17 +316,17 @@ const StudentDashboard = () => {
             <div className="space-y-2.5">
               {recentComplaints.length > 0 ? (
                 recentComplaints.map((c) => {
-                  const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.RESOLVED;
+                  const s = (COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED);
                   return (
                     <motion.div
                       key={c.id}
                       whileHover={{ x: 3 }}
                       transition={{ duration: 0.15 }}
                       onClick={() => navigate('/student/complaints')}
-                      className="flex items-center justify-between p-3.5 rounded-xl border bg-muted/5 hover:border-blue-500/30 hover:bg-muted/30 cursor-pointer transition-all"
+                      className="flex items-center justify-between p-3.5 rounded-xl border bg-muted/5 hover:border-brand-500/40 hover:bg-muted/30 cursor-pointer transition-all"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
+                        <div className={`shrink-0 ${dotClass(s.tone)}`} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{c.title}</p>
                           <p className="text-xs text-muted-foreground">Room {c.classroomNumber} · Block {c.block}</p>
@@ -342,11 +334,11 @@ const StudentDashboard = () => {
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         {c.priority != null && (
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.priority >= 4 ? 'bg-red-100 text-red-700 dark:bg-red-90/50 dark:text-red-400' : c.priority >= 3 ? 'bg-orange-100 text-orange-700 dark:bg-orange-90/50 dark:text-orange-400' : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-90/50 dark:text-cyan-400'}`}>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.priority >= 4 ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400' : c.priority >= 3 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400' : 'bg-cyan-100 text-primary dark:bg-cyan-900/50 dark:text-primary'}`}>
                             P{c.priority}
                           </span>
                         )}
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.text}`}>
+                        <span className={badgeClass(s.tone)}>
                           {s.label}
                         </span>
                       </div>
@@ -355,14 +347,14 @@ const StudentDashboard = () => {
                 })
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="h-16 w-16 rounded-2xl bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center mb-4">
-                    <FileTextOutlined className="text-3xl text-cyan-500" />
+                  <div className="h-16 w-16 rounded-2xl bg-accent dark:bg-cyan-950/30 flex items-center justify-center mb-4">
+                    <FileTextOutlined className="text-3xl text-primary" />
                   </div>
                   <h4 className="text-base font-semibold text-foreground mb-1">No Complaints Yet</h4>
                   <p className="text-sm text-muted-foreground mb-4">Start by raising your first complaint</p>
                   <button
                     onClick={() => navigate('/student/complaints/new')}
-                    className="flex items-center gap-2 rounded-xl bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-cyan-600/20"
+                    className="flex items-center gap-2 rounded-xl bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-md shadow-cyan-600/20"
                   >
                     <FileTextOutlined /> Raise a Complaint
                   </button>
@@ -411,7 +403,7 @@ const StudentDashboard = () => {
             </h3>
             <button
               onClick={() => navigate('/student/doubts')}
-              className="flex items-center gap-1 text-xs font-medium text-cyan-600 hover:text-cyan-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary transition-colors cursor-pointer"
             >
               View All <ArrowRightOutlined style={{ fontSize: 10 }} />
             </button>
@@ -437,7 +429,7 @@ const StudentDashboard = () => {
                     <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 font-semibold text-sky-800">
                       <CommentOutlined /> {d.answerCount}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-semibold text-foreground">
                       <EyeOutlined /> {d.views}
                     </span>
                   </div>
@@ -445,8 +437,8 @@ const StudentDashboard = () => {
               ))
             ) : (
               <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center mb-4">
-                  <QuestionCircleOutlined className="text-3xl text-cyan-500" />
+                <div className="h-16 w-16 rounded-2xl bg-accent dark:bg-cyan-950/30 flex items-center justify-center mb-4">
+                  <QuestionCircleOutlined className="text-3xl text-primary" />
                 </div>
                 <h4 className="text-base font-semibold text-foreground mb-1">No Doubts Yet</h4>
                 <p className="text-sm text-muted-foreground mb-4">Have a question? Ask the community!</p>

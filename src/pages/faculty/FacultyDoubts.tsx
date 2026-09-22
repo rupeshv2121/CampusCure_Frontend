@@ -1,10 +1,12 @@
 import PageTransition from '@/components/animated/PageTransition';
+import { DOUBT_STATUS } from "@/lib/statusStyles";
+import { Badge, PageHeader, PageShell } from "@/components/app/PageShell";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Doubt } from '@/types';
 import { getDoubts } from '@/api/faculty';
 import { getStudentPostingSettings } from '@/api/student';
 import { useAuth } from '@/context/AuthContext';
-import { CheckCircleOutlined, EyeOutlined, MessageOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, QuestionCircleOutlined, EyeOutlined, MessageOutlined } from '@ant-design/icons';
 import { Button, Empty, Input, Select, Tag, message } from 'antd';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -12,7 +14,6 @@ import { useNavigate } from 'react-router-dom';
 import { stripCodeBlocks } from '@/lib/codeBlocks';
 import { TagChipList } from '@/components/tags/TagChip';
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
 
 const FacultyDoubts = () => {
@@ -91,22 +92,23 @@ const FacultyDoubts = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Doubt Management</h1>
-          <p className="text-muted-foreground">Answer and verify student doubts.</p>
-        </div>
+      <PageShell>
+        <PageHeader
+          icon={<QuestionCircleOutlined />}
+          title="Doubt Management"
+          description="Answer and verify what students are asking"
+        />
 
         <div className="flex gap-3 flex-wrap">
           <Input.Search 
             placeholder="Search doubts..." 
-            className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" 
+            className="w-full sm:max-w-xs" 
             onChange={(e) => setSearch(e.target.value)} 
             allowClear 
           />
           <Select 
             placeholder="Filter by subject" 
-            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-foreground! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setSubjectFilter(v || null)} 
             options={doubtSubjects.map((s) => ({ label: s, value: s }))}
@@ -114,7 +116,7 @@ const FacultyDoubts = () => {
           />
           <Select 
             placeholder="Filter by status" 
-            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
+            className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-foreground! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" 
             allowClear 
             onChange={(v) => setStatusFilter(v || null)} 
             options={[
@@ -172,7 +174,7 @@ const FacultyDoubts = () => {
                         highlighting one per card is the cost the lazy highlighter avoids. */}
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{stripCodeBlocks(doubt.description)}</p>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
-                      <Tag color="purple">{doubt.subject}</Tag>
+                      <Badge tone="escalate">{doubt.subject}</Badge>
                       <Tag>Sem {doubt.semester}</Tag>
                       {/* CC-20: canonical casing, so faculty see the same
                           tag the students do. */}
@@ -182,7 +184,7 @@ const FacultyDoubts = () => {
                       />
                     </div>
                   </div>
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  <Badge tone={DOUBT_STATUS[doubt.status]?.tone ?? "neutral"}>{DOUBT_STATUS[doubt.status]?.label ?? doubt.status}</Badge>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -198,7 +200,7 @@ const FacultyDoubts = () => {
             ))}
           </div>
         )}
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

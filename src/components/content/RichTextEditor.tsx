@@ -57,7 +57,7 @@ const ToolButton = ({
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
         active
-          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+          ? "bg-blue-100 text-primary dark:bg-blue-900/40 dark:text-blue-300"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >

@@ -75,7 +75,7 @@ const AssistantWidget = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Close assistant' : 'Open assistant'}
-        className="fixed bottom-5 right-5 z-50 h-12 w-12 rounded-full bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] text-white shadow-lg flex items-center justify-center cursor-pointer"
+        className="fixed bottom-5 right-5 z-50 h-12 w-12 rounded-full bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white shadow-lg flex items-center justify-center cursor-pointer"
       >
         {open ? <CloseOutlined /> : <MessageOutlined />}
       </motion.button>
@@ -86,11 +86,11 @@ const AssistantWidget = () => {
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            className="fixed bottom-20 right-5 z-50 w-[min(24rem,calc(100vw-2.5rem))] max-h-[70vh] flex flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+            className="fixed bottom-20 right-5 z-50 w-[min(24rem,calc(100vw-2.5rem))] max-h-[70vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
           >
-            <div className="px-4 py-3 bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white">
+            <div className="px-4 py-3 bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white">
               <p className="text-sm font-semibold">CampusCure Assistant</p>
-              <p className="text-[11px] text-cyan-100/80">
+              <p className="text-[11px] text-brand-100/80">
                 Answers about your own complaints, doubts and updates
               </p>
             </div>
@@ -98,18 +98,18 @@ const AssistantWidget = () => {
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
               {messages.length === 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-slate-500">Try asking:</p>
+                  <p className="text-xs text-muted-foreground">Try asking:</p>
                   {SUGGESTIONS.map((suggestion) => (
                     <button
                       key={suggestion}
                       type="button"
                       onClick={() => void send(suggestion)}
-                      className="block w-full text-left text-sm rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                      className="block w-full text-left text-sm rounded-xl border border-border px-3 py-2 hover:bg-surface cursor-pointer"
                     >
                       {suggestion}
                     </button>
                   ))}
-                  <p className="text-[11px] text-slate-400 pt-1">
+                  <p className="text-[11px] text-muted-foreground pt-1">
                     It can only see your own records, and cannot change anything.
                   </p>
                 </div>
@@ -123,8 +123,8 @@ const AssistantWidget = () => {
                   <div
                     className={
                       message.role === 'user'
-                        ? 'inline-block rounded-2xl bg-[#00639B] text-white px-3 py-2 text-sm max-w-[85%] text-left'
-                        : 'inline-block rounded-2xl bg-slate-100 text-slate-800 px-3 py-2 text-sm max-w-[95%] whitespace-pre-wrap'
+                        ? 'inline-block rounded-2xl bg-[#07759D] text-white px-3 py-2 text-sm max-w-[85%] text-left'
+                        : 'inline-block rounded-2xl bg-muted text-foreground px-3 py-2 text-sm max-w-[95%] whitespace-pre-wrap'
                     }
                   >
                     {message.content}
@@ -144,13 +144,13 @@ const AssistantWidget = () => {
               ))}
 
               {busy && (
-                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
                   <Spin size="small" /> Looking that up…
                 </div>
               )}
             </div>
 
-            <div className="border-t border-slate-200 p-2 flex items-end gap-2">
+            <div className="border-t border-border p-2 flex items-end gap-2">
               <TextArea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

@@ -5,8 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import AppLayout from "@/layouts/AppLayout";
+import { buildAntdTheme } from "@/theme/antdTheme";
+import { StyleProvider } from "@ant-design/cssinjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
+import { App as AntdApp, ConfigProvider } from "antd";
+import { ThemeProvider, useTheme } from "next-themes";
+import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 const AdminComplaints = lazy(() => import("@/pages/admin/AdminComplaints"));
@@ -36,9 +40,43 @@ const ProfilePage = lazy(() => import("./pages/shared/ProfilePage"));
 
 const queryClient = new QueryClient();
 
+/**
+ * Keeps AntD in step with the `.dark` class next-themes puts on <html>.
+ *
+ * AntD is themed through JS tokens rather than CSS variables, so it cannot
+ * follow the class on its own — without this the chrome would stay light while
+ * everything around it went dark.
+ */
+const ThemedAntdProvider = ({ children }: { children: ReactNode }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const theme = useMemo(() => buildAntdTheme(isDark), [isDark]);
+
+  return (
+    // `layer` emits AntD's styles into @layer antd; see the layer statement
+    // at the top of index.css for why that matters.
+    <StyleProvider layer>
+      <ConfigProvider theme={theme}>
+        {/* AntD's App gives message/notification/modal a context-aware host,
+            so they inherit the theme above instead of rendering unstyled. */}
+        <AntdApp>{children}</AntdApp>
+      </ConfigProvider>
+    </StyleProvider>
+  );
+};
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    // Without this, switching themes animates every colour on the page at
+    // once, which reads as a slow smear rather than a switch.
+    disableTransitionOnChange
+  >
+    <ThemedAntdProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -94,8 +132,10 @@ const App = () => (
           </Suspense>
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemedAntdProvider>
+  </ThemeProvider>
 );
 
 export default App;

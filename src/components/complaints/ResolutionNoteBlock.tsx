@@ -15,15 +15,15 @@ interface ResolutionEntry {
 
 const VARIANT_STYLES: Record<ResolutionVariant, { container: string; title: string; badge: string; text: string }> = {
   success: {
-    container: 'rounded-xl border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-200/30 p-4',
-    title: 'text-green-700 dark:text-green-800',
-    badge: 'bg-green-100 text-green-700 dark:bg-green-300/30 dark:text-green-800',
-    text: 'text-green-800 dark:text-green-700',
+    container: 'rounded-xl border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/40/30 p-4',
+    title: 'text-green-700 dark:text-green-300',
+    badge: 'bg-green-100 text-green-700 dark:bg-green-900/40/30 dark:text-green-800',
+    text: 'text-green-800 dark:text-green-300',
   },
   warning: {
-    container: 'rounded-xl border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-300/20 p-4',
-    title: 'text-yellow-700 dark:text-yellow-800',
-    badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-300/30 dark:text-yellow-800',
+    container: 'rounded-xl border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/40/20 p-4',
+    title: 'text-yellow-700 dark:text-yellow-300',
+    badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40/30 dark:text-yellow-800',
     text: 'text-foreground',
   },
 };
