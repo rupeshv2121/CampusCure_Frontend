@@ -289,7 +289,7 @@ const RaiseComplaint = () => {
         {/* Header banner */}
         <div className="dashboard-hero">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px]" />
-          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-cyan-600/15 blur-2xl" />
+          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-cyan-600/15 blur-2xl" aria-hidden="true" />
           <div className="relative flex gap-4">
             <div className="inline-flex h-10 w-10 rounded-xl bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] items-center justify-center mb-3 shadow-md shadow-cyan-600/30">
               <SendOutlined style={{ fontSize: 16, color: 'white' }} />

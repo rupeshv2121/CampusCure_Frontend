@@ -123,8 +123,8 @@ const AdminUsers = () => {
         />
 
         {/* Role strip + search row */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-wrap gap-2">
             <button
               onClick={() => setRoleFilter(null)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
@@ -149,13 +149,13 @@ const AdminUsers = () => {
               );
             })}
           </div>
-          <div className="relative w-full sm:w-auto sm:ml-auto">
+          <div className="relative w-full shrink-0 sm:ml-auto sm:w-64">
             <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search users..."
-              className="w-full sm:w-64 rounded-xl border border-border bg-card pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-brand-500/16 focus:border-brand-500"
+              className="w-full rounded-xl border border-border bg-card pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-brand-500/16 focus:border-brand-500"
             />
           </div>
         </div>
@@ -273,7 +273,7 @@ const AdminUsers = () => {
                   </div>
 
                   {/* Pills */}
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex min-w-0 flex-wrap gap-2">
                     {(() => { const rs = ROLE_STYLES[panelUser.role] ?? ROLE_STYLES.STUDENT; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${rs.bg} ${rs.text}`}>{panelUser.role}</span>; })()}
                     {(() => { const as_ = APPROVAL_STYLES[panelUser.approvalStatus ?? 'PENDING']; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${as_.bg} ${as_.text}`}>{panelUser.approvalStatus}</span>; })()}
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${panelUser.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-muted text-muted-foreground dark:bg-slate-800 dark:text-muted-foreground'}`}>

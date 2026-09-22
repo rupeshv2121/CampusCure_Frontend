@@ -59,7 +59,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative flex min-h-[92vh] items-center overflow-hidden px-6 pb-20 pt-32 sm:pt-36">
+    <section className="relative flex min-h-[92vh] items-center overflow-hidden pb-20 pt-32 sm:pt-36">
       {/* Backdrop: grid texture, then two slow-drifting colour washes. All of
           it is decorative and sits behind the content. */}
       <div className="cc-grid" aria-hidden="true" />
@@ -77,10 +77,10 @@ const HeroSection = () => {
           initial="hidden"
           animate="show"
           transition={{ staggerChildren: 0.09, delayChildren: 0.05 }}
-          className="grid items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16"
+          className="grid min-w-0 items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16"
         >
           {/* ── Copy ─────────────────────────────────────────────────── */}
-          <div className="text-center lg:text-left">
+          <div className="min-w-0 text-center lg:text-left">
             <motion.div variants={fadeUp} transition={{ duration: 0.5, ease: EASE }}>
               <span className="cc-eyebrow">
                 <span className="relative flex h-1.5 w-1.5">
@@ -152,7 +152,7 @@ const HeroSection = () => {
           <motion.div
             variants={fadeUp}
             transition={{ duration: 0.7, ease: EASE }}
-            className="relative mx-auto w-full max-w-lg lg:max-w-none"
+            className="relative mx-auto w-full min-w-0 max-w-lg lg:max-w-none"
           >
             {/* Glow pooled under the panel so it lifts off the page. */}
             <div
@@ -172,17 +172,17 @@ const HeroSection = () => {
               </div>
 
               <div className="space-y-4 p-4 sm:p-5">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid min-w-0 grid-cols-3 gap-2 sm:gap-3">
                   {PREVIEW_STATS.map((stat) => (
                     <div
                       key={stat.label}
-                      className="rounded-xl border border-border bg-surface p-3"
+                      className="min-w-0 rounded-xl border border-border bg-surface p-2.5 sm:p-3"
                     >
                       <span className="text-sm text-brand-600">{stat.icon}</span>
-                      <div className="mt-1.5 font-display text-2xl font-bold tracking-tight">
+                      <div className="mt-1.5 font-display text-xl font-bold tracking-tight sm:text-2xl">
                         {stat.value}
                       </div>
-                      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <div className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">
                         {stat.label}
                       </div>
                     </div>

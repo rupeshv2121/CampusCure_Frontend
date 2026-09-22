@@ -80,7 +80,7 @@ const LandingNavbar = ({ scrolled }: LandingNavbarProps) => {
             : "border-transparent bg-card/50 shadow-none",
         )}
       >
-        <div className="flex h-15 items-center justify-between gap-4 px-4 sm:px-5">
+        <div className="flex h-15 min-w-0 items-center justify-between gap-2 px-4 sm:gap-4 sm:px-5">
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="rounded-xl outline-none"
@@ -89,7 +89,7 @@ const LandingNavbar = ({ scrolled }: LandingNavbarProps) => {
             <Wordmark size="sm" />
           </button>
 
-          <div className="hidden items-center gap-0.5 md:flex">
+          <div className="hidden items-center gap-0.5 lg:flex">
             {NAV_LINKS.map((link) => {
               const active = activeId === link.id;
               return (
@@ -140,7 +140,7 @@ const LandingNavbar = ({ scrolled }: LandingNavbarProps) => {
 
             <button
               onClick={() => setMobileMenu((open) => !open)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-accent md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-accent lg:hidden"
               aria-label={mobileMenu ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenu}
             >
@@ -156,7 +156,7 @@ const LandingNavbar = ({ scrolled }: LandingNavbarProps) => {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden border-t border-border md:hidden"
+              className="overflow-hidden border-t border-border lg:hidden"
             >
               <div className="space-y-1 px-3 py-3">
                 {NAV_LINKS.map((link) => (

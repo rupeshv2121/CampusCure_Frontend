@@ -228,8 +228,17 @@ const EXTRA_TITLES: { match: RegExp; label: string }[] = [
   { match: /\/complaints\/[^/]+$/, label: "Complaint" },
 ];
 
+/**
+ * Below this the sidebar opens as a drawer (see `useIsMobile`); between it and
+ * `TABLET_BREAKPOINT` the rail is shown but collapsed, because a 252px sidebar
+ * on a 768px tablet leaves barely half the screen for the actual page.
+ */
+const TABLET_BREAKPOINT = 1024;
+
 const AppLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < TABLET_BREAKPOINT,
+  );
   const [mobileDrawer, setMobileDrawer] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -300,6 +309,17 @@ const AppLayout = () => {
     );
   };
 
+  /**
+   * Collapse/expand only when the breakpoint is actually crossed, so a manual
+   * toggle is not undone by every resize event.
+   */
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${TABLET_BREAKPOINT - 1}px)`);
+    const onChange = (e: MediaQueryListEvent) => setCollapsed(e.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => {
     const initialize = async () => {
       await loadNotifications(INITIAL_NOTIFICATION_LIMIT);
@@ -326,7 +346,9 @@ const AppLayout = () => {
       .filter((i) => location.pathname.startsWith(i.key))
       .sort((a, b) => b.key.length - a.key.length)[0];
 
+  const exactNavItem = allItems.find((i) => i.key === location.pathname);
   const pageTitle =
+    exactNavItem?.label ??
     EXTRA_TITLES.find((t) => t.match.test(location.pathname))?.label ??
     activeItem?.label ??
     "CampusCure";
@@ -726,7 +748,12 @@ const AppLayout = () => {
         </header>
 
         <Content
-          className="overflow-auto p-4 md:p-6"
+          className={cn(
+            "overflow-auto p-4 md:p-6",
+            // Reserve room for the assistant FAB so the last row of a page is
+            // not stuck underneath it.
+            user.role === "STUDENT" && "pb-24 md:pb-24",
+          )}
           style={{ background: "hsl(var(--background))" }}
         >
           <Outlet />
