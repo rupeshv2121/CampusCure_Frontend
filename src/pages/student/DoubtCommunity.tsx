@@ -9,27 +9,38 @@ import {
   SimilarDoubtSuggestion,
 } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { DOUBT_STATUS } from "@/lib/statusStyles";
+import { Badge, PageHeader, PageShell } from "@/components/app/PageShell";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
-import { ClockCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, QuestionCircleOutlined, EyeOutlined, MessageOutlined, PlusOutlined } from '@ant-design/icons';
 import { Alert, Button, Empty, Input, message, Modal, Select, Tag } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
+import { stripCodeBlocks, plainTextLength } from '@/lib/codeBlocks';
+import { RichTextEditor, RICH_TEXT_FORMAT } from '@/components/content/RichTextEditor';
+import { TagChipList } from '@/components/tags/TagChip';
+import { TagInput } from '@/components/tags/TagInput';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
+import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
 
-const { TextArea } = Input;
 
 const doubtSchema = z.object({
   title: z.string().trim().min(10, 'Title must be at least 10 characters').max(200, 'Title too long'),
-  description: z.string().trim().min(20, 'Description must be at least 20 characters').max(2000, 'Description too long'),
+  // CC-23: the editor produces HTML, so a raw length check would measure
+  // markup. <p></p> is seven characters of nothing.
+  description: z
+    .string()
+    .refine((value) => plainTextLength(value) >= 20, 'Description must be at least 20 characters')
+    .refine((value) => plainTextLength(value) <= 2000, 'Description too long'),
   subject: z.string().trim().min(1, 'Subject is required'),
   semester: z.number().min(1, 'Semester must be 1-8').max(8),
-  labels: z.string().optional(),
+  labels: z.array(z.string()).optional(),
 });
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const fallbackDoubtSubjects = ['DSA', 'DBMS', 'OS', 'NETWORKS'];
 type DoubtTab = 'doubts' | 'my-doubts' | 'subjectwise-doubts';
 
@@ -43,6 +54,15 @@ const parseTab = (tabValue: string | null): DoubtTab => {
   return 'doubts';
 };
 
+/**
+ * Debounce for duplicate-doubt suggestions.
+ *
+ * Raised from 350ms in CC-11: the endpoint now embeds the query through a
+ * free-tier provider, so each keystroke burst that slips through costs a real
+ * API call. 600ms still feels responsive while typing a title.
+ */
+const SUGGESTION_DEBOUNCE_MS = 600;
+
 const DoubtCommunity = () => {
   const { user } = useAuth();
   const isApproved = user?.approvalStatus === 'APPROVED';
@@ -52,7 +72,13 @@ const DoubtCommunity = () => {
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [askModal, setAskModal] = useState(false);
-  const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: '' });
+  const [newDoubt, setNewDoubt] = useState({ title: '', description: '', subject: '', semester: '', labels: [] as string[] });
+  // CC-24: ids of files already uploaded; the form never carries bytes.
+  const [doubtFiles, setDoubtFiles] = useState<string[]>([]);
+  const [doubtUploaderKey, setDoubtUploaderKey] = useState(0);
+  // CC-20: tag filter lives in the URL, so a filtered list is shareable and
+  // survives a refresh. getAll gives the repeated ?tag= form the API expects.
+  const activeTags = searchParams.getAll('tag');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,9 +91,16 @@ const DoubtCommunity = () => {
   const [commonLoading, setCommonLoading] = useState(false);
 
   useEffect(() => {
-    fetchDoubts();
     fetchPostingSettings();
   }, []);
+
+  // Re-runs whenever the tag filter changes. Filtering happens server-side
+  // against the GIN-indexed normalized column, not over an already-fetched
+  // page, so it stays correct as the corpus grows.
+  useEffect(() => {
+    fetchDoubts(searchParams.getAll('tag'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   useEffect(() => {
     const nextTab = parseTab(searchParams.get('tab'));
@@ -112,30 +145,39 @@ const DoubtCommunity = () => {
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     const timer = window.setTimeout(async () => {
       try {
         const semesterValue = Number(newDoubt.semester);
-        const suggestions = await getSimilarDoubtSuggestions({
-          query,
-          subject: newDoubt.subject || undefined,
-          semester: Number.isInteger(semesterValue) && semesterValue > 0 ? semesterValue : undefined,
-          limit: 5,
-        });
+        const suggestions = await getSimilarDoubtSuggestions(
+          {
+            query,
+            subject: newDoubt.subject || undefined,
+            semester: Number.isInteger(semesterValue) && semesterValue > 0 ? semesterValue : undefined,
+            limit: 5,
+          },
+          controller.signal,
+        );
 
         if (!cancelled) {
           setSimilarDoubts(suggestions);
         }
       } catch {
+        // Includes the abort case, where there is nothing to report.
         if (!cancelled) {
           setSimilarDoubts([]);
         }
       }
-    }, 350);
+    }, SUGGESTION_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      // Abort the request itself, not just its result. Since CC-11 each call may
+      // embed the query through a rate-limited free-tier provider, so letting a
+      // superseded request finish spends quota on an answer nobody reads.
+      controller.abort();
     };
   }, [askModal, newDoubt.title, newDoubt.description, newDoubt.subject, newDoubt.semester]);
 
@@ -155,10 +197,10 @@ const DoubtCommunity = () => {
     }
   };
 
-  const fetchDoubts = async () => {
+  const fetchDoubts = async (tags: string[] = []) => {
     try {
       setLoading(true);
-      const data = await getDoubts();
+      const data = await getDoubts(tags.length > 0 ? { tags } : undefined);
       setDoubts(Array.isArray(data) ? data : []);
     } catch {
       message.error('Failed to fetch doubts');
@@ -192,6 +234,24 @@ const DoubtCommunity = () => {
   };
 
   const q = search.trim().toLowerCase();
+  /** Toggle a tag in the URL. Adding one must narrow the list, never replace it. */
+  const toggleTag = (tag: string) => {
+    const next = new URLSearchParams(searchParams);
+    const current = next.getAll('tag');
+    next.delete('tag');
+    const updated = current.includes(tag)
+      ? current.filter((t) => t !== tag)
+      : [...current, tag];
+    updated.forEach((t) => next.append('tag', t));
+    setSearchParams(next);
+  };
+
+  const clearTags = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('tag');
+    setSearchParams(next);
+  };
+
   const filtered = doubts.filter((d) => {
     const title = (d.title ?? '').toLowerCase();
     const desc = (d.description ?? '').toLowerCase();
@@ -217,16 +277,23 @@ const DoubtCommunity = () => {
 
     try {
       setSubmitting(true);
-      const labelsArray = newDoubt.labels ? newDoubt.labels.split(',').map(l => l.trim()).filter(Boolean) : [];
+      // CC-20: already a list. The server normalizes and stores both forms -
+      // splitting a comma-separated string here is what produced the
+      // near-duplicate tags this replaces.
+      const labelsArray = newDoubt.labels;
       await postDoubt({
         title: newDoubt.title,
         description: newDoubt.description,
         subject: newDoubt.subject,
         semester: Number(newDoubt.semester),
         labels: labelsArray,
+        attachmentIds: doubtFiles,
+        descriptionFormat: RICH_TEXT_FORMAT,
       });
       message.success('Your doubt has been posted!');
-      setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: '' });
+      setNewDoubt({ title: '', description: '', subject: '', semester: '', labels: [] });
+      setDoubtFiles([]);
+      setDoubtUploaderKey((k) => k + 1);
       setSimilarDoubts([]);
       setFormErrors({});
       setAskModal(false);
@@ -257,14 +324,23 @@ const DoubtCommunity = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Doubt Community</h1>
-            <p className="text-muted-foreground">Ask, answer, and learn together.</p>
-          </div>
-          <Button type="primary" icon={<PlusOutlined />} className="rounded-xl w-full sm:w-auto" disabled={!isApproved} title={!isApproved ? 'Account approval required' : undefined} onClick={() => setAskModal(true)}>Ask a Doubt</Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          icon={<QuestionCircleOutlined />}
+          title="Doubt Community"
+          description="Ask, answer, and learn together"
+          actions={
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!isApproved}
+              title={!isApproved ? 'Account approval required' : undefined}
+              onClick={() => setAskModal(true)}
+            >
+              Ask a Doubt
+            </Button>
+          }
+        />
 
         {!isApproved && (
           <Alert
@@ -283,7 +359,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -294,7 +370,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('my-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'my-doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -305,7 +381,7 @@ const DoubtCommunity = () => {
             onClick={() => changeTab('subjectwise-doubts')}
             className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'subjectwise-doubts'
-                ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                 : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
             }`}
           >
@@ -316,7 +392,38 @@ const DoubtCommunity = () => {
         {activeTab !== 'subjectwise-doubts' && (
           <div className="flex gap-3 flex-wrap mt-4">
             <Input.Search placeholder="Search doubts..." value={search} className="w-full sm:max-w-xs placeholder-gray-800! placeholder:font-medium" onChange={(e) => setSearch(e.target.value)} allowClear />
-            <Select placeholder="Filter by subject" value={subjectFilter || undefined} className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-gray-800! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} loading={subjectsLoading} />
+            <Select placeholder="Filter by subject" value={subjectFilter || undefined} className="w-full sm:min-w-35 sm:w-auto [&_.ant-select-selection-placeholder]:text-foreground! [&_.ant-select-selection-placeholder]:opacity-100 [&_.ant-select-selection-placeholder]:font-medium" allowClear onChange={(v) => setSubjectFilter(v || null)} options={doubtSubjects.map((s) => ({ label: s, value: s }))} loading={subjectsLoading} />
+          </div>
+        )}
+
+        {/* CC-20: the active tag filter, shown next to the other filters so it
+            is obvious why the list is short, and dismissible. */}
+        {activeTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Filtered by</span>
+            {activeTags.map((tag) => (
+              <Tag
+                key={tag}
+                color="blue"
+                closable
+                onClose={(e) => {
+                  e.preventDefault();
+                  toggleTag(tag);
+                }}
+                className="rounded-full text-xs"
+              >
+                {tag}
+              </Tag>
+            ))}
+            {activeTags.length > 1 && (
+              <button
+                type="button"
+                onClick={clearTags}
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Clear all
+              </button>
+            )}
           </div>
         )}
 
@@ -340,7 +447,7 @@ const DoubtCommunity = () => {
                       onClick={() => setCommonWindow(item.value)}
                       className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                         commonWindow === item.value
-                          ? 'bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] text-white border-transparent shadow-md shadow-cyan-600/20'
+                          ? 'bg-linear-to-r from-[#0A1F42] via-[#07759D] to-[#0C9EC0] text-white border-transparent shadow-md shadow-cyan-600/20'
                           : 'bg-card border-border text-muted-foreground hover:border-foreground/30'
                       }`}
                     >
@@ -378,7 +485,7 @@ const DoubtCommunity = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-sm font-bold text-foreground truncate">{topic.label}</h3>
-                      <span className="rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-90/40 dark:text-cyan-700 px-2.5 py-0.5 text-xs font-semibold">
+                      <span className="rounded-full bg-cyan-100 text-primary dark:bg-cyan-900/40 dark:text-primary px-2.5 py-0.5 text-xs font-semibold">
                         {topic.count} doubts
                       </span>
                     </div>
@@ -427,18 +534,38 @@ const DoubtCommunity = () => {
               <Empty description={activeTab === 'my-doubts' ? 'You have not posted any doubts yet' : 'No doubts found'} />
             )}
             {filtered.map((doubt, i) => (
-              <motion.div key={doubt.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} whileHover={{ scale: 1.01, boxShadow: '0 4px 20px rgba(22,119,255,0.08)' }} className="bg-card rounded-2xl border  p-5 cursor-pointer transition" onClick={() => navigate(`/student/doubts/${doubt.id}`)}>
+              <motion.div key={doubt.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} whileHover={{ scale: 1.01, boxShadow: '0 4px 20px rgba(22,119,255,0.08)' }} className="bg-card rounded-2xl border p-5 cursor-pointer transition" onClick={() => navigate(`/student/doubts/${doubt.id}`)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground text-base">{doubt.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{doubt.description}</p>
+                    {/* CC-22: cards show prose only. A truncated code block is noise, and
+                        highlighting one per card is the cost the lazy highlighter avoids. */}
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{stripCodeBlocks(doubt.description)}</p>
                     <div className="flex gap-1.5 mt-2 flex-wrap">
-                      <Tag color="purple">{doubt.subject}</Tag>
+                      <Badge tone="escalate">{doubt.subject}</Badge>
                       <Tag>Sem {doubt.semester}</Tag>
-                      {doubt.labels?.map((label) => <Tag key={label} color="blue" className="rounded-full text-xs">{label}</Tag>)}
+                      <TagChipList
+                        labels={doubt.labels}
+                        labelsNormalized={doubt.labelsNormalized}
+                        onTagClick={toggleTag}
+                        activeTags={activeTags}
+                      />
                     </div>
                   </div>
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                  <div className="flex items-center gap-1">
+                    <Badge tone={DOUBT_STATUS[doubt.status]?.tone ?? "neutral"}>{DOUBT_STATUS[doubt.status]?.label ?? doubt.status}</Badge>
+                    <BookmarkButton
+                      doubtId={doubt.id}
+                      bookmarked={Boolean(doubt.isBookmarkedByUser)}
+                      onChange={(next) =>
+                        setDoubts((current) =>
+                          current.map((d) =>
+                            d.id === doubt.id ? { ...d, isBookmarkedByUser: next } : d,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><MessageOutlined /> {doubt.answerCount} answers</span>
@@ -475,12 +602,18 @@ const DoubtCommunity = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Description *</label>
-              <TextArea rows={4} placeholder="Provide more details (min 20 chars)..." value={newDoubt.description} onChange={(e) => updateField('description', e.target.value)} status={formErrors.description ? 'error' : undefined} maxLength={2000} showCount />
+              {/* CC-23: produces HTML; the SERVER sanitises it on write. */}
+              <RichTextEditor
+                value={newDoubt.description}
+                onChange={(html) => setNewDoubt((p) => ({ ...p, description: html }))}
+                placeholder="Provide more details — use the toolbar for lists, code and maths"
+                disabled={submitting}
+              />
               {formErrors.description && <p className="text-xs text-destructive mt-1">{formErrors.description}</p>}
             </div>
             {similarDoubts.length > 0 && (
-              <div className="rounded-lg border border-dashed border-blue-300/70 bg-blue-50/40 p-3 sm:p-4 mt-8">
-                <p className="text-xs font-semibold text-blue-700">Similar doubts found</p>
+              <div className="rounded-lg border border-dashed border-blue-300/70 bg-accent/40 p-3 sm:p-4 mt-8">
+                <p className="text-xs font-semibold text-primary">Similar doubts found</p>
                 <div className="mt-2 space-y-2">
                   {similarDoubts.map((suggestion) => (
                     <div key={suggestion.id} className="rounded-md border bg-background p-2.5 sm:p-3">
@@ -522,11 +655,25 @@ const DoubtCommunity = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Labels (comma-separated)</label>
-              <Input placeholder="e.g. Sorting, Complexity, Searching" value={newDoubt.labels} onChange={(e) => updateField('labels', e.target.value)} />
+              <TagInput
+                value={newDoubt.labels}
+                onChange={(tags) => setNewDoubt((p) => ({ ...p, labels: tags }))}
+                disabled={submitting}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Screenshots or notes (optional)</label>
+              <AttachmentUploader
+                key={doubtUploaderKey}
+                entityType="DOUBT"
+                onChange={setDoubtFiles}
+                disabled={submitting}
+              />
             </div>
           </div>
         </Modal>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

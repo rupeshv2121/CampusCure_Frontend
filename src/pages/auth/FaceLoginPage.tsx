@@ -1,11 +1,11 @@
-import { faceLogin } from '@/api/auth';
+import { verifyFace, type FaceChallenge } from '@/api/auth';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleRedirect } from '@/lib/authUtils';
 import { Spin } from 'antd';
 import * as faceapi from 'face-api.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type Status =
@@ -18,14 +18,26 @@ type Status =
 
 const SCAN_TIMEOUT_MS = 30_000; // stop scanning after 30 seconds
 
+/**
+ * CC-60: samples taken from separate moments, not one frame.
+ *
+ * A photograph held to the camera produces near-identical descriptors every
+ * frame; a live face does not sit that still. The server rejects a set whose
+ * members are too alike. Must match FACE_REQUIRED_SAMPLES on the backend.
+ */
+const REQUIRED_SAMPLES = 3;
+const SAMPLE_GAP_MS = 450;
+
 const features = [
   {
-    title: 'Biometric sign-in in seconds',
-    description: 'Authenticate quickly without remembering passwords or OTPs.',
+    title: 'A second step, not a shortcut',
+    description:
+      'Your password has already been checked. This confirms it is you.',
   },
   {
-    title: 'Descriptor-based matching',
-    description: 'Descriptor-based matching used for authentication.',
+    title: 'Matched against your account only',
+    description:
+      'Compared with your own enrolled face, never searched across users.',
   },
   {
     title: 'Designed for campus use',
@@ -43,9 +55,28 @@ const FaceLoginPage = () => {
   const [statusMsg, setStatusMsg] = useState('Loading face recognition models…');
   const [faceWarning, setFaceWarning] = useState<string | null>(null);
   const scanStartRef = useRef<number>(0);
+  const samplesRef = useRef<number[][]>([]);
+  const [collected, setCollected] = useState(0);
 
   const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * CC-60: this page is no longer reachable on its own.
+   *
+   * The challenge is handed over by the password step. Without one there is
+   * nothing to verify against, so there is nowhere to go but back to login -
+   * which is the point: a face alone is not a way in.
+   */
+  const challenge = (location.state as { challenge?: FaceChallenge } | null)
+    ?.challenge;
+
+  useEffect(() => {
+    if (!challenge && !isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [challenge, isAuthenticated, navigate]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -151,36 +182,62 @@ const FaceLoginPage = () => {
         } else if (detections.length > 1) {
           setFaceWarning('Multiple faces detected — only one face should be visible.');
         } else {
-          // Exactly one face — attempt login
+          // Exactly one face. CC-60: collect several samples spaced apart
+          // rather than authenticating on the first frame - a still photo
+          // yields near-identical descriptors and the server rejects that.
           setFaceWarning(null);
-          scanningRef.current = false;
           setStatus('scanning');
-          setStatusMsg('Face detected! Authenticating…');
 
-          const descriptor = Array.from(detections[0].descriptor);
-          const response = await faceLogin(descriptor);
+          samplesRef.current.push(Array.from(detections[0].descriptor));
+          setCollected(samplesRef.current.length);
+
+          if (samplesRef.current.length < REQUIRED_SAMPLES) {
+            setStatusMsg(
+              `Hold still — ${samplesRef.current.length} of ${REQUIRED_SAMPLES} captured`,
+            );
+            setTimeout(scan, SAMPLE_GAP_MS);
+            return;
+          }
+
+          scanningRef.current = false;
+          setStatusMsg('Verifying…');
+
+          if (!challenge) {
+            navigate('/login', { replace: true });
+            return;
+          }
+
+          const response = await verifyFace(challenge, samplesRef.current);
 
           setStatus('success');
           setStatusMsg(`Welcome, ${response.user.name}!`);
           toast.success(`Welcome back, ${response.user.name}!`);
           stopCamera();
-          login(response.token, response.user);
+          login(response.token, response.user, response.refreshToken);
           navigate(getRoleRedirect(response.user.role, response.user));
           return;
         }
       } catch (err) {
         if (!scanningRef.current) return;
-        const msg = err instanceof Error ? err.message : 'Authentication failed.';
-        if (msg.includes('not recognized') || msg.includes('pending approval')) {
+        const msg = err instanceof Error ? err.message : 'Verification failed.';
+
+        // A rejected verification is terminal for this challenge - it is
+        // attempt-capped server-side, so silently rescanning would burn the
+        // remaining tries without telling anyone.
+        if (msg.toLowerCase().includes('verification failed')) {
           scanningRef.current = false;
           setFaceWarning(null);
           setStatus('error');
-          setStatusMsg(msg);
+          setStatusMsg(
+            'We could not verify your face. Sign in again to retry.',
+          );
           toast.error(msg);
           stopCamera();
           return;
         }
-        // Transient error — keep scanning
+        // Transient detection error — drop the partial set and keep scanning.
+        samplesRef.current = [];
+        setCollected(0);
       }
 
       // Schedule next scan frame
@@ -190,12 +247,12 @@ const FaceLoginPage = () => {
     };
 
     setTimeout(scan, 800);
-  }, [login, navigate, stopCamera]);
+  }, [challenge, login, navigate, stopCamera]);
 
   const handleRetry = () => {
-    setStatus('loading-models');
-    setStatusMsg('Reloading…');
-    window.location.reload();
+    // Reloading would land here with no challenge in history state, and the
+    // challenge is attempt-capped anyway - the password step is the way back.
+    navigate('/login', { replace: true });
   };
 
   const isLoading = ['loading-models', 'starting-camera', 'scanning'].includes(status);
@@ -207,14 +264,14 @@ const FaceLoginPage = () => {
     : isError
     ? 'ring-red-500'
     : status === 'camera-ready'
-    ? 'ring-cyan-500'
-    : 'ring-slate-600';
+    ? 'ring-brand-500'
+    : 'ring-border';
 
   return (
     <AuthSplitLayout
       showcaseTitle={
         <>
-          <span className="bg-linear-to-r from-cyan-200 via-white to-cyan-300 bg-clip-text text-transparent">Face ID</span>
+          <span className="cc-gradient-text--onDark">Face ID</span>
         </>
       }
       showcaseDescription="Look at your camera and sign in instantly with a biometric flow built for campus operations."
@@ -224,15 +281,15 @@ const FaceLoginPage = () => {
       formDescription="Center your face in the frame and hold steady while we verify your identity."
       footer={
         <div className="flex flex-col items-center gap-1 text-sm">
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             Use password instead?{' '}
-            <Link to="/login" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+            <Link to="/login" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
               Password Login
             </Link>
           </span>
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             No account?{' '}
-            <Link to="/register" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+            <Link to="/register" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
               Register
             </Link>
           </span>
@@ -252,21 +309,39 @@ const FaceLoginPage = () => {
           />
 
           {(isLoading || isSuccess) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/62 px-4 text-center text-white backdrop-blur-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brand-950/70 px-4 text-center text-white backdrop-blur-sm">
               {isSuccess ? <span className="text-5xl">✅</span> : <Spin size="large" />}
               <span className="text-sm font-medium">{statusMsg}</span>
             </div>
           )}
 
           {status === 'camera-ready' && !isError && (
-            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-cyan-300/45 animate-pulse" />
+            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-brand-300/50 animate-pulse" />
           )}
         </div>
 
         {status === 'camera-ready' && !faceWarning && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             {statusMsg}
+          </div>
+        )}
+
+        {/* CC-60: the capture is several samples, so it needs to look like
+            several samples - otherwise a user moves away after the first. */}
+        {(status === 'scanning' || collected > 0) && status !== 'success' && (
+          <div className="flex w-full flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              {Array.from({ length: REQUIRED_SAMPLES }, (_, i) => (
+                <span
+                  key={i}
+                  className={`h-2 w-8 rounded-full transition-colors ${
+                    i < collected ? 'bg-emerald-500' : 'bg-border'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-muted-foreground">{statusMsg}</span>
           </div>
         )}
 
@@ -285,7 +360,7 @@ const FaceLoginPage = () => {
             </div>
             <button
               onClick={handleRetry}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#06204d_0%,#0c5d8e_52%,#16b3c6_100%)] text-sm font-semibold text-white shadow-[0_14px_34px_rgba(8,79,120,0.30)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(8,79,120,0.36)]"
+              className="cc-btn cc-btn-primary w-full"
             >
               Try Again
             </button>

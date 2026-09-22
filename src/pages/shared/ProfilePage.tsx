@@ -2,6 +2,8 @@ import { getAdminProfile, updateAdminProfile } from '@/api/admin';
 import { getFacultyProfile, updateFacultyProfile } from '@/api/faculty';
 import { getStudentProfile, updateStudentProfile } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { APPROVAL_STATUS, ROLE_LABEL } from "@/lib/statusStyles";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { AdminLevel, departments } from '@/types';
@@ -257,24 +259,14 @@ const ProfilePage = () => {
 
   const initials = user.name.split(' ').map((n) => n[0]).join('').toUpperCase();
   const showFieldSkeleton = loadingProfile && !editing;
-  const roleTagStyle = {
-    background: '#1a8cd1',
-    color: '#ffffff',
-    border: 'none',
-  };
-  const approvalTagStyle = {
-    backgroundColor: user.approvalStatus === 'APPROVED' ? '#DCFCE7' : '#FEF3C7',
-    color: user.approvalStatus === 'APPROVED' ? '#166534' : '#92400E',
-    border: 'none',
-  };
   const editProfileButtonStyle = editing
     ? {
-        backgroundColor: '#ffffff',
-        color: '#0f172a',
-        borderColor: '#cbd5e1',
+        backgroundColor: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        borderColor: 'hsl(var(--border))',
       }
     : {
-        background: 'linear-gradient(135deg, #06204d 0%, #0c5d8e 52%, #16b3c6 100%)',
+        background: 'var(--brand-gradient-soft)',
         color: '#ffffff',
         borderColor: 'transparent',
       };
@@ -289,10 +281,10 @@ const ProfilePage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/85 shadow-sm"
+          className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-sm)]"
         >
           {/* Banner */}
-          <div className="h-24 bg-[radial-gradient(circle_at_top,#1cc8d4_0%,rgba(28,200,212,0.18)_0%,transparent_60%),linear-gradient(15deg,#04122f_8%,#0a2f61_44%,#0a7c9b_100%)] sm:h-32" />
+          <div className="cc-brand-banner h-24 sm:h-32" />
 
           {/* Avatar + Info */}
           <div className="px-4 pb-5 sm:px-6 sm:pb-6">
@@ -300,7 +292,7 @@ const ProfilePage = () => {
               <Avatar
                 size={96}
                 style={{
-                  backgroundColor: '#0C5D8E',
+                  backgroundColor: 'hsl(var(--brand-600))',
                   fontSize: 32,
                   fontWeight: 700,
                   border: '4px solid hsl(var(--card))',
@@ -311,12 +303,12 @@ const ProfilePage = () => {
               <div className="min-w-0 flex-1 pt-1 sm:pt-2">
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="mb-1 wrap-break-word text-xl font-bold text-foreground sm:mb-2 sm:text-2xl sm:text-white">{user.name}</h1>
-                  <Tag style={roleTagStyle} className='font-bold'>
-                    {user.role}
-                  </Tag>
-                  <Tag style={approvalTagStyle}>
-                    {user.approvalStatus}
-                  </Tag>
+                  <Badge tone="info">{ROLE_LABEL[user.role] ?? user.role}</Badge>
+                  {user.approvalStatus ? (
+                    <Badge tone={APPROVAL_STATUS[user.approvalStatus].tone}>
+                      {APPROVAL_STATUS[user.approvalStatus].label}
+                    </Badge>
+                  ) : null}
                 </div>
                 <p className="mt-0.5 break-all text-sm text-muted-foreground">Email: {user.email}</p>
                 <p className="mt-0.5 break-all text-xs text-muted-foreground">
@@ -522,15 +514,15 @@ const ProfilePage = () => {
                   <Divider className="my-2" />
                   <h2 className="text-lg font-semibold text-foreground">Activity Overview</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    <div className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4">
+                    <div className="rounded-xl border border-cyan-100 bg-accent/60 p-4">
                       <p className="text-2xl font-bold text-foreground">{adminInfo.complaintsAssigned}</p>
                       <p className="text-xs text-muted-foreground mt-1">Complaints Assigned</p>
                     </div>
-                    <div className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4">
+                    <div className="rounded-xl border border-cyan-100 bg-accent/60 p-4">
                       <p className="text-2xl font-bold text-foreground">{adminInfo.complaintsClosed}</p>
                       <p className="text-xs text-muted-foreground mt-1">Complaints Closed</p>
                     </div>
-                    <div className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4">
+                    <div className="rounded-xl border border-cyan-100 bg-accent/60 p-4">
                       <p className="text-2xl font-bold text-foreground">{adminInfo.usersManaged}</p>
                       <p className="text-xs text-muted-foreground mt-1">Users Managed</p>
                     </div>
@@ -550,7 +542,7 @@ const ProfilePage = () => {
                 icon={<SaveOutlined />}
                 size="large"
                 onClick={handleSave}
-                className="h-11 rounded-xl border-none bg-[linear-gradient(135deg,#06204d_0%,#0c5d8e_52%,#16b3c6_100%)] font-semibold text-white shadow-[0_14px_34px_rgba(8,79,120,0.28)] hover:opacity-95"
+                className="h-11 rounded-xl border-none bg-[linear-gradient(135deg,#0A1F42_0%,#07759D_52%,#0C9EC0_100%)] font-semibold text-white shadow-[0_14px_34px_rgba(8,79,120,0.28)] hover:opacity-95"
                 loading={loadingProfile}
               >
                 Save Changes

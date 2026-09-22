@@ -1,4 +1,5 @@
-import logo from "@/assets/logo.jpeg";
+import Wordmark from "@/components/brand/Wordmark";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import { ArrowLeftOutlined, CheckOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
@@ -22,30 +23,19 @@ type AuthSplitLayoutProps = {
   children: ReactNode;
 };
 
-const brand = (
-  <div className="flex items-center gap-3">
-    <div className="h-11 w-11 shrink-0 rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-lg shadow-cyan-950/20 backdrop-blur-sm">
-      <img
-        src={logo}
-        alt="CampusCure"
-        className="h-full w-full rounded-xl object-contain"
-      />
-    </div>
-    <div className="flex flex-col">
-      <span className="text-xl font-semibold tracking-tight">
-        <span className="text-sky-300">Campus</span>
-        <span className="text-cyan-100">Cure</span>
-      </span>
-      <span className="text-[11px] uppercase tracking-[0.32em] text-cyan-100/55">
-        Campus Operations
-      </span>
-    </div>
-  </div>
-);
+const EASE = [0.22, 1, 0.36, 1] as const;
 
+/**
+ * Two-pane shell for sign-in, registration and face verification.
+ *
+ * Left pane is brand and reassurance, right pane is the task. Below `lg` the
+ * left pane is dropped entirely rather than stacked — on a phone it would push
+ * the form, which is the only thing the visitor came for, below the fold.
+ */
 const AuthSplitLayout = ({
   showcaseTitle,
   showcaseDescription,
+  showcaseEyebrow,
   highlights,
   formTitle,
   formDescription,
@@ -55,100 +45,115 @@ const AuthSplitLayout = ({
   children,
 }: AuthSplitLayoutProps) => {
   return (
-    <div className="min-h-screen bg-slate-950 lg:grid lg:grid-cols-[minmax(420px,560px)_1fr]">
-      <aside className="relative hidden overflow-hidden lg:flex lg:min-h-screen lg:flex-col lg:justify-between">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#1cc8d4_0%,rgba(28,200,212,0.16)_26%,transparent_54%),linear-gradient(165deg,#04122f_8%,#0a2f61_44%,#0a7c9b_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-size-[64px_64px] opacity-20" />
-        <div className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(440px,46%)_1fr]">
+      {/* ── Showcase ─────────────────────────────────────────────────── */}
+      <aside className="cc-section--dark relative hidden lg:flex lg:min-h-screen lg:flex-col lg:justify-between lg:overflow-hidden">
+        <div className="cc-grid cc-grid--dark" aria-hidden="true" />
+        <div
+          aria-hidden="true"
+          className="cc-orb cc-animate-float-a -left-24 top-16 h-80 w-80 bg-brand-400/20"
+        />
+        <div
+          aria-hidden="true"
+          className="cc-orb cc-animate-float-b -right-16 bottom-24 h-72 w-72 bg-violet-500/15"
+        />
 
-        <div className="relative z-10 flex flex-col justify-between px-12 py-10">
-          <div className="space-y-12">
-            {brand}
+        <div className="relative z-10 flex flex-1 flex-col justify-center px-12 py-12 xl:px-16">
+          <Wordmark tone="onDark" size="lg" tagline="Campus Operations" />
 
-            <div className="space-y-7">
-              <div>
-                <h1 className="max-w-md text-4xl pb-2 font-semibold leading-[1.02] tracking-tight text-white">
-                  {showcaseTitle}
-                </h1>
-                <p className="max-w-xl text-base leading-8 text-cyan-50/76">
-                  {showcaseDescription}
-                </p>
-              </div>
+          <div className="mt-14">
+            {showcaseEyebrow ? (
+              <span className="cc-eyebrow cc-eyebrow--onDark mb-5">
+                {showcaseEyebrow}
+              </span>
+            ) : null}
 
-              <div className="space-y-4 pt-2">
-                {highlights.map((highlight) => (
-                  <div
-                    key={highlight.title}
-                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-sm"
-                  >
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-300/12 text-cyan-200 ring-1 ring-inset ring-cyan-200/18">
-                      <CheckOutlined style={{ fontSize: 12 }} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        {highlight.title}
-                      </p>
-                      {highlight.description ? (
-                        <p className="mt-1 text-sm leading-6 text-cyan-50/62">
-                          {highlight.description}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h1 className="max-w-md font-display text-[2.5rem] font-extrabold leading-[1.1] tracking-tight text-white">
+              {showcaseTitle}
+            </h1>
+
+            <p className="mt-5 max-w-md text-[15px] leading-7 text-brand-100/75">
+              {showcaseDescription}
+            </p>
+
+            <ul className="mt-9 space-y-3">
+              {highlights.map((highlight, i) => (
+                <motion.li
+                  key={highlight.title}
+                  initial={{ opacity: 0, x: -14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
+                  className="cc-card cc-card--glass flex items-start gap-4 rounded-2xl px-4 py-3.5"
+                >
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-400/20 text-brand-200 ring-1 ring-inset ring-brand-300/25">
+                    <CheckOutlined style={{ fontSize: 11 }} />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-white">
+                      {highlight.title}
+                    </span>
+                    {highlight.description ? (
+                      <span className="mt-1 block text-[13px] leading-6 text-brand-100/65">
+                        {highlight.description}
+                      </span>
+                    ) : null}
+                  </span>
+                </motion.li>
+              ))}
+            </ul>
           </div>
         </div>
       </aside>
 
-      <section className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(12,135,160,0.12),transparent_30%),linear-gradient(180deg,#f8fcff_0%,#eef6fb_100%)]">
-        <div className="absolute inset-0 hidden lg:block">
-          <div className="absolute -right-20 -top-7.5 h-72 w-72 rounded-full bg-cyan-200/30 blur-3xl" />
-          <div className="absolute bottom-0 left-[12%] h-60 w-60 rounded-full bg-blue-200/20 blur-3xl" />
-        </div>
+      {/* ── Form ─────────────────────────────────────────────────────── */}
+      <section className="relative flex min-h-screen flex-col overflow-hidden bg-surface">
+        <div
+          aria-hidden="true"
+          className="cc-orb -right-20 -top-16 h-72 w-72 bg-brand-300/25"
+        />
+        <div
+          aria-hidden="true"
+          className="cc-orb bottom-0 left-[10%] h-60 w-60 bg-violet-300/15"
+        />
 
-        <div className="relative z-10 sm:px-8 lg:px-10 lg:pt-8">
+        <div className="relative z-10 flex items-center justify-between px-5 pt-5 sm:px-8 lg:px-10 lg:pt-8">
           <Link
             to={backHref}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm backdrop-blur transition-colors hover:border-cyan-300/60 hover:text-slate-950"
+            className="cc-btn cc-btn-secondary cc-btn--sm rounded-full"
           >
-            <ArrowLeftOutlined style={{ fontSize: 12 }} />
+            <ArrowLeftOutlined style={{ fontSize: 11 }} />
             Back to home
           </Link>
+          <ThemeToggle />
         </div>
 
-        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-8 pt-2 sm:px-8 lg:px-12">
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-10 pt-6 sm:px-8 lg:px-12">
           <motion.div
-            initial={{ opacity: 0, y: 22 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: EASE }}
             className="w-full max-w-xl"
           >
-            <div className="rounded-4xl border border-white/70 bg-white/88 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-8 lg:px-10 lg:py-6">
-              <div className="space-y-8">
-                <div className="lg:hidden">{brand}</div>
+            <div className="cc-card p-6 shadow-[var(--shadow-xl)] sm:p-9">
+              <div className="lg:hidden">
+                <Wordmark size="md" />
+                <hr className="cc-divider my-6" />
+              </div>
 
-                <div className="space-y-3">
-                  {formEyebrow ? (
-                    <div className="inline-flex rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700">
-                      {formEyebrow}
-                    </div>
-                  ) : null}
-                  <div className="space-y-2">
-                    <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
-                      {formTitle}
-                    </h2>
-                    <p className="max-w-md text-sm leading-6 text-slate-500 sm:text-[15px]">
-                      {formDescription}
-                    </p>
-                  </div>
-                </div>
+              {formEyebrow ? (
+                <span className="cc-eyebrow">{formEyebrow}</span>
+              ) : null}
 
-                <div className="space-y-6">
-                  {children}
-                  {footer}
-                </div>
+              <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight">
+                {formTitle}
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                {formDescription}
+              </p>
+
+              <div className="mt-8 space-y-6">
+                {children}
+                {footer}
               </div>
             </div>
           </motion.div>

@@ -2,29 +2,17 @@ import { api } from '@/api/auth';
 import { getMyComplaints, submitComplaintFeedback } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
 import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
+import { Badge, Dot, EmptyState, ListRow, PageHeader, PageShell, StatCard, StatGrid } from '@/components/app/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
+import { COMPLAINT_STATUS, priorityMeta } from '@/lib/statusStyles';
 import { Complaint, ComplaintStatus } from '@/types';
 import { CloseOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { AttachmentList } from '@/components/attachments/AttachmentList';
 
-const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED:      { dot: 'bg-orange-500',  bg: 'bg-orange-100 dark:bg-orange-90/40', text: 'text-orange-700 dark:text-orange-700',   label: 'Raised' },
-  ASSIGNED:    { dot: 'bg-cyan-500',    bg: 'bg-cyan-100 dark:bg-cyan-90/40',     text: 'text-cyan-700 dark:text-cyan-700',       label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-90/40', text: 'text-violet-700 dark:text-violet-700',   label: 'In Progress' },
-  PENDING_CONFIRMATION: { dot: 'bg-blue-500',  bg: 'bg-blue-100 dark:bg-blue-90/40', text: 'text-blue-700 dark:text-blue-700',   label: 'Awaiting Your Confirmation' },
-  ESCALATED_TO_SUPERADMIN: { dot: 'bg-purple-600', bg: 'bg-purple-100 dark:bg-purple-400/30', text: 'text-purple-800 dark:text-purple-800', label: 'Escalated to Super Admin' },
-  RESOLVED:    { dot: 'bg-green-500',   bg: 'bg-green-100 dark:bg-green-90/40',   text: 'text-green-700 dark:text-green-700',     label: 'Resolved' },
-};
 
-const PRIORITY_STYLES: Record<number, { bg: string; text: string; label: string }> = {
-  1: { bg: 'bg-slate-100 dark:bg-slate-80',          text: 'text-slate-600 dark:text-slate-700',     label: 'P1 · Low' },
-  2: { bg: 'bg-cyan-100 dark:bg-cyan-90/40',          text: 'text-cyan-700 dark:text-cyan-700',       label: 'P2 · Minor' },
-  3: { bg: 'bg-yellow-100 dark:bg-yellow-90/40',      text: 'text-yellow-700 dark:text-yellow-700',   label: 'P3 · Medium' },
-  4: { bg: 'bg-orange-100 dark:bg-orange-90/40',      text: 'text-orange-700 dark:text-orange-700',   label: 'P4 · High' },
-  5: { bg: 'bg-red-100 dark:bg-red-90/40',            text: 'text-red-800 dark:text-red-700',         label: 'P5 · Critical' },
-};
 
 const MyComplaints = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -177,43 +165,42 @@ const MyComplaints = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Complaints</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Track the status of your submitted complaints</p>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground">{complaints.length} total</span>
-            <span className="h-4 w-px bg-border" />
-            <span className="text-green-600 dark:text-green-400 font-medium">
-              {complaints.filter(c => c.status === 'RESOLVED').length} resolved
+      <PageShell>
+        <PageHeader
+          icon={<FileTextOutlined />}
+          title="My Complaints"
+          description="Track the status of every issue you have reported"
+          actions={
+            <span className="flex items-center gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {complaints.length} total
+              </span>
+              <span className="h-4 w-px bg-border" />
+              <span className="font-semibold text-success">
+                {complaints.filter((c) => c.status === 'RESOLVED').length} resolved
+              </span>
             </span>
-          </div>
-        </div>
+          }
+        />
 
-        {/* Status summary strip */}
-        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_CONFIRMATION', 'RESOLVED'] as ComplaintStatus[]).map((s) => {
-            const style = STATUS_STYLES[s];
-            const count = complaints.filter(c => c.status === s).length;
+        {/* Doubles as the status filter — tapping a tile scopes the list. */}
+        <StatGrid cols={5}>
+          {(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_CONFIRMATION', 'RESOLVED'] as ComplaintStatus[]).map((st, i) => {
+            const meta = COMPLAINT_STATUS[st];
             return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(statusFilter === s ? null : s)}
-                className={`rounded-xl border p-3 text-center transition-all cursor-pointer ${
-                  statusFilter === s
-                    ? `${style.bg} border-current ${style.text}`
-                    : 'bg-card hover:border-blue-500/30'
-                }`}
-              >
-                <div className={`text-lg font-bold ${statusFilter === s ? style.text : 'text-foreground'}`}>{count}</div>
-                <div className={`text-xs mt-0.5 ${statusFilter === s ? style.text : 'text-muted-foreground'}`}>{style.label}</div>
-              </button>
+              <StatCard
+                key={st}
+                index={i}
+                tone={meta.tone}
+                icon={<span className="cc-badge__dot" />}
+                value={complaints.filter((c) => c.status === st).length}
+                label={meta.label}
+                active={statusFilter === st}
+                onClick={() => setStatusFilter(statusFilter === st ? null : st)}
+              />
             );
           })}
-        </div>
+        </StatGrid>
 
         {/* Search + filter */}
         <div className="flex gap-3 flex-wrap">
@@ -224,7 +211,7 @@ const MyComplaints = () => {
               placeholder="Search by title..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 h-9 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all w-full sm:w-64"
+              className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-4 text-sm text-foreground transition-colors placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/16 sm:w-64"
             />
           </div>
           <Select
@@ -234,7 +221,7 @@ const MyComplaints = () => {
             allowClear
             onChange={(v) => setStatusFilter(v || null)}
             options={(['RAISED', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_CONFIRMATION', 'RESOLVED'] as ComplaintStatus[]).map((s) => ({
-              label: STATUS_STYLES[s].label, value: s,
+              label: COMPLAINT_STATUS[s].label, value: s,
             }))}
           />
         </div>
@@ -255,54 +242,45 @@ const MyComplaints = () => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-cyan-50 dark:bg-cyan-700/50 flex items-center justify-center mb-4">
-              <FileTextOutlined className="text-3xl text-cyan-500" />
-            </div>
-            <p className="text-base font-semibold text-foreground mb-1">No complaints found</p>
-            <p className="text-sm text-muted-foreground">Try adjusting your search or status filter.</p>
-          </motion.div>
+          <EmptyState
+            icon={<FileTextOutlined />}
+            title="No complaints found"
+            description="Try adjusting your search or clearing the status filter."
+          />
         ) : (
           <div className="space-y-2.5">
             {filtered.map((c, i) => {
-              const s = STATUS_STYLES[c.status] ?? STATUS_STYLES.RESOLVED;
-              const p = c.priority ? PRIORITY_STYLES[c.priority] : null;
+              const meta = COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED;
+              const pri = c.priority ? priorityMeta(c.priority) : null;
               return (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  whileHover={{ x: 3 }}
-                  onClick={() => setSelected(c)}
-                  className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 p-4 rounded-2xl bg-card border hover:border-blue-500/30 hover:shadow-md hover:shadow-blue-500/5 cursor-pointer transition-all"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${s.dot}`} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{c.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Room {c.classroomNumber} · Block {c.block}{c.category ? ` · ${c.category.replace(/_/g, ' ')}` : ''}
-                      </p>
+                <ListRow key={c.id} index={i} onClick={() => setSelected(c)}>
+                  <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="flex min-w-0 items-center gap-3.5">
+                      <Dot tone={meta.tone} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{c.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          Room {c.classroomNumber} · Block {c.block}
+                          {c.category ? ` · ${c.category.replace(/_/g, ' ')}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
+                      {pri && (
+                        <Badge tone={pri.tone} className="hidden sm:inline-flex">
+                          {pri.label}
+                        </Badge>
+                      )}
+                      {Number(c.escalationCount ?? 0) > 0 && (
+                        <Badge tone="danger">Escalated {c.escalationCount}x</Badge>
+                      )}
+                      <Badge tone={meta.tone}>{meta.label}</Badge>
+                      <span className="hidden text-xs text-muted-foreground md:block">
+                        {formatDate(c.createdAt)}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
-                    {p && (
-                      <span className={`hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${p.bg} ${p.text}`}>
-                        {p.label}
-                      </span>
-                    )}
-                    {Number(c.escalationCount ?? 0) > 0 && (
-                      <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-400/20 dark:text-red-800">
-                        Escalated {c.escalationCount}x
-                      </span>
-                    )}
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.text}`}>
-                      {s.label}
-                    </span>
-                    <span className="hidden md:block text-xs text-muted-foreground">{formatDate(c.createdAt)}</span>
-                  </div>
-                </motion.div>
+                </ListRow>
               );
             })}
           </div>
@@ -324,9 +302,9 @@ const MyComplaints = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 60 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed bg-white right-0 top-0 h-full w-full max-w-md border-l shadow-2xl z-50 overflow-y-auto"
+                className="fixed bg-card right-0 top-0 h-full w-full max-w-md border-l shadow-2xl z-50 overflow-y-auto"
               >
-                <div className="p-6 flex flex-col gap-5 min-h-full bg-white">
+                <div className="p-6 flex flex-col gap-5 min-h-full bg-card">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-lg font-bold text-foreground leading-snug">{selected.title}</h2>
                     <button
@@ -338,8 +316,8 @@ const MyComplaints = () => {
                   </div>
 
                   <div className="flex gap-2 flex-wrap">
-                    {(() => { const s = STATUS_STYLES[selected.status] ?? STATUS_STYLES.RESOLVED; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.bg} ${s.text}`}>{s.label}</span>; })()}
-                    {selected.priority && (() => { const p = PRIORITY_STYLES[selected.priority!]; return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${p.bg} ${p.text}`}>{p.label}</span>; })()}
+                    {(() => { const m = COMPLAINT_STATUS[selected.status] ?? COMPLAINT_STATUS.RESOLVED; return <Badge tone={m.tone} dot>{m.label}</Badge>; })()}
+                    {selected.priority && (() => { const m = priorityMeta(selected.priority); return <Badge tone={m.tone}>{m.label}</Badge>; })()}
                     {selected.category && <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">{selected.category.replace(/_/g, ' ')}</span>}
                   </div>
 
@@ -362,11 +340,17 @@ const MyComplaints = () => {
                     <p className="text-sm text-foreground leading-relaxed">{selected.description}</p>
                   </div>
 
+                  {/* CC-02: evidence the student attached when filing. */}
+                  <AttachmentList
+                    attachments={selected.attachments}
+                    label="Photos & documents"
+                  />
+
                   {selected.assignedTo && (
                     <div className="rounded-xl border p-4">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Assigned To</p>
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#041A47] via-[#00639B] to-[#009BB0] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                        <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#0A1F42] via-[#07759D] to-[#0C9EC0] flex items-center justify-center text-white text-sm font-bold shrink-0">
                           {selected.assignedTo.name[0]}
                         </div>
                         <div>
@@ -384,7 +368,7 @@ const MyComplaints = () => {
                   )}
 
                   {selected.status === 'PENDING_CONFIRMATION' && (
-                    <div className="rounded-xl bg-blue-50 dark:bg-blue-90/30 border border-blue-200 dark:border-blue-900 p-4 space-y-3">
+                    <div className="rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-900 p-4 space-y-3">
                       <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
                         Faculty has marked this as resolved. Please confirm if the issue is actually fixed.
                       </p>
@@ -401,7 +385,7 @@ const MyComplaints = () => {
                           <button
                             onClick={() => setShowRejectionInput(true)}
                             disabled={confirmLoading}
-                            className="flex-1 px-4 py-2 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-90/30 text-red-700 dark:text-red-400 font-medium text-sm hover:bg-red-100 dark:hover:bg-red-90/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-2 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             ✗ Not Fixed
                           </button>
@@ -412,7 +396,7 @@ const MyComplaints = () => {
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
                             placeholder="Tell us why the issue is not fixed (optional)..."
-                            className="w-full p-2 rounded-lg border border-red-200 bg-white  text-sm text-foreground placeholder:text-muted-foreground focus:outline-none "
+                            className="w-full p-2 rounded-lg border border-red-200 bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                             rows={3}
                           />
                           <div className="flex gap-2">
@@ -499,7 +483,7 @@ const MyComplaints = () => {
             </>
           )}
         </AnimatePresence>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

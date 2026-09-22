@@ -143,6 +143,8 @@ export const raiseComplaint = async (data: {
   priority: number;
   classroomNumber: string;
   block: string;
+  /** CC-02: ids of files already uploaded to storage, not the files themselves. */
+  attachmentIds?: string[];
 }) => {
   try {
     const response = await api.post("/students/complaints/new", data);
@@ -225,6 +227,10 @@ export const postDoubt = async (data: {
   subject: string;
   semester: number;
   labels?: string[];
+  /** CC-24: ids of files already uploaded to storage, not the files. */
+  attachmentIds?: string[];
+  /** CC-23: HTML when written with the editor. Sanitised server-side. */
+  descriptionFormat?: "TEXT" | "HTML";
 }) => {
   try {
     const response = await api.post("/students/doubts", data);
@@ -251,6 +257,8 @@ export const getDoubts = async (filters?: {
   subject?: string;
   semester?: number;
   search?: string;
+  /** CC-20: normalized tags. Repeated, and ANDed together by the backend. */
+  tags?: string[];
 }): Promise<Doubt[]> => {
   try {
     const params = new URLSearchParams();
@@ -258,6 +266,9 @@ export const getDoubts = async (filters?: {
     if (filters?.subject) params.append("subject", filters.subject);
     if (filters?.semester) params.append("semester", String(filters.semester));
     if (filters?.search) params.append("search", filters.search);
+    // Repeated rather than comma-separated: adding a tag must narrow the list,
+    // and the backend ANDs them with hasEvery.
+    filters?.tags?.forEach((tag) => params.append("tag", tag));
 
     const response = await api.get(`/students/doubts?${params.toString()}`);
     const list = response.data?.doubts;
@@ -307,12 +318,18 @@ export const getCommonAcademicDoubts = async (
   }
 };
 
-export const getSimilarDoubtSuggestions = async (filters: {
-  query: string;
-  subject?: string;
-  semester?: number;
-  limit?: number;
-}): Promise<SimilarDoubtSuggestion[]> => {
+export const getSimilarDoubtSuggestions = async (
+  filters: {
+    query: string;
+    subject?: string;
+    semester?: number;
+    limit?: number;
+  },
+  // Lets the caller abort a request that is already in flight. Since CC-11 this
+  // endpoint may embed the query through a rate-limited third party, so a
+  // superseded request is real cost, not just a wasted response.
+  signal?: AbortSignal,
+): Promise<SimilarDoubtSuggestion[]> => {
   try {
     const params = new URLSearchParams();
     params.append("query", filters.query);
@@ -322,6 +339,7 @@ export const getSimilarDoubtSuggestions = async (filters: {
 
     const response = await api.get(
       `/students/doubts/suggestions?${params.toString()}`,
+      signal ? { signal } : undefined,
     );
     return response.data.suggestions;
   } catch (e: unknown) {
@@ -435,10 +453,17 @@ export const getMyDoubts = async (): Promise<Doubt[]> => {
 
 // ========== ANSWERS ==========
 
-export const postAnswer = async (doubtId: string, content: string) => {
+export const postAnswer = async (
+  doubtId: string,
+  content: string,
+  attachmentIds?: string[],
+  contentFormat?: "TEXT" | "HTML",
+) => {
   try {
     const response = await api.post(`/students/doubts/${doubtId}/answers`, {
       content,
+      attachmentIds,
+      contentFormat,
     });
     return response.data;
   } catch (e: unknown) {
@@ -624,4 +649,134 @@ export const getMyAnswerForDoubt = async (
         : "Failed to fetch answer";
     throw new Error(message);
   }
+};
+
+/** CC-13: a possible duplicate of a complaint being drafted. */
+export interface DuplicateComplaintSuggestion {
+  id: string;
+  title: string;
+  status: string;
+  similarity: number;
+  createdAt: string;
+}
+
+/**
+ * Advisory duplicate check for the complaint form.
+ *
+ * Deliberately swallows every error and returns []. This must never stop a
+ * student filing a complaint: if detection is unavailable, the correct
+ * behaviour is "no duplicates found", not an error.
+ */
+export const getSimilarComplaints = async (
+  filters: {
+    title: string;
+    description: string;
+    block: string;
+    classroomNumber: string;
+  },
+  signal?: AbortSignal,
+): Promise<DuplicateComplaintSuggestion[]> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("title", filters.title);
+    params.append("description", filters.description);
+    params.append("block", filters.block);
+    params.append("classroomNumber", filters.classroomNumber);
+
+    const response = await api.get(
+      `/students/complaints/similar?${params.toString()}`,
+      signal ? { signal } : undefined,
+    );
+    return response.data.duplicates ?? [];
+  } catch {
+    return [];
+  }
+};
+
+/* ------------------------------------------------------------------ *
+ * CC-14: free text -> structured complaint fields
+ * ------------------------------------------------------------------ */
+
+export interface ParsedComplaintFields {
+  category: string | null;
+  priority: 1 | 2 | 3 | null;
+  block: string | null;
+  classroomNumber: string | null;
+  /** "rules" | "model" | "none" — which path answered. */
+  source: string;
+}
+
+/**
+ * Ask the backend to extract complaint fields from a description.
+ *
+ * Advisory: the result pre-fills the form for the student to check and correct.
+ * Never throws — if extraction is unavailable the student simply fills the form
+ * as before.
+ */
+export const parseComplaintText = async (
+  text: string,
+  signal?: AbortSignal,
+): Promise<ParsedComplaintFields | null> => {
+  try {
+    const response = await api.post(
+      "/students/complaints/parse",
+      { text },
+      signal ? { signal } : undefined,
+    );
+    return response.data;
+  } catch {
+    return null;
+  }
+};
+
+/* ------------------------------------------------------------------ *
+ * CC-20: tag vocabulary
+ * ------------------------------------------------------------------ */
+
+export interface TagVocabularyEntry {
+  /** Canonical key — what you filter by. */
+  tag: string;
+  /** Most common original casing — what you render. */
+  display: string;
+  count: number;
+}
+
+/**
+ * Every tag in use, uncapped.
+ *
+ * This is a display map as well as an autocomplete source: a chip resolves its
+ * canonical casing through it, so a tag missing from the response would render
+ * in whatever casing its author happened to type.
+ */
+export const getDoubtTags = async (): Promise<TagVocabularyEntry[]> => {
+  const response = await api.get("/students/doubts/tags");
+  const tags = response.data?.tags;
+  return Array.isArray(tags) ? tags : [];
+};
+
+/* ------------------------------------------------------------------ *
+ * CC-21: bookmarks
+ * ------------------------------------------------------------------ */
+
+/**
+ * Save or unsave a doubt.
+ *
+ * Both directions are idempotent server-side, which is what lets the UI toggle
+ * optimistically without worrying about a double-tap on bad wifi.
+ */
+export const setDoubtBookmark = async (
+  doubtId: string,
+  bookmarked: boolean,
+): Promise<void> => {
+  if (bookmarked) {
+    await api.post(`/students/doubts/${doubtId}/bookmark`);
+  } else {
+    await api.delete(`/students/doubts/${doubtId}/bookmark`);
+  }
+};
+
+export const getBookmarkedDoubts = async (): Promise<Doubt[]> => {
+  const response = await api.get("/students/doubts/bookmarked");
+  const list = response.data?.doubts;
+  return Array.isArray(list) ? list : [];
 };

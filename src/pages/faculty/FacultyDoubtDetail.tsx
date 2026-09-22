@@ -1,5 +1,19 @@
-import { deleteAnswer, editAnswer, getDoubtById, moderateAnswer, postAnswer, upvoteDoubt } from '@/api/faculty';
+import {
+  approveAnswerDraft,
+  deleteAnswer,
+  editAnswer,
+  generateAnswerDraft,
+  getAnswerDraft,
+  getDoubtById,
+  moderateAnswer,
+  postAnswer,
+  rejectAnswerDraft,
+  upvoteDoubt,
+  type AnswerDraft,
+} from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { DOUBT_STATUS } from "@/lib/statusStyles";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
@@ -13,16 +27,18 @@ import {
   HistoryOutlined,
   LikeOutlined,
   MessageOutlined,
+  RobotOutlined,
   SafetyOutlined
 } from '@ant-design/icons';
 import { Alert, Avatar, Button, Card, Empty, Input, message, Modal, Select, Tag, Tooltip } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PostBody } from '@/components/content/PostBody';
+import { TagChipList } from '@/components/tags/TagChip';
 
 const { TextArea } = Input;
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const FacultyDoubtDetail = () => {
@@ -40,6 +56,11 @@ const FacultyDoubtDetail = () => {
   const [answerModerationSubmitting, setAnswerModerationSubmitting] = useState(false);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   const [doubtUpvoteLoading, setDoubtUpvoteLoading] = useState(false);
+  // CC-12: AI draft awaiting review. Null is the normal state, not an error.
+  const [draft, setDraft] = useState<AnswerDraft | null>(null);
+  const [draftText, setDraftText] = useState('');
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [draftSourcesOpen, setDraftSourcesOpen] = useState(false);
   const [answerModerationForm, setAnswerModerationForm] = useState({
     approvalStatus: 'APPROVED' as 'APPROVED' | 'REJECTED',
     moderationNote: '',
@@ -62,6 +83,79 @@ const FacultyDoubtDetail = () => {
       navigate('/faculty/doubts');
     } finally {
       setLoading(false);
+    }
+  };
+
+  /** CC-12: load any pending AI draft. Failure is silent — see getAnswerDraft. */
+  const fetchDraft = async () => {
+    if (!id) return;
+    const found = await getAnswerDraft(id);
+    setDraft(found);
+    setDraftText(found?.content ?? '');
+  };
+
+  useEffect(() => {
+    void fetchDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const handleGenerateDraft = async () => {
+    if (!id) return;
+    try {
+      setDraftBusy(true);
+      const result = await generateAnswerDraft(id);
+      if (result.created) {
+        await fetchDraft();
+        message.success('Draft generated');
+      } else {
+        // Usually "no grounding material found" — the feature working as
+        // designed rather than a failure.
+        message.info(result.reason ?? 'No draft could be generated for this doubt');
+      }
+    } finally {
+      setDraftBusy(false);
+    }
+  };
+
+  /**
+   * Approve the draft. Sends whatever is on screen, so edits are preserved and
+   * the backend can record whether the text was changed at all.
+   */
+  const handleApproveDraft = async () => {
+    if (!id || draftText.trim().length < 10) {
+      message.warning('Answer must be at least 10 characters long');
+      return;
+    }
+    try {
+      setDraftBusy(true);
+      const result = await approveAnswerDraft(id, draftText);
+      message.success(
+        result.editedOnApproval
+          ? 'Answer published with your edits'
+          : 'Answer published',
+      );
+      setDraft(null);
+      setDraftText('');
+      fetchDoubt();
+    } catch {
+      message.error('Failed to publish the answer');
+    } finally {
+      setDraftBusy(false);
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!id) return;
+    try {
+      setDraftBusy(true);
+      await rejectAnswerDraft(id);
+      message.success('Draft rejected');
+      setDraft(null);
+      setDraftText('');
+    } catch {
+      message.error('Failed to reject the draft');
+    } finally {
+      setDraftBusy(false);
     }
   };
 
@@ -242,18 +336,19 @@ const FacultyDoubtDetail = () => {
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
             <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
             <div className="flex flex-wrap gap-2">
-              <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+              <Badge tone={(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).tone}>{(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).label}</Badge>
             </div>
           </div>
 
-          <p className="text-foreground whitespace-pre-wrap mb-4">{doubt.description}</p>
+          <PostBody content={doubt.description} className="mb-4" />
 
           <div className="flex gap-2 mb-4 flex-wrap">
-            <Tag color="purple">{doubt.subject}</Tag>
+            <Badge tone="escalate">{doubt.subject}</Badge>
             <Tag>Sem {doubt.semester}</Tag>
-            {doubt.labels?.map((label) => (
-              <Tag key={label} color="blue">{label}</Tag>
-            ))}
+            <TagChipList
+              labels={doubt.labels}
+              labelsNormalized={doubt.labelsNormalized}
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-4 border-t">
@@ -320,7 +415,7 @@ const FacultyDoubtDetail = () => {
                     ) : (
                       <div className="flex-1">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
-                          <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
+                          <PostBody content={answer.content} />
                           <div className="flex flex-wrap items-center justify-start gap-2 sm:flex-col sm:items-end sm:justify-start shrink-0">
                             {/* <span className="text-lg font-semibold">{answer.upvotes}</span> */}
                             {answer.isAccepted && (
@@ -416,7 +511,7 @@ const FacultyDoubtDetail = () => {
                             className={`mt-2 rounded-lg px-3 py-2 text-xs ${
                               answer.approvalStatus === 'REJECTED'
                                 ? 'bg-red-50 text-red-700'
-                                : 'bg-blue-50 text-blue-800'
+                                : 'bg-accent text-blue-800'
                             }`}
                           >
                             <span className="font-medium">Moderation Note:</span> {answer.moderationNote}
@@ -431,8 +526,108 @@ const FacultyDoubtDetail = () => {
           )}
         </div>
 
+        {/* CC-12: AI-drafted answer awaiting review. Faculty only — students
+            never see this, and nothing publishes until approved here. */}
+        {draft && (
+          <Card className="rounded-2xl border-amber-300 bg-amber-50/40">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <RobotOutlined /> AI-drafted answer
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Written from {draft.sources.length} previously approved{' '}
+                  {draft.sources.length === 1 ? 'answer' : 'answers'} on this
+                  campus. Nothing is published until you approve it, and it will
+                  be published under your name.
+                </p>
+              </div>
+              <Tag color="orange">Not visible to students</Tag>
+            </div>
+
+            <Alert
+              type="warning"
+              showIcon
+              className="rounded-xl mb-3"
+              message="Please read this before approving"
+              description="AI drafts can be confidently wrong. Approving publishes it as your answer, so read it as carefully as you would read a student's."
+            />
+
+            <TextArea
+              rows={8}
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value)}
+              maxLength={4000}
+              showCount
+              disabled={!canPostAnswer || draftBusy}
+            />
+
+            {draft.sources.length > 0 && (
+              <div className="mt-3">
+                <Button
+                  type="link"
+                  size="small"
+                  className="px-0"
+                  onClick={() => setDraftSourcesOpen((open) => !open)}
+                >
+                  {draftSourcesOpen ? 'Hide' : 'Show'} the {draft.sources.length}{' '}
+                  source {draft.sources.length === 1 ? 'answer' : 'answers'}
+                </Button>
+                {draftSourcesOpen && (
+                  <div className="mt-2 space-y-2">
+                    {draft.sources.map((source) => (
+                      <div
+                        key={source.answerId}
+                        className="rounded-xl bg-white/70 border border-amber-200 p-3"
+                      >
+                        <p className="text-xs font-medium text-muted-foreground">
+                          In reply to: {source.doubtTitle}
+                        </p>
+                        <p className="text-sm text-foreground mt-1">
+                          {source.excerpt}…
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="primary"
+                onClick={handleApproveDraft}
+                loading={draftBusy}
+                disabled={!canPostAnswer || draftText.trim().length < 10}
+              >
+                Publish as my answer
+              </Button>
+              <Button onClick={handleRejectDraft} disabled={draftBusy}>
+                Reject draft
+              </Button>
+              <span className="text-xs text-muted-foreground self-center ml-1">
+                {draft.model}
+              </span>
+            </div>
+          </Card>
+        )}
+
         <Card className="rounded-2xl">
-          <h3 className="text-lg font-semibold mb-3">Your Answer</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Your Answer</h3>
+            {/* Offered only when there is no draft and no answer yet, so it
+                cannot regenerate over a draft already under review. */}
+            {!draft && canPostAnswer && (doubt.answers?.length ?? 0) === 0 && (
+              <Button
+                size="small"
+                icon={<RobotOutlined />}
+                onClick={handleGenerateDraft}
+                loading={draftBusy}
+              >
+                Suggest a draft
+              </Button>
+            )}
+          </div>
           {!isApproved && (
             <Alert
               type="warning"

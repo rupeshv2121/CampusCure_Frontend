@@ -60,10 +60,20 @@ export interface AdminProfile {
   adminLevel: AdminLevel;
 }
 
+/** CC-02. Mirrors what the backend returns alongside an entity. */
+export interface AttachmentSummary {
+  id: string;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+}
+
 export interface Complaint {
   id: string;
   title: string;
   description: string;
+  /** CC-02: evidence photos/PDFs. No URLs — those are signed per view. */
+  attachments?: AttachmentSummary[];
   type?: string;
   category?: string;
   status: ComplaintStatus;
@@ -126,6 +136,8 @@ export interface Doubt {
   subject: Subject;
   semester: number;
   labels: string[];
+  /// CC-20: lookup key for canonical display and filtering. Never rendered.
+  labelsNormalized?: string[];
   status: DoubtStatus;
   postedById: string;
   postedBy: {
@@ -133,6 +145,8 @@ export interface Doubt {
     name: string;
     userID: string;
     role?: UserRole;
+    /** CC-25: shown beside the author so a reader can weigh the source. */
+    reputation?: number;
     studentProfile?: {
       semester: number;
       branch: string;
@@ -145,6 +159,13 @@ export interface Doubt {
   answerCount: number;
   views: number;
   isUpvotedByUser?: boolean;
+  /** CC-21. Private to the caller; no count is ever exposed. */
+  isBookmarkedByUser?: boolean;
+  /** CC-24: files on the doubt itself. Empty while CC-02 is dormant. */
+  attachments?: AttachmentSummary[];
+  /** CC-23. TEXT rows predate the editor. */
+  descriptionFormat?: "TEXT" | "HTML";
+  savedAt?: string;
   acceptedAnswerId?: string | null;
   edited: boolean;
   editHistory?: { title?: string; description?: string; editedAt: string }[];
@@ -157,12 +178,18 @@ export interface Answer {
   id: string;
   doubtId: string;
   content: string;
+  /** CC-24: files on this answer. */
+  attachments?: AttachmentSummary[];
+  /** CC-23. See Doubt.descriptionFormat. */
+  contentFormat?: "TEXT" | "HTML";
   answeredById: string;
   answeredBy: {
     id: string;
     name: string;
     userID: string;
     role: UserRole;
+    /** CC-25. */
+    reputation?: number;
     facultyProfile?: {
       department: string;
       subjects: string[];
@@ -189,6 +216,9 @@ export interface Answer {
   isVerified: boolean;
   isAccepted: boolean;
   isUpvotedByUser?: boolean;
+  /** CC-21. Private to the caller; no count is ever exposed. */
+  isBookmarkedByUser?: boolean;
+  savedAt?: string;
   edited: boolean;
   editHistory?: { content: string; editedAt: string }[];
   createdAt: string;

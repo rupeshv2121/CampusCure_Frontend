@@ -1,11 +1,11 @@
-import { getCurrentUser, logoutUser } from '@/api/auth';
+import { getAccessToken, getCurrentUser, logoutUser, storeTokens, clearTokens } from '@/api/auth';
 import { User } from '@/types';
 import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
-  login: (token: string, userData: User) => void;
+  login: (token: string, userData: User, refreshToken?: string) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   const refreshUser = useCallback(async (): Promise<void> => {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -34,14 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check for existing session on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAccessToken();
       if (token) {
         try {
           const userData = await getCurrentUser();
           setUser(userData.user || userData);
         } catch (error) {
           console.error('Failed to restore session:', error);
-          localStorage.removeItem('token');
+          clearTokens();
         }
       }
       setLoading(false);
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Poll while account is pending to reflect approval changes in near real-time.
       useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
         if (!token || !user || user.approvalStatus !== 'PENDING') return;
 
         const timer = window.setInterval(() => {
@@ -85,8 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
       }, [refreshUser, user]);
 
-  const login = (token: string, userData: User): void => {
-    localStorage.setItem('token', token);
+  const login = (token: string, userData: User, refreshToken?: string): void => {
+    // CC-01b: the refresh token is the revocable half of the session.
+    storeTokens(token, refreshToken);
     setUser(userData);
     // Pull full user payload (including approval status/profile flags) right after login.
     void refreshUser();
@@ -98,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
-      localStorage.removeItem('token');
+      clearTokens();
       setUser(null);
       navigate('/');
     }

@@ -1,63 +1,69 @@
-import logo from '@/assets/logo.jpeg';
-import { GithubOutlined, LinkedinFilled, MailOutlined, TwitterOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import Wordmark from "@/components/brand/Wordmark";
+import {
+  GithubOutlined,
+  LinkedinFilled,
+  MailOutlined,
+  TwitterOutlined,
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+
+const SOCIALS = [
+  { icon: <TwitterOutlined />, href: "#", label: "Twitter" },
+  { icon: <LinkedinFilled />, href: "#", label: "LinkedIn" },
+  { icon: <GithubOutlined />, href: "#", label: "GitHub" },
+  {
+    icon: <MailOutlined />,
+    href: "mailto:contact@campuscure.com",
+    label: "Email",
+  },
+];
+
+const scrollTo = (id: string) => () =>
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
 const LandingFooter = () => {
   const navigate = useNavigate();
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
 
-  const footerLinks = {
+  const groups = {
     Product: [
-      { label: 'Features', action: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
-      { label: 'How It Works', action: () => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }) },
-      { label: 'Benefits', action: () => document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth' }) },
-      { label: 'Testimonials', action: () => document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth' }) },
+      { label: "Features", action: scrollTo("features") },
+      { label: "How it works", action: scrollTo("how-it-works") },
+      { label: "Benefits", action: scrollTo("benefits") },
+      { label: "Testimonials", action: scrollTo("testimonials") },
     ],
     Platform: [
-      { label: 'Student Portal', action: () => navigate('/login') },
-      { label: 'Faculty Portal', action: () => navigate('/login') },
-      { label: 'Admin Portal', action: () => navigate('/login') },
-      { label: 'Register', action: () => navigate('/register') },
+      { label: "Student portal", action: () => navigate("/login") },
+      { label: "Faculty portal", action: () => navigate("/login") },
+      { label: "Admin portal", action: () => navigate("/login") },
+      { label: "Create an account", action: () => navigate("/register") },
     ],
     Legal: [
-      { label: 'Privacy Policy', action: () => {} },
-      { label: 'Terms of Service', action: () => {} },
-      { label: 'Cookie Policy', action: () => {} },
+      { label: "Privacy policy", action: () => {} },
+      { label: "Terms of service", action: () => {} },
+      { label: "Cookie policy", action: () => {} },
     ],
   };
 
   return (
-    <footer className="bg-background border-t border-border">
-      <div className="max-w-7xl mx-auto px-14 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
-          {/* Brand */}
+    <footer className="border-t border-border bg-surface">
+      <div className="cc-container py-14">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="h-9 w-9 shrink-0">
-                <img src={logo} alt="CampusCure" className="h-full w-full object-fill" />
-              </div>
-              <span className="text-xl font-bold"><span className="bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] bg-clip-text text-transparent">
-    Campus
-  </span>
-  <span className="text-[#041A47]">
-    Cure
-  </span></span>
-            </div>
-            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed mb-6">
-              Transforming campus management with intelligent solutions for students, faculty, and administrators.
+            <Wordmark size="lg" tagline="Campus Operations" />
+
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              One workspace for campus complaints and academic doubts — with the
+              reporting to show what actually got fixed.
             </p>
-            <div className="flex gap-2">
-              {[
-                { icon: <TwitterOutlined />, href: '#', label: 'Twitter' },
-                { icon: <LinkedinFilled />, href: '#', label: 'LinkedIn' },
-                { icon: <GithubOutlined />, href: '#', label: 'GitHub' },
-                { icon: <MailOutlined />, href: 'mailto:contact@campuscure.com', label: 'Email' },
-              ].map((s) => (
+
+            <div className="mt-6 flex gap-2">
+              {SOCIALS.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="h-7 w-7 flex items-center justify-center rounded-xl bg-accent text-muted-foreground hover:bg-[#009BB0] hover:text-white transition-all duration-200"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-brand-500/40 hover:bg-brand-600 hover:text-white"
                 >
                   {s.icon}
                 </a>
@@ -65,33 +71,33 @@ const LandingFooter = () => {
             </div>
           </div>
 
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([group, links]) => (
-            <div key={group}>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-4">{group}</h3>
-              <ul className="space-y-3">
-                {links.map((link, idx) => (
-                  <li key={idx}>
+          {Object.entries(groups).map(([group, links]) => (
+            <nav key={group} aria-label={group}>
+              <h2 className="font-display text-xs font-bold uppercase tracking-[0.14em] text-foreground">
+                {group}
+              </h2>
+              <ul className="mt-4 space-y-3">
+                {links.map((link) => (
+                  <li key={link.label}>
                     <button
                       onClick={link.action}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-sm text-muted-foreground transition-colors hover:text-brand-700"
                     >
                       {link.label}
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
           ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-7 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} CampusCure. All rights reserved.
+            &copy; {year} CampusCure. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            Built with <span className="text-red-500">&#10084;&#65039;</span> for campus communities
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            Built for campus communities
           </p>
         </div>
       </div>

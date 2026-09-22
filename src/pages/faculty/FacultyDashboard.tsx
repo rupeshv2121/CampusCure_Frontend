@@ -1,9 +1,11 @@
 import { assignedComplaints as getAssignedComplaints, getDoubts } from '@/api/faculty';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { COMPLAINT_STATUS, DOUBT_STATUS } from "@/lib/statusStyles";
 import { useAuth } from '@/context/AuthContext';
 import { Complaint, Doubt } from '@/types';
 import { ArrowRightOutlined, BookOutlined, CheckCircleOutlined, ClockCircleOutlined, FileTextOutlined, LikeOutlined, MessageOutlined, QuestionCircleOutlined, EyeOutlined } from '@ant-design/icons';
-import { Progress, Tag, Spin, message } from 'antd';
+import { Progress, Spin, message } from 'antd';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +29,6 @@ const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   return <>{count}</>;
 };
 
-const statusColors: Record<string, string> = { RAISED: 'orange', ASSIGNED: 'cyan', IN_PROGRESS: 'blue', PENDING_CONFIRMATION: 'blue', ESCALATED_TO_SUPERADMIN: 'purple', RESOLVED: 'green' };
 
 const FacultyDashboard = () => {
   const navigate = useNavigate();
@@ -41,10 +42,10 @@ const FacultyDashboard = () => {
   const resolveRate = assignedComplaintsData.length > 0 ? Math.round((resolvedCount / assignedComplaintsData.length) * 100) : 0;
 
   const stats = [
-    { label: 'Assigned', value: assignedComplaintsData.length, icon: <FileTextOutlined />, iconColor: 'text-cyan-600 dark:text-cyan-400', lightBg: 'bg-cyan-50 dark:bg-cyan-90/30' },
-    { label: 'Resolved', value: resolvedCount, icon: <CheckCircleOutlined />, iconColor: 'text-green-600 dark:text-green-400', lightBg: 'bg-green-50 dark:bg-green-90/30' },
-    { label: 'Pending Verification', value: pendingConfirmationCount, icon: <ClockCircleOutlined />, iconColor: 'text-blue-600 dark:text-blue-400', lightBg: 'bg-blue-50 dark:bg-blue-90/30' },
-    { label: 'Pending Doubts', value: unresolvedDoubts.length, icon: <QuestionCircleOutlined />, iconColor: 'text-orange-600 dark:text-orange-400', lightBg: 'bg-orange-50 dark:bg-orange-90/30' },
+    { label: 'Assigned', value: assignedComplaintsData.length, icon: <FileTextOutlined />, iconColor: 'text-primary dark:text-primary', lightBg: 'bg-accent dark:bg-cyan-900/30' },
+    { label: 'Resolved', value: resolvedCount, icon: <CheckCircleOutlined />, iconColor: 'text-green-600 dark:text-green-400', lightBg: 'bg-green-50 dark:bg-green-900/30' },
+    { label: 'Pending Verification', value: pendingConfirmationCount, icon: <ClockCircleOutlined />, iconColor: 'text-primary dark:text-primary', lightBg: 'bg-accent dark:bg-blue-900/30' },
+    { label: 'Pending Doubts', value: unresolvedDoubts.length, icon: <QuestionCircleOutlined />, iconColor: 'text-orange-600 dark:text-orange-400', lightBg: 'bg-orange-50 dark:bg-orange-900/30' },
   ];
 
   useEffect(() => {
@@ -85,17 +86,17 @@ const FacultyDashboard = () => {
           className="dashboard-hero"
         >
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[48px_48px]" />
-          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-cyan-600/20 blur-3xl" />
-          <div className="absolute -bottom-8 right-1/3 h-40 w-40 rounded-full bg-violet-600/15 blur-2xl" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--primary" aria-hidden="true" />
+          <div className="dashboard-hero__glow dashboard-hero__glow--secondary" aria-hidden="true" />
           <div className="relative z-10">
             <h1 className="text-2xl font-bold">Hello, {user?.name}! 🎓</h1>
-            <p className="text-cyan-200/80 mt-1 text-sm">
+            <p className="text-brand-100/75 mt-1 text-sm">
               Faculty Dashboard
             </p>
             <div className="mt-4 grid grid-cols-1 min-[460px]:grid-cols-2 gap-3">
               <button
                 onClick={() => navigate('/faculty/complaints')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 shadow-lg shadow-brand-950/25 transition-colors hover:bg-brand-50"
               >
                 <FileTextOutlined /> View Complaints
               </button>
@@ -147,7 +148,7 @@ const FacultyDashboard = () => {
                 <Progress
                   type="dashboard"
                   percent={resolveRate}
-                  strokeColor={{ '0%': '#13c2c2', '100%': '#52c41a' }}
+                  strokeColor={{ '0%': '#13c2c2', '100%': '#25A179' }}
                   format={(p) => <span className="text-2xl font-bold text-foreground">{p}%</span>}
                   size={140}
                 />
@@ -175,7 +176,7 @@ const FacultyDashboard = () => {
                 <ClockCircleOutlined className="text-primary" /> Assigned Complaints
               </h3>
               {assignedComplaintsData.length > 0 && (
-                <button onClick={() => navigate('/faculty/complaints')} className="text-xs text-cyan-600 hover:text-cyan-700 transition-colors cursor-pointer">
+                <button onClick={() => navigate('/faculty/complaints')} className="text-xs text-primary hover:text-primary transition-colors cursor-pointer">
                   View All <ArrowRightOutlined />
                 </button>
               )}
@@ -188,12 +189,12 @@ const FacultyDashboard = () => {
                       <p className="text-sm font-medium text-foreground">{c.title}</p>
                       <p className="text-xs text-muted-foreground">Room {c.classroomNumber} · Block {c.block}</p>
                       {c.status === 'PENDING_CONFIRMATION' && c.resolutionDate && (
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        <p className="text-xs text-primary dark:text-primary mt-1">
                           ⏱️ Awaiting student confirmation since {new Date(c.resolutionDate).toLocaleDateString()}
                         </p>
                       )}
                     </div>
-                    <Tag color={statusColors[c.status]}>{c.status === 'PENDING_CONFIRMATION' ? 'Pending Confirmation' : c.status.replace('_', ' ')}</Tag>
+                    <Badge tone={(COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED).tone}>{(COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED).label}</Badge>
                   </div>
                 ))}
               </div>
@@ -219,7 +220,7 @@ const FacultyDashboard = () => {
               <BookOutlined className="text-violet-500" /> Recent Doubts
             </h3>
             {unresolvedDoubts.length > 0 && (
-              <button onClick={() => navigate('/faculty/doubts')} className="text-xs text-cyan-600 hover:text-cyan-700 transition-colors cursor-pointer">
+              <button onClick={() => navigate('/faculty/doubts')} className="text-xs text-primary hover:text-primary transition-colors cursor-pointer">
                 View All <ArrowRightOutlined />
               </button>
             )}
@@ -240,11 +241,11 @@ const FacultyDashboard = () => {
                       navigate(`/faculty/doubts/${d.id}`);
                     }
                   }}
-                  className="p-4 rounded-xl border  bg-muted/5 hover:border-primary/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="p-4 rounded-xl border bg-muted/5 hover:border-primary/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 >
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Tag color="purple" className="text-xs">{d.subject}</Tag>
-                    <Tag color={d.status === 'ANSWERED' ? 'blue' : 'orange'} className="text-xs">{d.status}</Tag>
+                    <Badge tone="escalate">{d.subject}</Badge>
+                    <Badge tone={(DOUBT_STATUS[d.status] ?? DOUBT_STATUS.OPEN).tone}>{(DOUBT_STATUS[d.status] ?? DOUBT_STATUS.OPEN).label}</Badge>
                   </div>
                   <p className="text-sm font-medium text-foreground line-clamp-2">{d.title}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -254,7 +255,7 @@ const FacultyDashboard = () => {
                     <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 font-semibold text-sky-800">
                       <MessageOutlined /> {d.answerCount}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-semibold text-foreground">
                       <EyeOutlined /> {d.views}
                     </span>
                   </div>

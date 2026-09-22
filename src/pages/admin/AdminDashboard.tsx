@@ -31,7 +31,7 @@ import {
   YAxis,
 } from "recharts";
 
-const COLORS = ["#1677FF", "#52c41a", "#fa8c16", "#722ed1", "#eb2f96"];
+const COLORS = ["#0785B0", "#25A179", "#F58B0A", "#7B55E0", "#DE4179"];
 
 const CountUp = ({ end, delay = 0 }: { end: number; delay?: number }) => {
   const [count, setCount] = useState(0);
@@ -138,29 +138,29 @@ const AdminDashboard = () => {
       label: "Total Complaints",
       value: stats.totalComplaints,
       icon: <FileTextOutlined />,
-      iconColor: "text-cyan-600 dark:text-cyan-400",
-      lightBg: "bg-cyan-50 dark:bg-cyan-90/30",
+      iconColor: "text-primary dark:text-primary",
+      lightBg: "bg-accent dark:bg-cyan-900/30",
     },
     {
       label: "Resolved",
       value: stats.resolvedComplaints,
       icon: <CheckCircleOutlined />,
       iconColor: "text-green-600 dark:text-green-400",
-      lightBg: "bg-green-50 dark:bg-green-90/30",
+      lightBg: "bg-green-50 dark:bg-green-900/30",
     },
     {
       label: "Pending",
       value: stats.raisedComplaints,
       icon: <ClockCircleOutlined />,
       iconColor: "text-orange-600 dark:text-orange-400",
-      lightBg: "bg-orange-50 dark:bg-orange-90/30",
+      lightBg: "bg-orange-50 dark:bg-orange-900/30",
     },
     {
       label: "Total Doubts",
       value: stats.totalDoubts,
       icon: <TeamOutlined />,
-      iconColor: "text-purple-600 dark:text-purple-400",
-      lightBg: "bg-purple-50 dark:bg-purple-90/30",
+      iconColor: "text-violet-600 dark:text-violet-400",
+      lightBg: "bg-violet-50 dark:bg-violet-900/30",
     },
   ];
 
@@ -179,13 +179,13 @@ const AdminDashboard = () => {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-                <Users className="text-cyan-300 text-lg" />
+                <Users className="text-brand-200 text-lg" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
                   Admin Dashboard
                 </h1>
-                <p className="text-cyan-200/70 text-xs">
+                <p className="text-brand-100/75 text-xs">
                   Welcome back, {user?.name}
                 </p>
               </div>
@@ -193,7 +193,7 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 min-[460px]:grid-cols-2 gap-3 mt-4">
               <button
                 onClick={() => navigate('/admin/complaints')}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/20 transition-colors cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-900 shadow-lg shadow-brand-950/25 transition-colors hover:bg-brand-50"
               >
                 <FileTextOutlined /> Manage Complaints
               </button>
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
                 <Progress
                   type="dashboard"
                   percent={resolutionRate}
-                  strokeColor={{ "0%": "#722ed1", "100%": "#52c41a" }}
+                  strokeColor={{ "0%": "#7B55E0", "100%": "#25A179" }}
                   format={(p) => (
                     <span className="text-2xl font-bold text-foreground">
                       {p}%
@@ -301,8 +301,8 @@ const AdminDashboard = () => {
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="5%" stopColor="#1677FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1677FF" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0785B0" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#0785B0" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient
                       id="colorResolved"
@@ -311,8 +311,8 @@ const AdminDashboard = () => {
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="5%" stopColor="#52c41a" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#52c41a" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#25A179" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#25A179" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -325,7 +325,7 @@ const AdminDashboard = () => {
                   <Area
                     type="monotone"
                     dataKey="complaints"
-                    stroke="#1677FF"
+                    stroke="#0785B0"
                     fillOpacity={1}
                     fill="url(#colorComplaints)"
                     strokeWidth={2}
@@ -333,7 +333,7 @@ const AdminDashboard = () => {
                   <Area
                     type="monotone"
                     dataKey="resolved"
-                    stroke="#52c41a"
+                    stroke="#25A179"
                     fillOpacity={1}
                     fill="url(#colorResolved)"
                     strokeWidth={2}
@@ -446,7 +446,7 @@ const AdminDashboard = () => {
                   <Tooltip />
                   <Bar
                     dataKey="count"
-                    fill="#722ed1"
+                    fill="#7B55E0"
                     radius={[0, 6, 6, 0]}
                     barSize={80}
                   >

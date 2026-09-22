@@ -1,95 +1,102 @@
-import { CheckCircleOutlined, FormOutlined, SearchOutlined, UserAddOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
+import {
+  CheckCircleOutlined,
+  FormOutlined,
+  SearchOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
 
-const steps = [
+const STEPS = [
   {
-    icon: <UserAddOutlined className="text-2xl" />,
-    title: 'Sign Up',
-    desc: 'Create your account as a student, faculty, or admin',
-    step: '01',
-    gradient: 'from-[#041A47] via-[#00639B] to-[#009BB0]',
-    shadow: 'shadow-cyan-600/30',
+    icon: <UserAddOutlined />,
+    title: "Sign up",
+    desc: "Create an account as a student, faculty member or administrator. Your role decides what you land on.",
+    tile: "",
   },
   {
-    icon: <FormOutlined className="text-2xl" />,
-    title: 'Submit & Track',
-    desc: 'Report complaints or ask doubts. Track everything in real-time from your dashboard.',
-    step: '02',
-    gradient: 'from-violet-600 to-purple-500',
-    shadow: 'shadow-violet-500/30',
+    icon: <FormOutlined />,
+    title: "Submit & track",
+    desc: "Report a complaint or ask a doubt. Both stay visible on your dashboard from the moment you post them.",
+    tile: "cc-icon-tile--violet",
   },
   {
-    icon: <SearchOutlined className="text-2xl" />,
-    title: 'Review & Assign',
-    desc: 'Administrators review complaints and assign them to the right faculty for quick resolution.',
-    step: '03',
-    gradient: 'from-orange-500 to-amber-400',
-    shadow: 'shadow-orange-500/30',
+    icon: <SearchOutlined />,
+    title: "Review & assign",
+    desc: "Administrators triage what comes in and hand it to the faculty or facilities team that can actually fix it.",
+    tile: "cc-icon-tile--amber",
   },
   {
-    icon: <CheckCircleOutlined className="text-2xl" />,
-    title: 'Resolved',
-    desc: 'Get notified instantly when your complaint is resolved or your doubt is answered.',
-    step: '04',
-    gradient: 'from-green-600 to-emerald-500',
-    shadow: 'shadow-green-500/30',
+    icon: <CheckCircleOutlined />,
+    title: "Resolved",
+    desc: "You are notified the moment your complaint closes or your doubt gets a verified answer.",
+    tile: "cc-icon-tile--emerald",
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const HowItWorksSection = () => (
-  <section id="how-it-works" className="py-24 px-6 bg-muted/20 dark:bg-muted/10">
-    <div className="max-w-6xl mx-auto">
+  <section id="how-it-works" className="cc-section cc-section--muted">
+    <div className="cc-container">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16"
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="cc-section-head"
       >
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-violet-600/10 text-violet-600 dark:text-violet-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          How It Works
-        </div>
-        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-         From {' '}
-          <span className="bg-linear-to-r from-[#041A47] via-[#00639B] to-[#009BB0] bg-clip-text text-transparent">
-            Signup to Resolution
-          </span>
+        <span className="cc-eyebrow">How it works</span>
+        <h2 className="cc-h2">
+          From signup to <span className="cc-gradient-text">resolution</span>
         </h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Get started in minutes and experience seamless campus management from day one.
+        <p className="cc-lede">
+          Four steps, and the same four steps whether it is a broken projector
+          or a question about database indexes.
         </p>
       </motion.div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {steps.map((step, i) => (
-          <motion.div
-            key={step.title}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.5, delay: i * 0.12 }}
-            className="relative group"
-          >
-            {/* Connector line */}
-            {i < steps.length - 1 && (
-              <div className="hidden lg:block absolute top-10 left-[calc(50%+2.5rem)] -right-3 h-px bg-linear-to-r from-border via-border to-transparent z-10" />
-            )}
+      <div className="relative">
+        {/* Rail connecting the steps. Drawn once behind the row rather than as
+            a fragment per card, so it stays continuous and lines up with the
+            icon centres (top 1.75rem = half of the 3.5rem tile). */}
+        <div
+          aria-hidden="true"
+          className="absolute left-0 right-0 top-7 hidden h-px bg-linear-to-r from-transparent via-border to-transparent lg:block"
+        />
 
-            <div className="relative bg-card border border-gray-500 rounded-3xl p-6 text-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 min-h-65">
-              {/* Gradient icon */}
-              <div className={`h-16 w-16 rounded-2xl bg-linear-to-br ${step.gradient} flex items-center justify-center text-white mx-auto mb-5 shadow-xl ${step.shadow} group-hover:scale-110 transition-transform duration-300`}>
+        <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((step, i) => (
+            <motion.li
+              key={step.title}
+              initial={{ opacity: 0, y: 26 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: i * 0.1, ease: EASE }}
+              className="group relative"
+            >
+              <span
+                className={
+                  "cc-icon-tile cc-icon-tile--lg relative z-10 ring-8 ring-surface " +
+                  step.tile
+                }
+              >
                 {step.icon}
-              </div>
+              </span>
 
-              <div className={`text-xs font-bold uppercase tracking-widest bg-linear-to-r ${step.gradient} bg-clip-text text-transparent mb-2`}>
-                Step {step.step}
+              <div className="mt-5">
+                <span className="font-mono text-xs font-semibold tracking-widest text-muted-foreground">
+                  STEP {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-2 font-display text-lg font-bold tracking-tight">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {step.desc}
+                </p>
               </div>
-
-              <h3 className="text-base font-semibold text-foreground mb-2">{step.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-            </div>
-          </motion.div>
-        ))}
+            </motion.li>
+          ))}
+        </ol>
       </div>
     </div>
   </section>

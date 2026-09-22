@@ -1,8 +1,10 @@
 import { getApprovedFaculty, getEscalatedComplaints, reassignEscalatedComplaint } from '@/api/admin';
 import PageTransition from '@/components/animated/PageTransition';
+import { PageHeader, PageShell } from "@/components/app/PageShell";
+import { COMPLAINT_STATUS, badgeClass, dotClass } from "@/lib/statusStyles";
 import ResolutionNoteBlock from '@/components/complaints/ResolutionNoteBlock';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Complaint, ComplaintStatus, User } from '@/types';
+import type { Complaint, User } from '@/types';
 import {
     AlertOutlined,
     CloseOutlined,
@@ -15,14 +17,6 @@ import { Input, Modal, Select, message } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const STATUS_STYLES: Record<ComplaintStatus, { dot: string; bg: string; text: string; label: string }> = {
-  RAISED:      { dot: 'bg-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/20', text: 'text-orange-800 dark:text-orange-800', label: 'Raised' },
-  ASSIGNED:    { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-800',     label: 'Assigned' },
-  IN_PROGRESS: { dot: 'bg-cyan-500',   bg: 'bg-cyan-100 dark:bg-cyan-900/20',     text: 'text-cyan-800 dark:text-cyan-800',     label: 'In Progress' },
-  PENDING_CONFIRMATION:      { dot: 'bg-slate-500',  bg: 'bg-slate-200 dark:bg-slate-400/60',     text: 'text-slate-800 dark:text-slate-800',  label: 'Pending Confirmation' },
-  ESCALATED_TO_SUPERADMIN:   { dot: 'bg-purple-600', bg: 'bg-purple-200 dark:bg-purple-400/30',   text: 'text-purple-800 dark:text-purple-800', label: 'Escalated to SuperAdmin' },
-  RESOLVED:    { dot: 'bg-green-500',  bg: 'bg-green-100 dark:bg-green-400/20',   text: 'text-green-800 dark:text-green-800',   label: 'Resolved' },
-};
 
 const SuperAdminComplaints = () => {
   const [selected, setSelected] = useState<Complaint | null>(null);
@@ -122,36 +116,24 @@ const SuperAdminComplaints = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        {/* Header Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl bg-linear-to-br from-purple-900 via-indigo-950 to-blue-950 p-7 text-white shadow-xl"
-        >
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[32px_32px]" />
-          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-purple-500/10" />
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <ExclamationCircleOutlined className="text-purple-300 text-lg" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Escalated Complaints Management</h1>
-              <p className="text-purple-200/70 text-xs mt-0.5">{complaints.length} escalated complaint(s) requiring SuperAdmin attention</p>
-            </div>
-          </div>
-        </motion.div>
+      <PageShell>
+        <PageHeader
+          variant="hero"
+          icon={<ExclamationCircleOutlined />}
+          title="Escalated Complaints"
+          description={`${complaints.length} issue(s) needing Super Admin attention`}
+        />
 
         {/* Info banner for SuperAdmin */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-xl p-4 flex items-start gap-3"
+          className="bg-violet-50 dark:bg-violet-900/30 border border-purple-200 dark:border-purple-700 rounded-xl p-4 flex items-start gap-3"
         >
-          <AlertOutlined className="text-purple-600 dark:text-purple-400 text-lg mt-0.5 shrink-0" />
+          <AlertOutlined className="text-violet-600 dark:text-violet-400 text-lg mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-purple-900 dark:text-purple-800 text-sm mb-1">SuperAdmin Review Required</h3>
-            <p className="text-xs text-purple-700 dark:text-purple-700 leading-relaxed">
+            <h3 className="font-semibold text-violet-900 dark:text-violet-200 text-sm mb-1">SuperAdmin Review Required</h3>
+            <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
               These complaints have been rejected by students and require your intervention. Review the rejection reasons, reassign to appropriate faculty members, and provide guidance for resolution.
             </p>
           </div>
@@ -195,7 +177,7 @@ const SuperAdminComplaints = () => {
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {filtered.map((c, i) => {
-              const st = STATUS_STYLES[c.status];
+              const st = (COMPLAINT_STATUS[c.status] ?? COMPLAINT_STATUS.RESOLVED);
               return (
                 <motion.div
                   key={c.id}
@@ -204,11 +186,11 @@ const SuperAdminComplaints = () => {
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ scale: 1.01 }}
                   onClick={() => setSelected(c)}
-                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm cursor-pointer hover:border-purple-500/30 hover:shadow-purple-500/5 transition-all"
+                  className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm cursor-pointer hover:border-brand-500/40 transition-all"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2">
-                      <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${st.dot}`} />
+                      <span className={`mt-1.5 shrink-0 ${dotClass(st.tone)}`} />
                       <p className="font-semibold text-sm text-foreground min-w-0 flex-1 truncate">{c.title}</p>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -225,7 +207,7 @@ const SuperAdminComplaints = () => {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto sm:justify-end">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                    <span className={badgeClass(st.tone)}>{st.label}</span>
                     <span className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</span>
                   </div>
                 </motion.div>
@@ -252,7 +234,7 @@ const SuperAdminComplaints = () => {
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
                 className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border shadow-2xl z-50 overflow-y-auto bg-background"
               >
-                <div className="sticky top-0 border-b border-border px-6 py-4 flex items-center justify-between z-10 bg-white">
+                <div className="sticky top-0 border-b border-border px-6 py-4 flex items-center justify-between z-10 bg-card">
                   <h2 className="font-bold text-foreground text-base truncate pr-4">{selected.title}</h2>
                   <button
                     onClick={() => setSelected(null)}
@@ -261,19 +243,19 @@ const SuperAdminComplaints = () => {
                     <CloseOutlined style={{ fontSize: 14 }} />
                   </button>
                 </div>
-                <div className="p-6 space-y-5 bg-white">
+                <div className="p-6 space-y-5 bg-card">
                   {/* Status + category pills */}
                   <div className="flex gap-2 flex-wrap">
                     {(() => {
-                      const st = STATUS_STYLES[selected.status];
+                      const st = (COMPLAINT_STATUS[selected.status] ?? COMPLAINT_STATUS.RESOLVED);
                       return (
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.bg} ${st.text}`}>{st.label}</span>
+                        <span className={badgeClass(st.tone)}>{st.label}</span>
                       );
                     })()}
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Room {selected.classroomNumber}</span>
                     <span className="rounded-full px-3 py-1 text-xs font-semibold bg-muted text-muted-foreground">Block {selected.block}</span>
                     {selected.category && (
-                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-700">{selected.category.replace('_', ' ')}</span>
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-cyan-100 text-primary dark:bg-cyan-900/20 dark:text-primary">{selected.category.replace('_', ' ')}</span>
                     )}
                     {selected.escalationCount ? (
                       <span className="rounded-full px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-700">
@@ -290,7 +272,7 @@ const SuperAdminComplaints = () => {
 
                   {/* Rejection Reason */}
                   {/* {selected.studentRejectionMessage && (
-                    <div className="rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-300/20 p-4">
+                    <div className="rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/40/20 p-4">
                       <p className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide mb-2">Student Rejection Reason</p>
                       <p className="text-sm text-foreground">{selected.studentRejectionMessage}</p>
                     </div>
@@ -319,11 +301,11 @@ const SuperAdminComplaints = () => {
                   )}
 
                   {Array.isArray(selected.assignmentHistory) && selected.assignmentHistory.length > 0 && (
-                    <div className="rounded-xl border border-cyan-200 bg-cyan-50/70 p-4 space-y-3">
-                      <p className="text-xs font-semibold text-cyan-700 uppercase tracking-wide">Assignment History</p>
+                    <div className="rounded-xl border border-cyan-200 bg-accent/70 p-4 space-y-3">
+                      <p className="text-xs font-semibold text-primary uppercase tracking-wide">Assignment History</p>
                       <div className="space-y-2">
                         {[...selected.assignmentHistory].reverse().map((entry, index) => (
-                          <div key={`${entry.timestamp}-${index}`} className="rounded-lg border border-cyan-100 bg-white p-3">
+                          <div key={`${entry.timestamp}-${index}`} className="rounded-lg border border-cyan-100 bg-card p-3">
                             <p className="text-sm font-medium text-foreground">
                               {entry.fromAssigneeName ? `${entry.fromAssigneeName} → ${entry.toAssigneeName}` : `Assigned to ${entry.toAssigneeName}`}
                             </p>
@@ -331,7 +313,7 @@ const SuperAdminComplaints = () => {
                               {entry.mode.replace('_', ' ')} · {new Date(entry.timestamp).toLocaleString()}
                             </p>
                             {entry.note ? (
-                              <p className="mt-2 text-xs text-slate-600">Note: {entry.note}</p>
+                              <p className="mt-2 text-xs text-muted-foreground">Note: {entry.note}</p>
                             ) : null}
                           </div>
                         ))}
@@ -420,7 +402,7 @@ const SuperAdminComplaints = () => {
             )} */}
           </div>
         </Modal>
-      </div>
+      </PageShell>
     </PageTransition>
   );
 };

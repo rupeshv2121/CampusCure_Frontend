@@ -1,5 +1,7 @@
 import { deleteAnswer as deleteStudentAnswer, deleteDoubt, editAnswer as editStudentAnswer, editDoubt, getDoubtById, markAnswerAsAccepted, postAnswer, upvoteAnswer, upvoteDoubt as upvoteStudentDoubt } from '@/api/student';
 import PageTransition from '@/components/animated/PageTransition';
+import { Badge } from "@/components/app/PageShell";
+import { DOUBT_STATUS } from "@/lib/statusStyles";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Doubt } from '@/types';
@@ -17,10 +19,17 @@ import { Avatar, Button, Card, Empty, Input, message, Modal, Tag, Tooltip } from
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PostBody } from '@/components/content/PostBody';
+import { TagChipList } from '@/components/tags/TagChip';
+import { AttachmentUploader } from '@/components/attachments/AttachmentUploader';
+import { AttachmentList } from '@/components/attachments/AttachmentList';
+import { RichTextEditor, RICH_TEXT_FORMAT } from '@/components/content/RichTextEditor';
+import { AuthorReputation } from '@/components/reputation/AuthorReputation';
+import { plainTextLength } from '@/lib/codeBlocks';
+import { BookmarkButton } from '@/components/bookmarks/BookmarkButton';
 
 const { TextArea } = Input;
 
-const statusColors: Record<string, string> = { OPEN: 'orange', ANSWERED: 'blue', RESOLVED: 'green' };
 const approvalColors: Record<string, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 
 const DoubtDetail = () => {
@@ -32,6 +41,10 @@ const DoubtDetail = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedDoubt, setEditedDoubt] = useState({ title: '', description: '' });
   const [answerText, setAnswerText] = useState('');
+  // CC-24: files are already in storage by the time this submits - the form
+  // carries ids, never bytes.
+  const [answerFiles, setAnswerFiles] = useState<string[]>([]);
+  const [answerUploaderKey, setAnswerUploaderKey] = useState(0);
   const [answerSubmitting, setAnswerSubmitting] = useState(false);
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editedAnswerText, setEditedAnswerText] = useState('');
@@ -93,16 +106,19 @@ const DoubtDetail = () => {
 
   const handlePostAnswer = async () => {
     if (!id) return;
-    if (!answerText.trim() || answerText.trim().length < 10) {
+    // CC-23: measure the writing, not the markup.
+    if (plainTextLength(answerText) < 10) {
       message.warning('Answer must be at least 10 characters long');
       return;
     }
 
     try {
       setAnswerSubmitting(true);
-      await postAnswer(id, answerText.trim());
+      await postAnswer(id, answerText.trim(), answerFiles, RICH_TEXT_FORMAT);
       message.success('Answer submitted for faculty review');
       setAnswerText('');
+      setAnswerFiles([]);
+      setAnswerUploaderKey((k) => k + 1);
       fetchDoubt();
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Failed to submit answer');
@@ -279,8 +295,19 @@ const DoubtDetail = () => {
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
                 <h1 className="text-2xl font-bold text-foreground wrap-break-word">{doubt.title}</h1>
-                <div className="flex flex-wrap gap-2">
-                  <Tag color={statusColors[doubt.status]}>{doubt.status}</Tag>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).tone}>{(DOUBT_STATUS[doubt.status] ?? DOUBT_STATUS.OPEN).label}</Badge>
+                  {/* CC-21: private save. No count is shown, deliberately. */}
+                  <BookmarkButton
+                    doubtId={doubt.id}
+                    bookmarked={Boolean(doubt.isBookmarkedByUser)}
+                    showLabel
+                    onChange={(next) =>
+                      setDoubt((current) =>
+                        current ? { ...current, isBookmarkedByUser: next } : current,
+                      )
+                    }
+                  />
                   {isDoubtOwner && (
                     <>
                       <Button icon={<EditOutlined />} size="small" onClick={() => setEditMode(true)}>Edit</Button>
@@ -290,14 +317,22 @@ const DoubtDetail = () => {
                 </div>
               </div>
 
-              <p className="text-foreground whitespace-pre-wrap mb-4">{doubt.description}</p>
+              <PostBody content={doubt.description} format={doubt.descriptionFormat} className="mb-4" />
+
+              {/* CC-24: empty and invisible while CC-02 is dormant. */}
+              <AttachmentList attachments={doubt.attachments} className="mb-4" />
 
               <div className="flex gap-2 mb-4 flex-wrap">
-                <Tag color="purple">{doubt.subject}</Tag>
+                <Badge tone="escalate">{doubt.subject}</Badge>
                 <Tag>Sem {doubt.semester}</Tag>
-                {doubt.labels?.map((label) => (
-                  <Tag key={label} color="blue">{label}</Tag>
-                ))}
+                {/* CC-20: clicking a tag returns to the community filtered by it. */}
+                <TagChipList
+                  labels={doubt.labels}
+                  labelsNormalized={doubt.labelsNormalized}
+                  onTagClick={(tag) =>
+                    navigate(`/student/doubts?tag=${encodeURIComponent(tag)}`)
+                  }
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-4 border-t">
@@ -384,7 +419,8 @@ const DoubtDetail = () => {
                     ) : (
                       <div className="flex flex-col gap-2.5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start w-full">
-                          <p className="text-foreground whitespace-pre-wrap mb-0 wrap-break-word">{answer.content}</p>
+                          <PostBody content={answer.content} format={answer.contentFormat} />
+                          <AttachmentList attachments={answer.attachments} />
                           <Tooltip title="Upvote this answer">
                             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                               <Button
@@ -404,6 +440,9 @@ const DoubtDetail = () => {
                               {answer.answeredBy.name || answer.answeredBy.userID}
                               &nbsp;&nbsp;&nbsp;
                               {answer.answeredBy.role === 'FACULTY' && <Tag color="gold" className="ml-2">Faculty</Tag>}
+                              {/* CC-25: reputation beside the author is where
+                                  it helps a reader weigh the answer. */}
+                              <AuthorReputation reputation={answer.answeredBy.reputation} />
                             </span>
                             <span>{formatDate(answer.createdAt)}</span>
                             {answer.editHistory && answer.editHistory.length > 0 && (
@@ -465,7 +504,7 @@ const DoubtDetail = () => {
                           </div>
                         </div>
                         {showApprovedNoteToEveryone && (
-                          <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                          <div className="rounded-lg bg-accent px-3 py-2 text-xs text-blue-800">
                             <span className="font-medium">Faculty Note:</span> {answer.moderationNote}
                           </div>
                         )}
@@ -486,16 +525,24 @@ const DoubtDetail = () => {
         {canPostAnswer && (
           <Card className="rounded-2xl">
             <h3 className="text-lg font-semibold mb-3">Your Answer</h3>
-            <TextArea
-              rows={6}
+            {/* CC-23: produces HTML; the SERVER sanitises it on write. */}
+            <RichTextEditor
               value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              placeholder="Write your answer here (minimum 10 characters)..."
-              maxLength={2000}
-              showCount
+              onChange={setAnswerText}
+              placeholder="Write your answer here…"
+              disabled={answerSubmitting}
             />
+            <div className="mt-3">
+              <AttachmentUploader
+                key={answerUploaderKey}
+                entityType="ANSWER"
+                onChange={setAnswerFiles}
+                disabled={answerSubmitting}
+              />
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={answerText.trim().length < 10}>
+              <Button onClick={handlePostAnswer} loading={answerSubmitting} disabled={plainTextLength(answerText) < 10}>
                 Submit for Review
               </Button>
               <span className="text-xs text-muted-foreground">

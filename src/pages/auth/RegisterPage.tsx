@@ -1,4 +1,4 @@
-import { loginUser, registerUser } from '@/api/auth';
+import { loginUser, registerUser, storeTokens, clearTokens } from '@/api/auth';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import FaceRegister from '@/components/FaceRegister';
 import { UserRole, departments } from '@/types';
@@ -20,10 +20,13 @@ const benefits = [
   },
 ];
 
+// Only self-service roles are offered here. ADMIN and SUPER_ADMIN accounts are
+// created by an existing super admin — the backend rejects them from this
+// public endpoint with 403. See docs/specs/CC-01c-privileged-role-escalation.md
 const roleOptions: { label: string; value: UserRole }[] = [
   { label: 'Student', value: 'STUDENT' },
   { label: 'Faculty', value: 'FACULTY' },
-  { label: 'Admin', value: 'ADMIN' },
+  // { label: 'Admin', value: 'ADMIN' },
   // { label: 'Super Admin', value: 'SUPER_ADMIN' },
 ];
 
@@ -93,7 +96,9 @@ const RegisterPage = () => {
 
       try {
         const loginResponse = await loginUser(userData.email, userData.password);
-        localStorage.setItem('token', loginResponse.token);
+        // CC-01b: store BOTH tokens. Storing only the access token would give
+        // this just-registered user a 15-minute session with no way to renew.
+        storeTokens(loginResponse.token, loginResponse.refreshToken);
         setShowFaceRegister(true);
       } catch {
         setTimeout(() => navigate('/login'), 1000);
@@ -107,13 +112,14 @@ const RegisterPage = () => {
 
   const handleFaceSuccess = () => {
     toast.success('Face registered! Your account is pending approval.');
-    localStorage.removeItem('token');
+    // Clear both, or a stale refresh token is left behind in storage.
+    clearTokens();
     setTimeout(() => navigate('/login'), 1000);
   };
 
   const handleFaceSkip = () => {
     toast.info('Skipped face setup. You can register your face later from your profile.');
-    localStorage.removeItem('token');
+    clearTokens();
     setTimeout(() => navigate('/login'), 800);
   };
 
@@ -124,7 +130,7 @@ const RegisterPage = () => {
         showcaseTitle={
           <>
             Finish With{' '}
-            <span className="bg-linear-to-r from-cyan-200 via-white to-cyan-300 bg-clip-text text-transparent">
+            <span className="cc-gradient-text--onDark">
               Face Login Setup
             </span>
           </>
@@ -149,7 +155,7 @@ const RegisterPage = () => {
         formTitle="Set up Face ID"
         formDescription="Complete biometric registration now to unlock faster logins."
       >
-        <div className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-3 shadow-inner shadow-slate-100">
+        <div className="rounded-[28px] border border-border bg-surface p-3 shadow-none">
           <FaceRegister onSuccess={handleFaceSuccess} onSkip={handleFaceSkip} />
         </div>
       </AuthSplitLayout>
@@ -162,7 +168,7 @@ const RegisterPage = () => {
       showcaseTitle={
         <>
           Create Your{' '}
-          <span className="bg-linear-to-r from-cyan-200 via-white to-cyan-300 bg-clip-text text-transparent">
+          <span className="cc-gradient-text--onDark">
             CampusCure Account
           </span>
         </>
@@ -173,9 +179,9 @@ const RegisterPage = () => {
       formTitle="Create your account"
       formDescription="Set up your profile once and get access to the tools your role needs across the platform."
       footer={
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900">
+          <Link to="/login" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
             Sign In
           </Link>
         </p>
@@ -184,48 +190,48 @@ const RegisterPage = () => {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Full name</label>
+          <label className="cc-label">Full name</label>
           <Input
             size="large"
-            prefix={<UserOutlined className="text-slate-400" />}
+            prefix={<UserOutlined className="text-muted-foreground" />}
             placeholder="Your full name"
-            className="h-13 rounded-2xl border-slate-200 bg-slate-50/70 px-2 shadow-none"
+            className="cc-field"
             value={userData.fullName}
             onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email address</label>
+          <label className="cc-label">Email address</label>
           <Input
             size="large"
-            prefix={<MailOutlined className="text-slate-400" />}
+            prefix={<MailOutlined className="text-muted-foreground" />}
             placeholder="you@campus.edu"
             type="email"
-            className="h-13 rounded-2xl border-slate-200 bg-slate-50/70 px-2 shadow-none"
+            className="cc-field"
             value={userData.email}
             onChange={(e) => setUserData({ ...userData, email: e.target.value })}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="cc-label">Password</label>
           <Input.Password
             size="large"
-            prefix={<LockOutlined className="text-slate-400" />}
+            prefix={<LockOutlined className="text-muted-foreground" />}
             placeholder="Create a secure password"
-            className="h-13 rounded-2xl border-slate-200 bg-slate-50/70 px-2 shadow-none"
+            className="cc-field"
             value={userData.password}
             onChange={(e) => setUserData({ ...userData, password: e.target.value })}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Role</label>
+          <label className="cc-label">Role</label>
           <Select
             size="large"
             placeholder="Select your role"
-            className="w-full"
+            className="cc-field w-full"
             value={role || undefined}
             onChange={(value: UserRole) => setRole(value)}
             options={roleOptions}
@@ -241,14 +247,14 @@ const RegisterPage = () => {
               transition={{ duration: 0.25 }}
               className="overflow-hidden"
             >
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="space-y-4 rounded-3xl border border-border bg-surface p-4">
                 {(role === 'STUDENT' || role === 'FACULTY' || role === 'ADMIN') && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Department</label>
+                    <label className="cc-label">Department</label>
                     <Select
                       size="large"
                       placeholder="Select department"
-                      className="w-full"
+                      className="cc-field w-full"
                       options={departments.map((department) => ({ label: department, value: department }))}
                       value={userData.department || undefined}
                       onChange={(value) => setUserData({ ...userData, department: value })}
@@ -258,12 +264,12 @@ const RegisterPage = () => {
 
                 {role === 'STUDENT' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Student ID</label>
+                    <label className="cc-label">Student ID</label>
                     <Input
                       size="large"
-                      prefix={<IdcardOutlined className="text-slate-400" />}
+                      prefix={<IdcardOutlined className="text-muted-foreground" />}
                       placeholder="Enter your student ID"
-                      className="h-13 rounded-2xl border-slate-200 bg-white px-2 shadow-none"
+                      className="cc-field"
                       value={userData.studentId}
                       onChange={(e) => setUserData({ ...userData, studentId: e.target.value })}
                     />
@@ -272,12 +278,12 @@ const RegisterPage = () => {
 
                 {role === 'FACULTY' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Faculty ID</label>
+                    <label className="cc-label">Faculty ID</label>
                     <Input
                       size="large"
-                      prefix={<IdcardOutlined className="text-slate-400" />}
+                      prefix={<IdcardOutlined className="text-muted-foreground" />}
                       placeholder="Enter your faculty ID"
-                      className="h-13 rounded-2xl border-slate-200 bg-white px-2 shadow-none"
+                      className="cc-field"
                       value={userData.facultyId}
                       onChange={(e) => setUserData({ ...userData, facultyId: e.target.value })}
                     />
@@ -286,12 +292,12 @@ const RegisterPage = () => {
 
                 {role === 'ADMIN' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Admin ID</label>
+                    <label className="cc-label">Admin ID</label>
                     <Input
                       size="large"
-                      prefix={<IdcardOutlined className="text-slate-400" />}
+                      prefix={<IdcardOutlined className="text-muted-foreground" />}
                       placeholder="Enter your admin ID"
-                      className="h-13 rounded-2xl border-slate-200 bg-white px-2 shadow-none"
+                      className="cc-field"
                       value={userData.adminId}
                       onChange={(e) => setUserData({ ...userData, adminId: e.target.value })}
                     />
@@ -300,12 +306,12 @@ const RegisterPage = () => {
 
                 {role === 'SUPER_ADMIN' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Super Admin ID</label>
+                    <label className="cc-label">Super Admin ID</label>
                     <Input
                       size="large"
-                      prefix={<IdcardOutlined className="text-slate-400" />}
+                      prefix={<IdcardOutlined className="text-muted-foreground" />}
                       placeholder="Enter your super admin ID"
-                      className="h-13 rounded-2xl border-slate-200 bg-white px-2 shadow-none"
+                      className="cc-field"
                       value={userData.superAdminId}
                       onChange={(e) => setUserData({ ...userData, superAdminId: e.target.value })}
                     />
@@ -319,7 +325,7 @@ const RegisterPage = () => {
         <button
           onClick={handleRegister}
           disabled={loading}
-          className="flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#06204d_0%,#0c5d8e_52%,#16b3c6_100%)] text-base font-semibold text-white shadow-[0_16px_36px_rgba(8,79,120,0.28)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(8,79,120,0.34)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="cc-btn cc-btn-primary cc-btn--lg w-full"
         >
           {loading ? <Spin size="small" /> : 'Create Account'}
         </button>
