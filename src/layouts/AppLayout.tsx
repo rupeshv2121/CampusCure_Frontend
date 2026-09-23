@@ -101,6 +101,15 @@ const getNavGroups = (role: UserRole): NavGroup[] => {
             icon: <TrophyIcon />,
             label: "Reputation",
           },
+          {
+            // CC-27: the directory is for everyone, which is the whole point -
+            // a student with a flooded bathroom should be able to find the
+            // plumber rather than file a complaint and wait to see where it
+            // gets routed.
+            key: "/student/directory",
+            icon: <TeamOutlined />,
+            label: "Staff Directory",
+          },
         ],
       },
     ];
@@ -138,6 +147,15 @@ const getNavGroups = (role: UserRole): NavGroup[] => {
             icon: <TrophyIcon />,
             label: "Reputation",
           },
+          {
+            // CC-27: the directory is for everyone, which is the whole point -
+            // a student with a flooded bathroom should be able to find the
+            // plumber rather than file a complaint and wait to see where it
+            // gets routed.
+            key: "/faculty/directory",
+            icon: <TeamOutlined />,
+            label: "Staff Directory",
+          },
         ],
       },
     ];
@@ -168,6 +186,15 @@ const getNavGroups = (role: UserRole): NavGroup[] => {
             label: "Escalated",
           },
           { key: "/admin/users", icon: <TeamOutlined />, label: "Users" },
+          {
+            // CC-27: the directory is for everyone, which is the whole point -
+            // a student with a flooded bathroom should be able to find the
+            // plumber rather than file a complaint and wait to see where it
+            // gets routed.
+            key: "/admin/directory",
+            icon: <TeamOutlined />,
+            label: "Staff Directory",
+          },
         ],
       },
       {
@@ -224,6 +251,7 @@ function TrophyIcon() {
  */
 const EXTRA_TITLES: { match: RegExp; label: string }[] = [
   { match: /\/profile$/, label: "My Profile" },
+  { match: /\/directory$/, label: "Staff Directory" },
   { match: /\/doubts\/[^/]+$/, label: "Doubt" },
   { match: /\/complaints\/[^/]+$/, label: "Complaint" },
 ];
