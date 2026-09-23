@@ -343,7 +343,11 @@ const MyComplaints = () => {
                   {/* CC-02: evidence the student attached when filing. */}
                   <AttachmentList
                     attachments={selected.attachments}
-                    label="Photos & documents"
+                    label={
+                      selected.resolutionAttachments?.length
+                        ? 'Before — what you reported'
+                        : 'Photos & documents'
+                    }
                   />
 
                   {selected.assignedTo && (
@@ -366,6 +370,15 @@ const MyComplaints = () => {
                   {selected.resolutionNote && (
                     <ResolutionNoteBlock note={selected.resolutionNote} title="Resolution Note" variant="success" />
                   )}
+
+                  {/* CC-30: the "after" half, placed immediately ABOVE the
+                      confirm/reject buttons on purpose. This is the evidence
+                      the decision rests on, and a photo below the buttons is a
+                      photo half the students never scroll to. */}
+                  <AttachmentList
+                    attachments={selected.resolutionAttachments}
+                    label="After — photos of the repair"
+                  />
 
                   {selected.status === 'PENDING_CONFIRMATION' && (
                     <div className="rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-900 p-4 space-y-3">
